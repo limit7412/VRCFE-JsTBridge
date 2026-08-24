@@ -43,3 +43,43 @@ msgstr "1つのアバターにKx VRC FE-JsT Bridgeを複数追加できません
 
 msgid "guard.dialog.duplicate_removed"
 msgstr "1つのアバターにKx VRC FE-JsT Bridgeは1つだけ置けるため、重複していたコンポーネントを削除しました。"
+
+# インスペクタ
+msgid "inspector.description"
+msgstr "フェイストラッキングが有効な間、FaceEmoを自動でバイパスさせます。\nアバタールートへの追加を推奨します。"
+
+msgid "prop.bypass_trigger"
+msgstr "バイパスの発動条件"
+
+msgid "prop.bypass_trigger.tooltip"
+msgstr "どのトラッキング状態でFaceEmoを止めるかを選びます。"
+
+msgid "prop.bypass_trigger.facial_expressions_disabled"
+msgstr "目か口が有効なとき"
+
+msgid "prop.bypass_trigger.facial_expressions_disabled.tooltip"
+msgstr "Jerry's TemplatesのFacialExpressionsDisabledに従います。目と口のどちらかが有効なら発動します。"
+
+msgid "prop.bypass_trigger.lip_tracking_only"
+msgstr "口が有効なときだけ (実験的)"
+
+msgid "prop.bypass_trigger.lip_tracking_only.tooltip"
+msgstr "LipTrackingActiveに従います。目だけのトラッキングではFaceEmoを止めません。"
+
+msgid "inspector.bypass_trigger.lip_tracking_only"
+msgstr "実験的な設定です。目だけをトラッキングする構成では、FaceEmoのまばたきとデフォルト表情が目のシェイプと競合したままになります。"
+
+msgid "prop.enable_tracking_reapply"
+msgstr "Tracking Controlを再適用する"
+
+msgid "prop.enable_tracking_reapply.tooltip"
+msgstr "バイパスの成立後に、Tracking ControlをJerry's Templatesの状態へ合わせ直すレイヤーを生成します。"
+
+msgid "inspector.tracking_reapply.disabled"
+msgstr "再適用を止めると、リップシンクが復活する、目だけトラッキング時に目が固まる、といった競合が起きます。トラブルシュートのときだけ無効にしてください。"
+
+msgid "prop.reapply_delay_seconds"
+msgstr "再適用までの待ち時間 (秒)"
+
+msgid "prop.reapply_delay_seconds.tooltip"
+msgstr "バイパスの成立を待つ秒数です。Tracking Controlが追従しないときは値を増やしてください。"
