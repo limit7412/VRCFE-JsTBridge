@@ -43,3 +43,43 @@ msgstr "An avatar cannot have more than one Kx VRC FE-JsT Bridge. The duplicate 
 
 msgid "guard.dialog.duplicate_removed"
 msgstr "An avatar can only have one Kx VRC FE-JsT Bridge, so the duplicate component was removed."
+
+# Inspector
+msgid "inspector.description"
+msgstr "Bypasses FaceEmo automatically while face tracking is active.\nAdding this to the avatar root is recommended."
+
+msgid "prop.bypass_trigger"
+msgstr "Bypass Trigger"
+
+msgid "prop.bypass_trigger.tooltip"
+msgstr "Chooses which tracking state stops FaceEmo."
+
+msgid "prop.bypass_trigger.facial_expressions_disabled"
+msgstr "Eye or lip tracking is active"
+
+msgid "prop.bypass_trigger.facial_expressions_disabled.tooltip"
+msgstr "Follows FacialExpressionsDisabled of Jerry's Templates. Fires when either eye or lip tracking is active."
+
+msgid "prop.bypass_trigger.lip_tracking_only"
+msgstr "Only lip tracking is active (experimental)"
+
+msgid "prop.bypass_trigger.lip_tracking_only.tooltip"
+msgstr "Follows LipTrackingActive. FaceEmo keeps running while only eye tracking is active."
+
+msgid "inspector.bypass_trigger.lip_tracking_only"
+msgstr "This setting is experimental. With eye tracking only, FaceEmo's blink and default face still conflict with the eye blend shapes."
+
+msgid "prop.enable_tracking_reapply"
+msgstr "Re-apply Tracking Control"
+
+msgid "prop.enable_tracking_reapply.tooltip"
+msgstr "Generates the layer that re-applies Tracking Control to match the state of Jerry's Templates after the bypass takes effect."
+
+msgid "inspector.tracking_reapply.disabled"
+msgstr "Without the re-apply layer, lip sync comes back and the eyes freeze while only lip tracking is active. Turn this off only to work around trouble."
+
+msgid "prop.reapply_delay_seconds"
+msgstr "Re-apply Delay (seconds)"
+
+msgid "prop.reapply_delay_seconds.tooltip"
+msgstr "Seconds to wait for the bypass to take effect. Increase it when Tracking Control does not follow."

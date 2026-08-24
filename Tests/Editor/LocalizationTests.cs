@@ -1,0 +1,122 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+using UnityEditor;
+using FEJsTBridge.Presentation;
+
+namespace FEJsTBridge.Tests
+{
+    /// <summary>
+    /// 翻訳ファイルの検証
+    ///
+    /// NDMFのLocalizerは、引けなかったキーを既定言語 (ja-jp) から補う。
+    /// 実行時の引き当てを見るだけでは英語の訳抜けが表に出ないため、poファイルを直接読む。
+    /// </summary>
+    public class LocalizationTests
+    {
+        private static readonly string[] Languages = { "ja-jp", "en-us" };
+
+        /// <summary>
+        /// インスペクタとビルド時の警告が使う文言のキー
+        /// ツールチップ (.tooltip) は任意のため、ここには含めない
+        /// </summary>
+        private static readonly string[] RequiredKeys =
+        {
+            "common.ok",
+            "dialog.title",
+            "inspector.description",
+            "inspector.bypass_trigger.lip_tracking_only",
+            "inspector.tracking_reapply.disabled",
+            "prop.bypass_trigger",
+            "prop.enable_tracking_reapply",
+            "prop.reapply_delay_seconds",
+            "warning.jerry_not_found",
+            "warning.jerry_not_found:description",
+            "warning.face_emo_not_found",
+            "warning.face_emo_not_found:description",
+            "warning.duplicate_component",
+            "warning.duplicate_component:description",
+            "guard.log.duplicate",
+            "guard.dialog.duplicate_removed",
+        };
+
+        [Test]
+        public void PoFiles_AreImportedAsLocalizationAssets()
+        {
+            foreach (var language in Languages)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<LocalizationAsset>(PathFor(language));
+                Assert.That(asset, Is.Not.Null, $"{language}.poがLocalizationAssetとして読み込めない");
+            }
+        }
+
+        [Test]
+        public void PoFiles_HaveIdenticalKeySets()
+        {
+            var japanese = ReadKeys("ja-jp");
+            var english = ReadKeys("en-us");
+
+            Assert.That(english.Except(japanese), Is.Empty, "ja-jpに無いキーがen-usにある");
+            Assert.That(japanese.Except(english), Is.Empty, "en-usに無いキーがja-jpにある");
+        }
+
+        [Test]
+        public void PoFiles_ContainEveryRequiredKey()
+        {
+            foreach (var language in Languages)
+            {
+                var keys = ReadKeys(language);
+                foreach (var required in RequiredKeys)
+                {
+                    Assert.That(keys, Contains.Item(required), $"{language}.poに{required}が無い");
+                }
+            }
+        }
+
+        [Test]
+        public void BypassTriggerLabelKeys_CoverEveryEnumValue()
+        {
+            var labelKeys = FEJsTBridgeComponentEditor.BypassTriggerLabelKeys;
+
+            // 並びは宣言順に一致させる必要がある (enumValueIndexで引くため)
+            Assert.That(labelKeys.Count, Is.EqualTo(Enum.GetValues(typeof(BypassTrigger)).Length));
+
+            foreach (var language in Languages)
+            {
+                var keys = ReadKeys(language);
+                foreach (var labelKey in labelKeys)
+                {
+                    Assert.That(keys, Contains.Item(labelKey), $"{language}.poに{labelKey}が無い");
+                }
+            }
+        }
+
+        private static string PathFor(string language)
+        {
+            return $"{Localization.GetLocalizationRoot()}/{language}.po";
+        }
+
+        private static IReadOnlyCollection<string> ReadKeys(string language)
+        {
+            var path = PathFor(language);
+            Assert.That(File.Exists(path), Is.True, $"{path}が見つからない");
+
+            var keys = new HashSet<string>();
+            foreach (Match match in Regex.Matches(File.ReadAllText(path), "^msgid \"(.*)\"", RegexOptions.Multiline))
+            {
+                var key = match.Groups[1].Value;
+
+                // 先頭の空msgidはpoのヘッダー
+                if (key.Length > 0)
+                {
+                    keys.Add(key);
+                }
+            }
+
+            return keys;
+        }
+    }
+}

@@ -38,7 +38,7 @@ namespace FEJsTBridge
             return assets;
         }
 
-        private static string GetLocalizationRoot()
+        internal static string GetLocalizationRoot()
         {
             // Assets/配下・Packages/配下のどちらに置かれても解決できるよう、asmdefの位置から辿る
             var asmdefPath = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(
