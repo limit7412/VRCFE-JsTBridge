@@ -39,7 +39,7 @@ msgstr "Only the settings on {0} are used and the others are ignored."
 
 # Duplicate component guard
 msgid "guard.log.duplicate"
-msgstr "An avatar cannot have more than one Kx VRC FE-JsT Bridge. The component you added will be removed."
+msgstr "An avatar cannot have more than one Kx VRC FE-JsT Bridge. The duplicate component will be removed."
 
 msgid "guard.dialog.duplicate_removed"
-msgstr "This avatar already has a Kx VRC FE-JsT Bridge, so the component you added was removed."
+msgstr "An avatar can only have one Kx VRC FE-JsT Bridge, so the duplicate component was removed."

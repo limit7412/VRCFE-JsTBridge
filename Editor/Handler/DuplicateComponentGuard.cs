@@ -9,7 +9,7 @@ namespace FEJsTBridge.Handler
 {
     /// <summary>
     /// 同一アバター内にFEJsTBridgeComponentが複数配置された場合、
-    /// 後から追加されたコンポーネントを自動削除するガード
+    /// 選定ポリシーが選ぶ1つを残して自動削除するガード
     /// RuntimeコンポーネントのOnValidateフック経由で呼び出される
     /// </summary>
     [InitializeOnLoad]
@@ -35,59 +35,66 @@ namespace FEJsTBridge.Handler
                 return;
             }
 
-            var components = avatarRoot.GetComponentsInChildren<FEJsTBridgeComponent>(true)
-                .Where(c => c != null)
-                .ToArray();
-
-            var instanceId = component.GetInstanceID();
+            var components = CollectComponents(avatarRoot);
             if (components.Length <= 1)
             {
-                PendingRemoval.Remove(instanceId);
+                PendingRemoval.Remove(component.GetInstanceID());
                 return;
             }
 
-            var primary = GenerateBridgeUseCase.SelectPrimaryComponent(avatarRoot, components);
-            if (primary == component)
+            // OnValidateは編集されたコンポーネントにしか届かないため、
+            // 触られた側だけを見て判断すると、もう一方が残ったままになる。
+            // 触られた側が残る場合でも、漏れた側をここで削除する
+            foreach (var duplicate in GenerateBridgeUseCase.SelectDuplicateComponents(avatarRoot, components))
             {
-                PendingRemoval.Remove(instanceId);
-                return;
+                ScheduleRemoval(avatarRoot, duplicate);
             }
+        }
 
+        private static void ScheduleRemoval(Transform avatarRoot, FEJsTBridgeComponent duplicate)
+        {
+            var instanceId = duplicate.GetInstanceID();
             if (!PendingRemoval.Add(instanceId))
             {
                 return;
             }
 
-            Debug.LogWarning("[FEJsTBridge] " + S("guard.log.duplicate"), component);
+            Debug.LogWarning("[FEJsTBridge] " + S("guard.log.duplicate"), duplicate);
 
             // OnValidateの最中はオブジェクトを破棄できないため、次のエディタ更新へ回す
             EditorApplication.delayCall += () =>
             {
                 PendingRemoval.Remove(instanceId);
 
-                if (component == null || avatarRoot == null)
+                if (duplicate == null || avatarRoot == null)
                 {
                     return;
                 }
 
-                var refreshed = avatarRoot.GetComponentsInChildren<FEJsTBridgeComponent>(true)
-                    .Where(c => c != null)
-                    .ToArray();
-                var refreshedPrimary = GenerateBridgeUseCase.SelectPrimaryComponent(avatarRoot, refreshed);
-
-                if (refreshedPrimary != component)
+                // 待っている間に構成が変わっていることがあるので、削除の直前に選び直す
+                var refreshed = CollectComponents(avatarRoot);
+                if (!GenerateBridgeUseCase.SelectDuplicateComponents(avatarRoot, refreshed).Contains(duplicate))
                 {
-                    Undo.DestroyObjectImmediate(component);
+                    return;
+                }
 
-                    if (!Application.isBatchMode)
-                    {
-                        EditorUtility.DisplayDialog(
-                            S("dialog.title"),
-                            S("guard.dialog.duplicate_removed"),
-                            S("common.ok"));
-                    }
+                Undo.DestroyObjectImmediate(duplicate);
+
+                if (!Application.isBatchMode)
+                {
+                    EditorUtility.DisplayDialog(
+                        S("dialog.title"),
+                        S("guard.dialog.duplicate_removed"),
+                        S("common.ok"));
                 }
             };
+        }
+
+        private static FEJsTBridgeComponent[] CollectComponents(Transform avatarRoot)
+        {
+            return avatarRoot.GetComponentsInChildren<FEJsTBridgeComponent>(true)
+                .Where(c => c != null)
+                .ToArray();
         }
 
         private static Transform FindAvatarRootForUniqueness(FEJsTBridgeComponent component)

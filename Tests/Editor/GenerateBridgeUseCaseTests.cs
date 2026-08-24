@@ -81,6 +81,31 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void SelectDuplicateComponents_ReturnsEveryComponentExceptPrimary()
+        {
+            var root = CreateAvatarRoot();
+            var onChild = AddComponentTo(root, "Child");
+            var onRoot = AddComponentTo(root);
+
+            var duplicates = GenerateBridgeUseCase.SelectDuplicateComponents(
+                root.transform, new[] { onChild, onRoot });
+
+            // ルート側があとから追加された場合でも、漏れた子側が削除対象になる
+            Assert.That(duplicates, Is.EqualTo(new[] { onChild }));
+        }
+
+        [Test]
+        public void SelectDuplicateComponents_ReturnsEmpty_WhenOnlyOneComponentExists()
+        {
+            var root = CreateAvatarRoot();
+            var onRoot = AddComponentTo(root);
+
+            Assert.That(
+                GenerateBridgeUseCase.SelectDuplicateComponents(root.transform, new[] { onRoot }),
+                Is.Empty);
+        }
+
+        [Test]
         public void RemoveComponents_DestroysAllComponents()
         {
             var root = CreateAvatarRoot();

@@ -86,7 +86,7 @@ jobs:
           # 一致していないと、パッケージの中身が同じプレリリースが積み上がるか、
           # 逆に中身が変わったのに作られないかのどちらかが起きる。
           #
-          # テストコード(Tests/)とドキュメントはzipへ入らないため対象外。
+          # テストコード(Tests/)とREADMEはzipへ入らないため対象外。
           # このワークフロー自身も対象に含めない。手順を変えてもzipの中身は変わらず、
           # 中身の同じプレリリースが増えるだけになる。
           # 手順を変えて作り直したいときは`workflow_dispatch`から実行する。
@@ -98,7 +98,7 @@ jobs:
             for FILE in "$NEW_PATH" "$OLD_PATH"; do
               [ -n "$FILE" ] || continue
               case "$FILE" in
-                Editor/*|Runtime/*|Editor.meta|Runtime.meta|package.json|package.json.meta)
+                Editor/*|Runtime/*|Editor.meta|Runtime.meta|package.json|package.json.meta|LICENSE|LICENSE.meta)
                   echo "パッケージの中身が変わる変更: $FILE"
                   RELEVANT=true
                   ;;
@@ -204,6 +204,8 @@ jobs:
           zip -r "$ZIP_NAME" \
             package.json \
             package.json.meta \
+            LICENSE \
+            LICENSE.meta \
             Runtime/ \
             Runtime.meta \
             Editor/ \

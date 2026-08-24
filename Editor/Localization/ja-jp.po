@@ -39,7 +39,7 @@ msgstr "{0}の設定だけを使い、残りは無視しました。"
 
 # 重複コンポーネントの自動排除
 msgid "guard.log.duplicate"
-msgstr "1つのアバターにKx VRC FE-JsT Bridgeを複数追加できません。追加したコンポーネントを削除します。"
+msgstr "1つのアバターにKx VRC FE-JsT Bridgeを複数追加できません。重複しているコンポーネントを削除します。"
 
 msgid "guard.dialog.duplicate_removed"
-msgstr "このアバターにはすでにKx VRC FE-JsT Bridgeがあるため、追加したコンポーネントを削除しました。"
+msgstr "1つのアバターにKx VRC FE-JsT Bridgeは1つだけ置けるため、重複していたコンポーネントを削除しました。"

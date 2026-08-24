@@ -46,6 +46,23 @@ namespace FEJsTBridge.UseCase
             return SelectPrimaryComponent(avatarRoot != null ? avatarRoot.transform : null, components);
         }
 
+        /// <summary>
+        /// 選定から漏れたコンポーネントを返す（重複の自動排除で削除する対象）
+        /// ビルドが採用するものと、エディタ上に残すものを一致させるためにここへ置く
+        /// </summary>
+        public static FEJsTBridgeComponent[] SelectDuplicateComponents(
+            Transform avatarRoot,
+            IReadOnlyList<FEJsTBridgeComponent> components)
+        {
+            var primary = SelectPrimaryComponent(avatarRoot, components);
+            if (primary == null)
+            {
+                return new FEJsTBridgeComponent[0];
+            }
+
+            return components.Where(c => c != null && c != primary).ToArray();
+        }
+
         public static FEJsTBridgeComponent[] CollectComponents(GameObject avatarRoot)
         {
             if (avatarRoot == null)
