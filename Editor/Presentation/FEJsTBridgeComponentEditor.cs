@@ -13,8 +13,10 @@ namespace FEJsTBridge.Presentation
     /// 表示文言はNDMFのローカライズ機構から引く。
     /// enumの選択肢はPropertyFieldではC#の識別子がそのまま出てしまうため、
     /// ポップアップを自前で描いて訳語を当てる。
+    /// 自前で描いた分はBeginProperty/EndPropertyで囲み、プレハブの上書き表示を保つ。
     /// </summary>
     [CustomEditor(typeof(FEJsTBridgeComponent))]
+    [CanEditMultipleObjects]
     public class FEJsTBridgeComponentEditor : Editor
     {
         /// <summary>
@@ -56,17 +58,24 @@ namespace FEJsTBridge.Presentation
                 options[i] = G(BypassTriggerLabelKeys[i]);
             }
 
+            // BeginPropertyで囲むと、プレハブインスタンス上での上書き表示と
+            // 右クリックのRevertが、通常のフィールドと同じように働く
+            var rect = EditorGUILayout.GetControlRect();
+            var label = EditorGUI.BeginProperty(rect, G("prop.bypass_trigger"), property);
+
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
 
             // enumValueIndexは宣言順の添字なので、選択肢の並びと対応する
-            var selected = EditorGUILayout.Popup(G("prop.bypass_trigger"), property.enumValueIndex, options);
+            var selected = EditorGUI.Popup(rect, label, property.enumValueIndex, options);
 
             EditorGUI.showMixedValue = false;
             if (EditorGUI.EndChangeCheck())
             {
                 property.enumValueIndex = selected;
             }
+
+            EditorGUI.EndProperty();
 
             if (!property.hasMultipleDifferentValues
                 && property.enumValueIndex == (int)BypassTrigger.LipTrackingOnly)
