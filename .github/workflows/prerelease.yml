@@ -87,7 +87,6 @@ jobs:
           # 逆に中身が変わったのに作られないかのどちらかが起きる。
           #
           # テストコード(Tests/)とドキュメントはzipへ入らないため対象外。
-          # `.meta`はzip生成時に`-x "*.meta"`で除外されるため、これも対象外。
           # このワークフロー自身も対象に含めない。手順を変えてもzipの中身は変わらず、
           # 中身の同じプレリリースが増えるだけになる。
           # 手順を変えて作り直したいときは`workflow_dispatch`から実行する。
@@ -98,11 +97,8 @@ jobs:
             COUNT=$((COUNT + 1))
             for FILE in "$NEW_PATH" "$OLD_PATH"; do
               [ -n "$FILE" ] || continue
-              # `case`は先に書いたパターンで止まるため、除外を対象より前に置く
               case "$FILE" in
-                *.meta)
-                  ;;
-                Editor/*|Runtime/*|package.json)
+                Editor/*|Runtime/*|Editor.meta|Runtime.meta|package.json|package.json.meta)
                   echo "パッケージの中身が変わる変更: $FILE"
                   RELEVANT=true
                   ;;
@@ -200,11 +196,18 @@ jobs:
           ZIP_NAME="${PACKAGE_NAME}-${{ steps.version.outputs.version }}.zip"
 
           # Create zip with package contents
+          #
+          # `.meta`も含める。Unityはアセットへの参照を`.meta`のGUIDで解決するため、
+          # 配布物から外すと導入のたびにGUIDが振り直され、更新後のアバターで
+          # コンポーネントがMissing Scriptになる。
+          # ディレクトリ自身の`.meta`はパッケージ直下にあるので個別に指定する。
           zip -r "$ZIP_NAME" \
             package.json \
+            package.json.meta \
             Runtime/ \
+            Runtime.meta \
             Editor/ \
-            -x "*.meta"
+            Editor.meta
 
           echo "Created: $ZIP_NAME"
           ls -la "$ZIP_NAME"

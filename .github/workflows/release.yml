@@ -57,11 +57,18 @@ jobs:
           ZIP_NAME="${PACKAGE_NAME}-${{ steps.version.outputs.version }}.zip"
 
           # Create zip with package contents
+          #
+          # `.meta`も含める。Unityはアセットへの参照を`.meta`のGUIDで解決するため、
+          # 配布物から外すと導入のたびにGUIDが振り直され、更新後のアバターで
+          # コンポーネントがMissing Scriptになる。
+          # ディレクトリ自身の`.meta`はパッケージ直下にあるので個別に指定する。
           zip -r "$ZIP_NAME" \
             package.json \
+            package.json.meta \
             Runtime/ \
+            Runtime.meta \
             Editor/ \
-            -x "*.meta"
+            Editor.meta
 
           echo "Created: $ZIP_NAME"
           ls -la "$ZIP_NAME"
