@@ -1,0 +1,27 @@
+{
+    "name": "com.qazx7412.kx-vrc-fe-jst-bridge",
+    "version": "0.1.0",
+    "displayName": "Kx VRC FE-JsT Bridge",
+    "description": "FaceEmoとJerry's Templates (MA版) を併用したアバターで、フェイストラッキング有効中だけFaceEmoを自動でバイパスさせるNDMFプラグイン。両パッケージのアセットには手を入れず、ビルド時にブリッジ用のアニメーターレイヤーを生成する。",
+    "unity": "2022.3",
+    "unityRelease": "6f1",
+    "dependencies": {},
+    "vpmDependencies": {
+        "com.vrchat.avatars": ">=3.7.0",
+        "nadena.dev.ndmf": ">=1.5.0",
+        "nadena.dev.modular-avatar": ">=1.10.0"
+    },
+    "author": {
+        "name": "kairox",
+        "url": "https://github.com/limit7412"
+    },
+    "keywords": [
+        "VRChat",
+        "NDMF",
+        "FaceEmo",
+        "FaceTracking",
+        "VRCFT",
+        "ModularAvatar"
+    ],
+    "samples": []
+}
