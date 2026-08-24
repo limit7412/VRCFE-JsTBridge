@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Language: ja-jp\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# 共通
+msgid "common.ok"
+msgstr "OK"
+
+msgid "dialog.title"
+msgstr "Kx VRC FE-JsT Bridge"
+
+# ビルド時の警告
+msgid "warning.jerry_not_found"
+msgstr "Jerry's Templatesが見つかりません"
+
+msgid "warning.jerry_not_found:description"
+msgstr "トリガーとなるパラメータの供給元がないため、生成したブリッジは何もしません。"
+
+msgid "warning.jerry_not_found:hint"
+msgstr "Jerry's Templates (MA版) をこのアバターへ追加すると動作します。あとから追加する予定であれば、この警告は無視して構いません。"
+
+msgid "warning.face_emo_not_found"
+msgstr "FaceEmoが見つかりません"
+
+msgid "warning.face_emo_not_found:description"
+msgstr "バイパスさせる相手がいないため、生成したブリッジは何もしません。"
+
+msgid "warning.face_emo_not_found:hint"
+msgstr "FaceEmoの生成物をこのアバターへ追加すると動作します。あとから追加する予定であれば、この警告は無視して構いません。"
+
+msgid "warning.duplicate_component"
+msgstr "Kx VRC FE-JsT Bridgeが複数あります"
+
+msgid "warning.duplicate_component:description"
+msgstr "{0}の設定だけを使い、残りは無視しました。"
+
+# 重複コンポーネントの自動排除
+msgid "guard.log.duplicate"
+msgstr "1つのアバターにKx VRC FE-JsT Bridgeを複数追加できません。追加したコンポーネントを削除します。"
+
+msgid "guard.dialog.duplicate_removed"
+msgstr "このアバターにはすでにKx VRC FE-JsT Bridgeがあるため、追加したコンポーネントを削除しました。"
