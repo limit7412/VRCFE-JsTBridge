@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Language: en-us\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Common
+msgid "common.ok"
+msgstr "OK"
+
+msgid "dialog.title"
+msgstr "Kx VRC FE-JsT Bridge"
+
+# Build warnings
+msgid "warning.jerry_not_found"
+msgstr "Jerry's Templates was not found"
+
+msgid "warning.jerry_not_found:description"
+msgstr "Nothing supplies the trigger parameter, so the generated bridge does nothing."
+
+msgid "warning.jerry_not_found:hint"
+msgstr "Add Jerry's Templates (MA version) to this avatar to make the bridge work. Ignore this warning if you plan to add it later."
+
+msgid "warning.face_emo_not_found"
+msgstr "FaceEmo was not found"
+
+msgid "warning.face_emo_not_found:description"
+msgstr "There is nothing to bypass, so the generated bridge does nothing."
+
+msgid "warning.face_emo_not_found:hint"
+msgstr "Add the FaceEmo output to this avatar to make the bridge work. Ignore this warning if you plan to add it later."
+
+msgid "warning.duplicate_component"
+msgstr "Multiple Kx VRC FE-JsT Bridge components were found"
+
+msgid "warning.duplicate_component:description"
+msgstr "Only the settings on {0} are used and the others are ignored."
+
+# Duplicate component guard
+msgid "guard.log.duplicate"
+msgstr "An avatar cannot have more than one Kx VRC FE-JsT Bridge. The duplicate component will be removed."
+
+msgid "guard.dialog.duplicate_removed"
+msgstr "An avatar can only have one Kx VRC FE-JsT Bridge, so the duplicate component was removed."

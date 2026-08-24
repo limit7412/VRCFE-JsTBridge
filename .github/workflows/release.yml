@@ -1,0 +1,129 @@
+name: Build VPM Package
+
+on:
+  release:
+    # `published`のみ。通常リリース・プレリリースいずれの公開でも発火する。
+    # ただしprerelease.ymlがGITHUB_TOKENで自動作成するプレリリースは、
+    # ワークフローの連鎖起動を防ぐGitHub Actionsの仕様により`release`イベント
+    # 自体が発火しないため対象外。
+    # そちらのzipの添付とリスティング通知はprerelease.yml側で行う。
+    #
+    # `released`は追加しない。これはプレリリースからの昇格に限らず通常リリースの
+    # 公開時にも`published`と同時に発火するため、同一タグに対してこのワークフローが
+    # 2回並行実行され、同名zipのアップロードが競合してしまう。
+    # プレリリースを正式リリースへ昇格した場合(`released`のみが発火するケース)は
+    # zipは昇格前の`published`で既に添付済みなので、リスティングを更新したい場合は
+    # vcc-vpm側の"Build Repo Listing" → "Run workflow"で手動再生成する。
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., 1.0.0)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(jq -r '.version' package.json)
+          fi
+          # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Update package.json version
+        run: |
+          jq '.version = "${{ steps.version.outputs.version }}"' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: Create package zip
+        run: |
+          PACKAGE_NAME="com.qazx7412.kx-vrc-fe-jst-bridge"
+          ZIP_NAME="${PACKAGE_NAME}-${{ steps.version.outputs.version }}.zip"
+
+          # Create zip with package contents
+          #
+          # `.meta`も含める。Unityはアセットへの参照を`.meta`のGUIDで解決するため、
+          # 配布物から外すと導入のたびにGUIDが振り直され、更新後のアバターで
+          # コンポーネントがMissing Scriptになる。
+          # ディレクトリ自身の`.meta`はパッケージ直下にあるので個別に指定する。
+          zip -r "$ZIP_NAME" \
+            package.json \
+            package.json.meta \
+            LICENSE \
+            LICENSE.meta \
+            Runtime/ \
+            Runtime.meta \
+            Editor/ \
+            Editor.meta
+
+          echo "Created: $ZIP_NAME"
+          ls -la "$ZIP_NAME"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vpm-package
+          path: "*.zip"
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: "*.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # リリース公開をVPMリスティングリポジトリへ通知し、リスティングを即時再生成する。
+  # GitHubの`release`イベントはリリース元リポジトリのワークフローにしか配信されない
+  # ため、リスティング側から検知することはできず、こちらから通知する必要がある。
+  #
+  # `needs: build`としているのはリリース資材(zip)の添付完了を待つため。リスティングの
+  # 生成はリリースのアセットを参照するので、添付前に通知するとzipが無い状態で
+  # インデックスされてしまう。
+  #
+  # 動作には以下がこのリポジトリに設定されている必要がある:
+  #   secret `LISTING_DISPATCH_TOKEN` … limit7412/vcc-vpm のみをスコープとし
+  #   "Contents: Read and write" を持つ fine-grained PAT。
+  #   (このリポジトリの GITHUB_TOKEN は他リポジトリへ到達できないため必須)
+  #
+  # secretは`inherit`ではなく明示的に渡す。`inherit`は可変ref(@main)で読み込まれる
+  # 他リポジトリのワークフローへこのリポジトリの全secretを渡してしまうが、
+  # 必要なのはこの1つだけ。
+  #
+  # リリースのタグは`release`イベントから読まれるため`tag`入力は渡していない。
+  # (安定版リリースは手動作成のため`release`トリガが発火する。
+  #  プレリリースはprerelease.ymlがGITHUB_TOKENで自動作成するためトリガ自体が
+  #  発火せず、あちらは`tag`を明示的に渡して同じ通知を行っている。
+  #  安定版もワークフローから作る形に変えた場合は同様に`tag`が必要になる)
+  notify-listing:
+    name: notify-listing
+    needs: build
+    if: github.event_name == 'release'
+    # 呼び出された再利用可能ワークフローは呼び出し元の`GITHUB_TOKEN`を受け取るため、
+    # 何も指定しないとトップレベルの`contents: write`がそのまま渡り、他リポジトリの
+    # ワークフローがこのリポジトリの内容やリリース資材を変更できてしまう。
+    # 通知はvcc-vpm側へ`LISTING_DISPATCH_TOKEN`を使って行われ`GITHUB_TOKEN`は
+    # 使わないので、権限は全て落とす。
+    permissions: {}
+    uses: limit7412/vcc-vpm/.github/workflows/notify-listing.yml@main
+    with:
+      # デフォルトを持たない必須入力。`uses:`の参照先と同じリポジトリを指すこと。
+      listing-repo: limit7412/vcc-vpm
+    secrets:
+      LISTING_DISPATCH_TOKEN: ${{ secrets.LISTING_DISPATCH_TOKEN }}
