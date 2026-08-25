@@ -27,6 +27,15 @@ namespace FEJsTBridge.Domain
         public bool IsEmpty => LayerIndices.Count == 0;
 
         /// <summary>
+        /// 取り除く名前が1つでも指定されているか
+        /// 一覧が空行だけのときにFXを探しに行かないよう、選定と同じ規則で判定する
+        /// </summary>
+        public static bool HasRequestedName(IEnumerable<string> requestedNames)
+        {
+            return Normalize(requestedNames).Any();
+        }
+
+        /// <summary>
         /// レイヤー名の一覧と、取り除きたい名前の一覧から選定する
         /// 同名のレイヤーが複数あれば、そのすべてを対象にする
         /// </summary>
@@ -37,18 +46,16 @@ namespace FEJsTBridge.Domain
             var indices = new List<int>();
             var missing = new List<string>();
 
-            if (existingLayerNames == null || requestedNames == null)
+            if (existingLayerNames == null)
             {
                 return new FxLayerRemovalPlan(indices, missing);
             }
 
             var seen = new HashSet<string>();
 
-            foreach (var requested in requestedNames)
+            foreach (var name in Normalize(requestedNames))
             {
-                // 一覧の空行と、前後の空白は無視する
-                var name = requested?.Trim();
-                if (string.IsNullOrEmpty(name) || !seen.Add(name))
+                if (!seen.Add(name))
                 {
                     continue;
                 }
@@ -72,6 +79,21 @@ namespace FEJsTBridge.Domain
             indices.Sort();
 
             return new FxLayerRemovalPlan(indices, missing);
+        }
+
+        /// <summary>
+        /// 一覧の空行を落とし、前後の空白を落とす
+        /// </summary>
+        private static IEnumerable<string> Normalize(IEnumerable<string> requestedNames)
+        {
+            if (requestedNames == null)
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            return requestedNames
+                .Select(name => name?.Trim())
+                .Where(name => !string.IsNullOrEmpty(name));
         }
     }
 }

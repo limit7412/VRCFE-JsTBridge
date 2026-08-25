@@ -31,10 +31,14 @@ namespace FEJsTBridge.Infra
 
             foreach (var layer in descriptor.baseAnimationLayers)
             {
-                if (layer.type == VRCAvatarDescriptor.AnimLayerType.FX)
+                if (layer.type != VRCAvatarDescriptor.AnimLayerType.FX)
                 {
-                    return AnimatorControllerResolver.Resolve(layer.animatorController);
+                    continue;
                 }
+
+                // Defaultを選んだあとも参照が残ることがある。
+                // ビルドでは無視されるコントローラなので、取り除いても出力に反映されない
+                return layer.isDefault ? null : AnimatorControllerResolver.Resolve(layer.animatorController);
             }
 
             return null;
@@ -56,6 +60,11 @@ namespace FEJsTBridge.Infra
 
             foreach (var layer in descriptor.baseAnimationLayers.Concat(descriptor.specialAnimationLayers))
             {
+                if (layer.isDefault)
+                {
+                    continue;
+                }
+
                 var controller = AnimatorControllerResolver.Resolve(layer.animatorController);
                 if (controller != null && !controllers.Contains(controller))
                 {

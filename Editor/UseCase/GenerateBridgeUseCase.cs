@@ -147,7 +147,8 @@ namespace FEJsTBridge.UseCase
         /// </summary>
         private static void RemoveConflictingFxLayers(GameObject avatarRoot, IReadOnlyList<string> requestedNames)
         {
-            if (requestedNames == null || requestedNames.Count == 0)
+            // 空行だけの一覧でFXを探すと、FXの無いアバターで意味のない警告が出る
+            if (!FxLayerRemovalPlan.HasRequestedName(requestedNames))
             {
                 return;
             }

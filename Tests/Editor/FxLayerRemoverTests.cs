@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.Animations;
+using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 using FEJsTBridge.Infra;
 using Object = UnityEngine.Object;
@@ -11,6 +12,7 @@ namespace FEJsTBridge.Tests
     public class FxLayerRemoverTests
     {
         private AnimatorController _controller;
+        private readonly List<Object> _created = new List<Object>();
 
         [SetUp]
         public void SetUp()
@@ -25,6 +27,16 @@ namespace FEJsTBridge.Tests
         [TearDown]
         public void TearDown()
         {
+            foreach (var target in _created)
+            {
+                if (target != null)
+                {
+                    Object.DestroyImmediate(target);
+                }
+            }
+
+            _created.Clear();
+
             if (_controller != null)
             {
                 Object.DestroyImmediate(_controller);
@@ -86,6 +98,62 @@ namespace FEJsTBridge.Tests
         public void GetLayerNames_ReturnsEmpty_ForNull()
         {
             Assert.That(FxLayerRemover.GetLayerNames(null), Is.Empty);
+        }
+
+        [Test]
+        public void FindFxController_ReturnsController_WhenFxIsCustom()
+        {
+            var avatarRoot = CreateAvatarWithFx(_controller, isDefault: false);
+
+            Assert.That(FxLayerRemover.FindFxController(avatarRoot), Is.SameAs(_controller));
+        }
+
+        [Test]
+        public void FindFxController_ReturnsNull_WhenFxIsDefault()
+        {
+            // Defaultを選んだあとも参照が残ることがあるが、ビルドでは無視される
+            var avatarRoot = CreateAvatarWithFx(_controller, isDefault: true);
+
+            Assert.That(FxLayerRemover.FindFxController(avatarRoot), Is.Null);
+        }
+
+        [Test]
+        public void FindFxController_ResolvesOverrideController()
+        {
+            var overrideController = new AnimatorOverrideController(_controller);
+            _created.Add(overrideController);
+            var avatarRoot = CreateAvatarWithFx(overrideController, isDefault: false);
+
+            Assert.That(FxLayerRemover.FindFxController(avatarRoot), Is.SameAs(_controller));
+        }
+
+        [Test]
+        public void CollectAvatarControllers_SkipsDefaultLayers()
+        {
+            var avatarRoot = CreateAvatarWithFx(_controller, isDefault: true);
+
+            Assert.That(FxLayerRemover.CollectAvatarControllers(avatarRoot), Is.Empty);
+        }
+
+        private GameObject CreateAvatarWithFx(RuntimeAnimatorController fx, bool isDefault)
+        {
+            var avatarRoot = new GameObject("Avatar");
+            _created.Add(avatarRoot);
+
+            var descriptor = avatarRoot.AddComponent<VRCAvatarDescriptor>();
+            descriptor.baseAnimationLayers = new[]
+            {
+                new VRCAvatarDescriptor.CustomAnimLayer
+                {
+                    type = VRCAvatarDescriptor.AnimLayerType.FX,
+                    animatorController = fx,
+                    isDefault = isDefault,
+                    isEnabled = true,
+                },
+            };
+            descriptor.specialAnimationLayers = new VRCAvatarDescriptor.CustomAnimLayer[0];
+
+            return avatarRoot;
         }
 
         [Test]

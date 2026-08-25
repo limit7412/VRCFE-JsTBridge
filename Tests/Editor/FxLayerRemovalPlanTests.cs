@@ -72,5 +72,19 @@ namespace FEJsTBridge.Tests
         {
             Assert.That(FxLayerRemovalPlan.Resolve(Layers, new string[0]).IsEmpty, Is.True);
         }
+
+        [Test]
+        public void HasRequestedName_IsFalse_ForEmptyEntriesOnly()
+        {
+            Assert.That(FxLayerRemovalPlan.HasRequestedName(new[] { "", "  ", null }), Is.False);
+            Assert.That(FxLayerRemovalPlan.HasRequestedName(new string[0]), Is.False);
+            Assert.That(FxLayerRemovalPlan.HasRequestedName(null), Is.False);
+        }
+
+        [Test]
+        public void HasRequestedName_IsTrue_WhenAnyNameIsGiven()
+        {
+            Assert.That(FxLayerRemovalPlan.HasRequestedName(new[] { "", "  Mabataki  " }), Is.True);
+        }
     }
 }
