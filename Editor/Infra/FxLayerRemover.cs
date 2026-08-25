@@ -23,6 +23,15 @@ namespace FEJsTBridge.Infra
         /// </summary>
         public static AnimatorController FindFxController(GameObject avatarRoot)
         {
+            return AnimatorControllerResolver.Resolve(FindFxRuntimeController(avatarRoot));
+        }
+
+        /// <summary>
+        /// FXに指定されたコントローラを、Override Controllerのまま取り出す
+        /// 何が再生されるかを調べるには、差し替えの情報が要る
+        /// </summary>
+        public static RuntimeAnimatorController FindFxRuntimeController(GameObject avatarRoot)
+        {
             var descriptor = FindDescriptor(avatarRoot);
             if (descriptor == null)
             {
@@ -38,7 +47,7 @@ namespace FEJsTBridge.Infra
 
                 // Defaultを選んだあとも参照が残ることがある。
                 // ビルドでは無視されるコントローラなので、取り除いても出力に反映されない
-                return layer.isDefault ? null : AnimatorControllerResolver.Resolve(layer.animatorController);
+                return layer.isDefault ? null : layer.animatorController;
             }
 
             return null;
@@ -209,41 +218,12 @@ namespace FEJsTBridge.Infra
         {
             foreach (var layer in controller.layers)
             {
-                foreach (var behaviour in CollectBehaviours(layer.stateMachine))
+                foreach (var behaviour in AnimatorGraphWalker.Behaviours(layer.stateMachine))
                 {
                     if (behaviour is VRCAnimatorLayerControl control && control != null)
                     {
                         yield return control;
                     }
-                }
-            }
-        }
-
-        private static IEnumerable<StateMachineBehaviour> CollectBehaviours(AnimatorStateMachine stateMachine)
-        {
-            if (stateMachine == null)
-            {
-                yield break;
-            }
-
-            foreach (var behaviour in stateMachine.behaviours)
-            {
-                yield return behaviour;
-            }
-
-            foreach (var state in stateMachine.states)
-            {
-                foreach (var behaviour in state.state.behaviours)
-                {
-                    yield return behaviour;
-                }
-            }
-
-            foreach (var child in stateMachine.stateMachines)
-            {
-                foreach (var behaviour in CollectBehaviours(child.stateMachine))
-                {
-                    yield return behaviour;
                 }
             }
         }

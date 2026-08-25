@@ -142,3 +142,70 @@ msgstr "レイヤー操作の索引を付け替えられません"
 
 msgid "warning.layer_control_not_editable:description"
 msgstr "{0}がプロジェクトのアセットのままのため、VRC Animator Layer Controlの索引を付け替えられませんでした。除去したレイヤーより後ろを指す操作が、別のレイヤーへずれます。"
+
+# 除去候補の調査
+msgid "inspector.inspect.button"
+msgstr "除去候補を調べる"
+
+msgid "inspector.inspect.multi_edit"
+msgstr "複数のコンポーネントを選択している間は、除去候補を調べられません。アバターごとにFXが異なるため、一つだけ選択してから調べてください。"
+
+msgid "inspector.inspect.no_fx"
+msgstr "アバターのFXコントローラが見つかりません。FXにDefault以外のコントローラが割り当てられているか確認してください。"
+
+msgid "inspector.inspect.no_reference"
+msgstr "FaceEmoとJerry's Templatesが見つからないため、比較の基準がありません。ブレンドシェイプを書くレイヤーをそのまま挙げているので、内容を確認してから追加してください。"
+
+msgid "inspector.inspect.empty_reference"
+msgstr "FaceEmoかJerry's Templatesは見つかりましたが、ブレンドシェイプを書くクリップがありません。比較の土台が無いため、ブレンドシェイプによる判定はしていません。表情のクリップが設定されているか確認してください。"
+
+msgid "inspector.inspect.write_defaults"
+msgstr "候補以外のレイヤーにWrite Defaultsが有効なステートがあります。有効なステートはクリップに書いていないブレンドシェイプも既定値へ戻すため、この一覧に出ないレイヤーがバイパス中に表情を崩すことがあります。"
+
+msgid "inspector.inspect.no_face_emo"
+msgstr "FaceEmoが見つかりません。FaceEmoが書くブレンドシェイプを基準に入れられないため、FaceEmoとだけ競合するレイヤーは「競合なし」と出ます。"
+
+msgid "inspector.inspect.no_jerry"
+msgstr "Jerry's Templatesが見つかりません。トラッキングが書くブレンドシェイプを基準に入れられないため、トラッキングとだけ競合するレイヤーは「競合なし」と出ます。"
+
+msgid "inspector.inspect.no_candidate"
+msgstr "競合しそうなレイヤーは見つかりませんでした。"
+
+msgid "inspector.inspect.candidates"
+msgstr "除去候補"
+
+msgid "inspector.inspect.others"
+msgstr "候補以外のレイヤー ({0})"
+
+msgid "inspector.inspect.layer"
+msgstr "{0} (レイヤー {1})"
+
+msgid "inspector.inspect.layer_index"
+msgstr "レイヤー {0}"
+
+msgid "inspector.inspect.same_name"
+msgstr "同じ名前のレイヤーが他に{0}枚あります (レイヤー {1})。除去は名前で行うため、追加するとそれらもまとめて消えます。"
+
+msgid "inspector.inspect.empty_name"
+msgstr "このレイヤーには名前がありません。除去は名前で行うため指定できません。Animatorでレイヤーに名前を付けてから、もう一度調べてください。"
+
+msgid "inspector.inspect.add"
+msgstr "追加"
+
+msgid "inspector.inspect.add_all"
+msgstr "候補をすべて追加"
+
+msgid "inspector.inspect.reason.shared"
+msgstr "表情やトラッキングと同じブレンドシェイプを{0}個書く: {1}"
+
+msgid "inspector.inspect.reason.blend_shapes"
+msgstr "ブレンドシェイプを{0}個書く: {1}"
+
+msgid "inspector.inspect.reason.tracking_control"
+msgstr "Tracking ControlでEyesかMouthを切り替える"
+
+msgid "inspector.inspect.verdict.no_conflict"
+msgstr "競合なし"
+
+msgid "inspector.inspect.verdict.managed"
+msgstr "他のツールが管理"

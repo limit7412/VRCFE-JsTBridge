@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEditor.Animations;
+using System.Linq;
 using UnityEngine;
 using nadena.dev.modular_avatar.core;
 using FEJsTBridge.Domain;
@@ -23,6 +23,41 @@ namespace FEJsTBridge.Infra
             }
 
             return EnvironmentReport.Detect(CollectParameterNames(avatarRoot));
+        }
+
+        /// <summary>
+        /// アバターに載っているMerge Animatorを集める
+        /// FaceEmoやJerryのコントローラを、パラメータ名で見分けるために使う
+        /// </summary>
+        public static IReadOnlyList<MergeAnimatorEntry> CollectMergeAnimatorEntries(GameObject avatarRoot)
+        {
+            var entries = new List<MergeAnimatorEntry>();
+            if (avatarRoot == null)
+            {
+                return entries;
+            }
+
+            foreach (var mergeAnimator in avatarRoot.GetComponentsInChildren<ModularAvatarMergeAnimator>(true))
+            {
+                if (mergeAnimator == null || mergeAnimator.animator == null)
+                {
+                    continue;
+                }
+
+                var basePath = MergeAnimatorEntry.GetBasePath(mergeAnimator, avatarRoot);
+                if (entries.Any(entry =>
+                        entry.RuntimeController == mergeAnimator.animator && entry.BasePath == basePath))
+                {
+                    continue;
+                }
+
+                entries.Add(new MergeAnimatorEntry(
+                    mergeAnimator.animator,
+                    AnimatorControllerResolver.Resolve(mergeAnimator.animator),
+                    basePath));
+            }
+
+            return entries;
         }
 
         private static IEnumerable<IReadOnlyCollection<string>> CollectParameterNames(GameObject avatarRoot)

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor.Animations;
 using UnityEngine;
+using VRC.SDK3.Avatars.Components;
 using nadena.dev.modular_avatar.core;
 using FEJsTBridge.Domain;
 using FEJsTBridge.Infra;
@@ -37,7 +38,8 @@ namespace FEJsTBridge.Tests
             return root;
         }
 
-        private void AddMergeAnimator(GameObject avatarRoot, string childName, bool active, params string[] parameters)
+        private ModularAvatarMergeAnimator AddMergeAnimator(
+            GameObject avatarRoot, string childName, bool active, params string[] parameters)
         {
             var child = new GameObject(childName);
             child.transform.SetParent(avatarRoot.transform, false);
@@ -53,6 +55,9 @@ namespace FEJsTBridge.Tests
 
             var mergeAnimator = child.AddComponent<ModularAvatarMergeAnimator>();
             mergeAnimator.animator = controller;
+            mergeAnimator.pathMode = MergeAnimatorPathMode.Absolute;
+
+            return mergeAnimator;
         }
 
         [Test]
@@ -105,6 +110,59 @@ namespace FEJsTBridge.Tests
 
             Assert.That(report.JerryDetected, Is.False);
             Assert.That(report.FaceEmoDetected, Is.False);
+        }
+
+        [Test]
+        public void CollectMergeAnimatorEntries_KeepsBasePathEmpty_ForAbsoluteMode()
+        {
+            var root = CreateAvatarRoot();
+            AddMergeAnimator(root, "FaceEmo", true, BridgeParameterNames.ForceBypassEnable);
+
+            var entry = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(root)[0];
+
+            Assert.That(entry.BasePath, Is.Empty);
+        }
+
+        [Test]
+        public void CollectMergeAnimatorEntries_UsesObjectPath_ForRelativeMode()
+        {
+            var root = CreateAvatarRoot();
+            var mergeAnimator = AddMergeAnimator(root, "Prefab", true, "Dummy");
+            mergeAnimator.pathMode = MergeAnimatorPathMode.Relative;
+
+            var entry = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(root)[0];
+
+            Assert.That(entry.BasePath, Is.EqualTo("Prefab"));
+        }
+
+        [Test]
+        public void CollectMergeAnimatorEntries_UsesRelativePathRoot_WhenSpecified()
+        {
+            // relativePathRootの解決はアバタールートを起点にするため、Descriptorが要る
+            var root = CreateAvatarRoot();
+            root.AddComponent<VRCAvatarDescriptor>();
+
+            var target = new GameObject("Face");
+            target.transform.SetParent(root.transform, false);
+
+            var mergeAnimator = AddMergeAnimator(root, "Prefab", true, "Dummy");
+            mergeAnimator.pathMode = MergeAnimatorPathMode.Relative;
+            mergeAnimator.relativePathRoot.Set(target);
+
+            var entry = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(root)[0];
+
+            Assert.That(entry.BasePath, Is.EqualTo("Face"));
+        }
+
+        [Test]
+        public void CollectMergeAnimatorEntries_IgnoresMergeAnimatorWithoutController()
+        {
+            var root = CreateAvatarRoot();
+            var child = new GameObject("Empty");
+            child.transform.SetParent(root.transform, false);
+            child.AddComponent<ModularAvatarMergeAnimator>();
+
+            Assert.That(AvatarEnvironmentScanner.CollectMergeAnimatorEntries(root), Is.Empty);
         }
     }
 }

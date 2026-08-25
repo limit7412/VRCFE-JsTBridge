@@ -142,3 +142,70 @@ msgstr "Layer control indices cannot be remapped"
 
 msgid "warning.layer_control_not_editable:description"
 msgstr "{0} is still a project asset, so its VRC Animator Layer Control indices could not be remapped. Controls pointing after a removed layer now drive a different layer."
+
+# Finding layers to remove
+msgid "inspector.inspect.button"
+msgstr "Find layers to remove"
+
+msgid "inspector.inspect.multi_edit"
+msgstr "Inspection is unavailable while multiple components are selected. Each avatar has its own FX, so select a single component before inspecting."
+
+msgid "inspector.inspect.no_fx"
+msgstr "The avatar has no FX controller. Check that FX is set to something other than Default."
+
+msgid "inspector.inspect.no_reference"
+msgstr "FaceEmo and Jerry's Templates were not found, so there is nothing to compare against. Layers that write blend shapes are listed as they are, so check each one before adding it."
+
+msgid "inspector.inspect.empty_reference"
+msgstr "FaceEmo or Jerry's Templates was found, but none of its clips write blend shapes. There is nothing to compare against, so blend shapes were not used for judging. Check that the expression clips are set up."
+
+msgid "inspector.inspect.write_defaults"
+msgstr "Layers outside this list have states with Write Defaults on. Such states also reset blend shapes their clips do not write, so a layer missing from this list can still break expressions during bypass."
+
+msgid "inspector.inspect.no_face_emo"
+msgstr "FaceEmo was not found. Its blend shapes are missing from the comparison, so layers that only conflict with FaceEmo are shown as having no conflict."
+
+msgid "inspector.inspect.no_jerry"
+msgstr "Jerry's Templates was not found. Tracking blend shapes are missing from the comparison, so layers that only conflict with tracking are shown as having no conflict."
+
+msgid "inspector.inspect.no_candidate"
+msgstr "No layer looks like it conflicts."
+
+msgid "inspector.inspect.candidates"
+msgstr "Layers to remove"
+
+msgid "inspector.inspect.others"
+msgstr "Other layers ({0})"
+
+msgid "inspector.inspect.layer"
+msgstr "{0} (layer {1})"
+
+msgid "inspector.inspect.layer_index"
+msgstr "Layer {0}"
+
+msgid "inspector.inspect.same_name"
+msgstr "{0} other layers share this name (layer {1}). Removal works by name, so adding it removes those too."
+
+msgid "inspector.inspect.empty_name"
+msgstr "This layer has no name. Removal works by name, so it cannot be targeted. Name the layer in the Animator window and inspect again."
+
+msgid "inspector.inspect.add"
+msgstr "Add"
+
+msgid "inspector.inspect.add_all"
+msgstr "Add every candidate"
+
+msgid "inspector.inspect.reason.shared"
+msgstr "Writes {0} blend shapes that expressions or tracking also write: {1}"
+
+msgid "inspector.inspect.reason.blend_shapes"
+msgstr "Writes {0} blend shapes: {1}"
+
+msgid "inspector.inspect.reason.tracking_control"
+msgstr "Switches Tracking Control for eyes or mouth"
+
+msgid "inspector.inspect.verdict.no_conflict"
+msgstr "No conflict"
+
+msgid "inspector.inspect.verdict.managed"
+msgstr "Managed by another tool"
