@@ -171,7 +171,7 @@ namespace FEJsTBridge.Tests
             var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 3);
 
             var result = FxLayerRemover.RemapFxLayerControls(
-                new[] { _controller }, new[] { 0, -1, 1, 2 });
+                new[] { _controller }, new[] { 0, -1, 1, 2 }, _ => true);
 
             Assert.That(control.layer, Is.EqualTo(2));
             Assert.That(result.RemappedCount, Is.EqualTo(1));
@@ -184,7 +184,7 @@ namespace FEJsTBridge.Tests
             var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 1);
 
             var result = FxLayerRemover.RemapFxLayerControls(
-                new[] { _controller }, new[] { 0, -1, 1, 2 });
+                new[] { _controller }, new[] { 0, -1, 1, 2 }, _ => true);
 
             // 範囲外の索引はVRChatに無視されるため、誤爆させずに済む
             Assert.That(control.layer, Is.EqualTo(-1));
@@ -197,7 +197,7 @@ namespace FEJsTBridge.Tests
             var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.Gesture, 3);
 
             var result = FxLayerRemover.RemapFxLayerControls(
-                new[] { _controller }, new[] { 0, -1, 1, 2 });
+                new[] { _controller }, new[] { 0, -1, 1, 2 }, _ => true);
 
             Assert.That(control.layer, Is.EqualTo(3));
             Assert.That(result.RemappedCount, Is.EqualTo(0));
@@ -208,9 +208,21 @@ namespace FEJsTBridge.Tests
         {
             var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 9);
 
-            FxLayerRemover.RemapFxLayerControls(new[] { _controller }, new[] { 0, -1, 1, 2 });
+            FxLayerRemover.RemapFxLayerControls(new[] { _controller }, new[] { 0, -1, 1, 2 }, _ => true);
 
             Assert.That(control.layer, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void RemapFxLayerControls_SkipsController_WhenItIsNotEditable()
+        {
+            var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 3);
+
+            var result = FxLayerRemover.RemapFxLayerControls(
+                new[] { _controller }, new[] { 0, -1, 1, 2 }, _ => false);
+
+            Assert.That(control.layer, Is.EqualTo(3));
+            Assert.That(result.SkippedControllers, Is.EqualTo(new[] { _controller.name }));
         }
 
         private static VRCAnimatorLayerControl AddLayerControl(

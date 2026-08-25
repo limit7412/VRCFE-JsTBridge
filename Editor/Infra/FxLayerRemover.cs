@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
@@ -130,9 +130,14 @@ namespace FEJsTBridge.Infra
         /// 指していたレイヤーごと除去された場合は、範囲外の索引にして無効化する
         /// (VRChatは範囲外の索引を無視する)。
         /// </summary>
+        /// <param name="isEditable">
+        /// 書き換えてよいコントローラかの判定。ビルド中の複製かどうかはNDMFにしか分からないため、
+        /// 呼び出し側から渡す
+        /// </param>
         public static LayerControlRemapResult RemapFxLayerControls(
             IEnumerable<AnimatorController> controllers,
-            IReadOnlyList<int> newIndices)
+            IReadOnlyList<int> newIndices,
+            Func<AnimatorController, bool> isEditable)
         {
             var detachedOwners = new List<string>();
             var skippedControllers = new List<string>();
@@ -159,7 +164,7 @@ namespace FEJsTBridge.Infra
                 }
 
                 // 複製されていないアセットは書き換えない
-                if (EditorUtility.IsPersistent(controller))
+                if (isEditable != null && !isEditable(controller))
                 {
                     skippedControllers.Add(controller.name);
                     continue;
