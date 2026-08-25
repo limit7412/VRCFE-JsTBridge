@@ -81,13 +81,27 @@ namespace FEJsTBridge.Tests
             "guard.dialog.duplicate_removed",
         };
 
+        /// <summary>
+        /// poが取り込まれた結果の型を、名前で確かめる
+        /// </summary>
+        /// <remarks>
+        /// LocalizationAssetを型として書かないのは、このアセンブリから解決できないためである。
+        /// FEJsTBridge.Editorでは書けるので、テスト側の参照の問題だと分かるが、
+        /// 確かめたいのは「poがLocalizationAssetとして取り込まれること」であり、
+        /// 型名の一致で足りる。
+        /// </remarks>
         [Test]
         public void PoFiles_AreImportedAsLocalizationAssets()
         {
             foreach (var language in Languages)
             {
-                var asset = AssetDatabase.LoadAssetAtPath<LocalizationAsset>(PathFor(language));
-                Assert.That(asset, Is.Not.Null, $"{language}.poがLocalizationAssetとして読み込めない");
+                var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(PathFor(language));
+
+                Assert.That(asset, Is.Not.Null, $"{language}.poが読み込めない");
+                Assert.That(
+                    asset.GetType().Name,
+                    Is.EqualTo("LocalizationAsset"),
+                    $"{language}.poがLocalizationAssetとして取り込まれていない");
             }
         }
 
