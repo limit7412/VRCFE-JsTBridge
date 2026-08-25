@@ -83,3 +83,62 @@ msgstr "Re-apply Delay (seconds)"
 
 msgid "prop.reapply_delay_seconds.tooltip"
 msgstr "Seconds to wait for the bypass to take effect. Increase it when Tracking Control does not follow."
+
+# FX layer removal
+msgid "prop.remove_fx_layers"
+msgstr "FX Layers To Remove"
+
+msgid "prop.remove_fx_layers.tooltip"
+msgstr "Names of the FX layers removed at build time. The avatar's own assets are not modified."
+
+msgid "inspector.remove_fx_layers"
+msgstr "While FaceEmo is bypassed it stops writing, and the avatar's own expression layers surface again.\nList those layers here (gesture expressions, blink, Tracking Control switching, and so on) and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
+
+msgid "warning.fx_not_found"
+msgstr "The FX controller was not found"
+
+msgid "warning.fx_not_found:description"
+msgstr "FX layers to remove are listed, but the avatar has no FX controller."
+
+msgid "warning.layer_not_found"
+msgstr "An FX layer was not found"
+
+msgid "warning.layer_not_found:description"
+msgstr "FX has no layer named {0}, so nothing was removed for it. Check the name."
+
+msgid "warning.layer_not_found:hint"
+msgstr "Layers merged later by Merge Animator are out of scope. Only layers in the avatar's own FX can be removed."
+
+msgid "warning.synced_layer_detached"
+msgstr "A synced layer lost its source"
+
+msgid "warning.synced_layer_detached:description"
+msgstr "The layer {0} referenced was removed, so the reference was cleared."
+
+msgid "info.layers_removed"
+msgstr "FX layers were removed"
+
+msgid "info.layers_removed:description"
+msgstr "{0}"
+
+# Safeguards for FX layer removal
+msgid "warning.fx_not_editable"
+msgstr "The FX controller cannot be edited"
+
+msgid "warning.fx_not_editable:description"
+msgstr "FX is still a project asset, so the layer removal was skipped. This keeps the avatar's own asset intact."
+
+msgid "warning.fx_not_editable:hint"
+msgstr "Modular Avatar clones the controllers during the build, so this warning does not normally appear."
+
+msgid "warning.layer_control_detached"
+msgstr "A layer control lost its target"
+
+msgid "warning.layer_control_detached:description"
+msgstr "A VRC Animator Layer Control in {0} pointed at a removed FX layer. Its target was cleared so that it does not drive a different layer."
+
+msgid "warning.layer_control_not_editable"
+msgstr "Layer control indices cannot be remapped"
+
+msgid "warning.layer_control_not_editable:description"
+msgstr "{0} is still a project asset, so its VRC Animator Layer Control indices could not be remapped. Controls pointing after a removed layer now drive a different layer."

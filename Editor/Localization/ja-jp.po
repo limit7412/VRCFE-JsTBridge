@@ -83,3 +83,62 @@ msgstr "再適用までの待ち時間 (秒)"
 
 msgid "prop.reapply_delay_seconds.tooltip"
 msgstr "バイパスの成立を待つ秒数です。Tracking Controlが追従しないときは値を増やしてください。"
+
+# FXレイヤーの除去
+msgid "prop.remove_fx_layers"
+msgstr "取り除くFXレイヤー"
+
+msgid "prop.remove_fx_layers.tooltip"
+msgstr "ビルド時にFXから取り除くレイヤーの名前です。アバター素体のアセットは書き換わりません。"
+
+msgid "inspector.remove_fx_layers"
+msgstr "FaceEmoをバイパスすると、FaceEmoが書き込みを止めた分だけ、素体の表情レイヤーが表に出てきます。\n素体の表情レイヤー (ジェスチャー表情、まばたき、Tracking Controlの切り替えなど) の名前をここに並べると、ビルド時にFXから取り除きます。\nレイヤー名はビルド後のFXをAnimatorウィンドウで開くと確認できます。"
+
+msgid "warning.fx_not_found"
+msgstr "FXコントローラが見つかりません"
+
+msgid "warning.fx_not_found:description"
+msgstr "取り除くFXレイヤーが指定されていますが、アバターにFXコントローラがありません。"
+
+msgid "warning.layer_not_found"
+msgstr "FXレイヤーが見つかりません"
+
+msgid "warning.layer_not_found:description"
+msgstr "{0}という名前のレイヤーがFXにないため、取り除けませんでした。名前を確認してください。"
+
+msgid "warning.layer_not_found:hint"
+msgstr "Merge Animatorであとからマージされるレイヤーは対象外です。取り除けるのは素体のFXにあるレイヤーだけです。"
+
+msgid "warning.synced_layer_detached"
+msgstr "Syncedレイヤーの参照先が無くなりました"
+
+msgid "warning.synced_layer_detached:description"
+msgstr "{0}が参照していたレイヤーを取り除いたため、参照を外しました。"
+
+msgid "info.layers_removed"
+msgstr "FXレイヤーを取り除きました"
+
+msgid "info.layers_removed:description"
+msgstr "{0}"
+
+# FXレイヤー除去の安全側の処理
+msgid "warning.fx_not_editable"
+msgstr "FXコントローラを書き換えられません"
+
+msgid "warning.fx_not_editable:description"
+msgstr "FXがプロジェクトのアセットのままのため、レイヤーの除去を見送りました。素体のアセットを壊さないための処置です。"
+
+msgid "warning.fx_not_editable:hint"
+msgstr "Modular Avatarがビルド中にコントローラを複製するため、通常はこの警告は出ません。"
+
+msgid "warning.layer_control_detached"
+msgstr "レイヤー操作の参照先が無くなりました"
+
+msgid "warning.layer_control_detached:description"
+msgstr "{0}にあるVRC Animator Layer Controlが、除去したFXレイヤーを指していました。誤って別のレイヤーを操作しないよう、参照を無効にしました。"
+
+msgid "warning.layer_control_not_editable"
+msgstr "レイヤー操作の索引を付け替えられません"
+
+msgid "warning.layer_control_not_editable:description"
+msgstr "{0}がプロジェクトのアセットのままのため、VRC Animator Layer Controlの索引を付け替えられませんでした。除去したレイヤーより後ろを指す操作が、別のレイヤーへずれます。"

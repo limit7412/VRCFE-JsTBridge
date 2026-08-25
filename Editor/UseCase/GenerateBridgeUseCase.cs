@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using nadena.dev.ndmf;
 using FEJsTBridge.Domain;
@@ -109,6 +108,8 @@ namespace FEJsTBridge.UseCase
                 var plan = BridgePlanBuilder.Build(BridgeSettings.FromComponent(primary));
                 var controller = AnimatorControllerWriter.Write(plan, asset => SaveAsset(context, asset));
                 MergeAnimatorInstaller.Install(avatarRoot, controller);
+
+                RemoveConflictingFxLayers(context, primary.removeFxLayers);
             }
             finally
             {
@@ -137,6 +138,94 @@ namespace FEJsTBridge.UseCase
             }
         }
 
+        /// <summary>
+        /// 指定されたFXレイヤーを取り除く
+        ///
+        /// FaceEmoが書き込みを止めている間だけ表に出てくる素体の表情レイヤーが対象になる。
+        /// 取り除く相手はビルド中のFXであり、素体のアセットには触れない。
+        /// </summary>
+        private static void RemoveConflictingFxLayers(BuildContext context, IReadOnlyList<string> requestedNames)
+        {
+            var avatarRoot = context.AvatarRootObject;
+
+            // 空行だけの一覧でFXを探すと、FXの無いアバターで意味のない警告が出る
+            if (!FxLayerRemovalPlan.HasRequestedName(requestedNames))
+            {
+                return;
+            }
+
+            var controller = FxLayerRemover.FindFxController(avatarRoot);
+            if (controller == null)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.fx_not_found");
+                return;
+            }
+
+            var plan = FxLayerRemovalPlan.Resolve(FxLayerRemover.GetLayerNames(controller), requestedNames);
+
+            foreach (var missing in plan.MissingNames)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_not_found", missing);
+            }
+
+            if (plan.IsEmpty)
+            {
+                return;
+            }
+
+            // ビルド中のFXはModular Avatarが複製したものである。
+            // 複製はビルド用のコンテナへ保存されるため永続アセットになる。
+            // プロジェクトの元アセットと区別できるのはNDMFだけなので、その判定を使う
+            if (!context.IsTemporaryAsset(controller))
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.fx_not_editable");
+                return;
+            }
+
+            var result = FxLayerRemover.Remove(controller, plan.LayerIndices);
+
+            ErrorReport.ReportError(
+                Localization.Localizer,
+                ErrorSeverity.Information,
+                "info.layers_removed",
+                string.Join(", ", result.RemovedLayerNames));
+
+            foreach (var detached in result.DetachedSyncedLayerNames)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.synced_layer_detached", detached);
+            }
+
+            RemapFxLayerControls(context, result.NewLayerIndices);
+        }
+
+        /// <summary>
+        /// FXのレイヤーを索引で指すVRCAnimatorLayerControlを、除去後の索引へ付け替える
+        /// 付け替えないと、除去でずれた分だけ別のレイヤーを操作してしまう
+        /// </summary>
+        private static void RemapFxLayerControls(BuildContext context, IReadOnlyList<int> newLayerIndices)
+        {
+            var remap = FxLayerRemover.RemapFxLayerControls(
+                FxLayerRemover.CollectAvatarControllers(context.AvatarRootObject),
+                newLayerIndices,
+                context.IsTemporaryAsset);
+
+            foreach (var owner in remap.DetachedOwners.Distinct())
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_control_detached", owner);
+            }
+
+            foreach (var skipped in remap.SkippedControllers.Distinct())
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_control_not_editable", skipped);
+            }
+        }
+
         private static void ReportEnvironment(EnvironmentReport report)
         {
             if (!report.JerryDetected)
@@ -154,25 +243,11 @@ namespace FEJsTBridge.UseCase
 
         /// <summary>
         /// 生成物をビルドの一時アセットへ登録する
-        ///
-        /// NDMF 1.6以降のIAssetSaverではなくAssetContainerを使うのは、依存の下限を
-        /// 1.5.0に保つため。生成するアセットは数個なので、コンテナ直付けでも支障はない。
+        /// 保存済みのアセットとnullはNDMF側で無視される
         /// </summary>
         private static void SaveAsset(BuildContext context, Object asset)
         {
-            if (asset == null)
-            {
-                return;
-            }
-
-            var container = context.AssetContainer;
-            if (container == null || !EditorUtility.IsPersistent(container))
-            {
-                // Play modeのビルドなどアセット保存が無効な場合は、メモリ上のまま扱う
-                return;
-            }
-
-            AssetDatabase.AddObjectToAsset(asset, container);
+            context.AssetSaver.SaveAsset(asset);
         }
     }
 }
