@@ -9,8 +9,9 @@ name: Auto Assign
 # 別のユーザーを指定する場合はリポジトリ変数AUTO_ASSIGNEEへログイン名を設定する。
 # 設定場所は Settings → Secrets and variables → Actions → Variables。
 #
-# 作成時点で誰もアサインされていない場合に限って割り当てる。
-# テンプレートや他の自動化が先にアサインしている場合は、その割り当てを尊重する。
+# 誰もアサインされていない場合に限って割り当てる。
+# テンプレートや他の自動化が先にアサインしている場合も、
+# その担当者を手動で外した場合も、こちらから割り当て直さない。
 
 on:
   # 発火は作成時のみとする。
@@ -42,14 +43,18 @@ jobs:
           REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
           ASSIGNEE: ${{ vars.AUTO_ASSIGNEE || github.repository_owner }}
+          PAYLOAD_ASSIGNEES: ${{ toJSON(github.event.issue.assignees || github.event.pull_request.assignees) }}
         run: |
           set -euo pipefail
 
-          # 発火からジョブ開始までの間に他の自動化や手動でアサインされうるため、
-          # 割り当ての有無はペイロードではなくAPIで取り直して判定する
+          # 作成時点と実行時点の両方を確認し、どちらかに担当者がいればスキップする。
+          # 発火からジョブ開始までの間に状態が動きうるため、片方だけでは足りない。
+          # テンプレートで担当者付きに作られた直後に手動で外された場合は
+          # 実行時点が空になり、逆に作成後にアサインされた場合は作成時点が空になる。
+          initial=$(printf '%s' "$PAYLOAD_ASSIGNEES" | jq 'length')
           assigned=$(gh api "repos/$REPO/issues/$NUMBER" --jq '.assignees | length')
-          if [ "$assigned" -gt 0 ]; then
-            echo "::notice::#$NUMBER は既にアサイン済みのためスキップします"
+          if [ "$initial" -gt 0 ] || [ "$assigned" -gt 0 ]; then
+            echo "::notice::#$NUMBER は既にアサインが指定されているためスキップします"
             exit 0
           fi
 
