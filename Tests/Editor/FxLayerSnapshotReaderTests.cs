@@ -179,6 +179,30 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Read_IgnoresSourceBehaviours_WhenSyncedLayerOverridesThem()
+        {
+            _controller.AddLayer("Source");
+            var state = _controller.layers[0].stateMachine.AddState("Fist");
+            var control = state.AddStateMachineBehaviour<VRCAnimatorTrackingControl>();
+            control.trackingEyes = VRC_AnimatorTrackingControl.TrackingType.Animation;
+
+            _controller.AddLayer("Synced");
+            var layers = _controller.layers;
+            layers[1].syncedLayerIndex = 0;
+
+            // 差し替えたステートでは、同期元のbehaviourは動かない
+            var driver = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
+            _created.Add(driver);
+            layers[1].SetOverrideBehaviours(state, new StateMachineBehaviour[] { driver });
+            _controller.layers = layers;
+
+            var snapshots = FxLayerSnapshotReader.Read(_controller);
+
+            Assert.That(snapshots[0].ChangesTrackingControl, Is.True);
+            Assert.That(snapshots[1].ChangesTrackingControl, Is.False);
+        }
+
+        [Test]
         public void CollectBlendShapeBindings_FollowsOverrideController()
         {
             var state = AddLayerWithClip("A", "Body", "blendShape.Smile");

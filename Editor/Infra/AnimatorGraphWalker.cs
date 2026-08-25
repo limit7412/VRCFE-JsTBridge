@@ -34,6 +34,31 @@ namespace FEJsTBridge.Infra
             }
         }
 
+        /// <summary>
+        /// ステートマシン自身が持つbehaviour
+        /// ステートのものは含まない
+        /// </summary>
+        public static IEnumerable<StateMachineBehaviour> StateMachineBehaviours(AnimatorStateMachine stateMachine)
+        {
+            if (stateMachine == null)
+            {
+                yield break;
+            }
+
+            foreach (var behaviour in stateMachine.behaviours)
+            {
+                yield return behaviour;
+            }
+
+            foreach (var child in stateMachine.stateMachines)
+            {
+                foreach (var behaviour in StateMachineBehaviours(child.stateMachine))
+                {
+                    yield return behaviour;
+                }
+            }
+        }
+
         /// <summary>ステートマシン自身とステートが持つ全behaviour</summary>
         public static IEnumerable<StateMachineBehaviour> Behaviours(AnimatorStateMachine stateMachine)
         {

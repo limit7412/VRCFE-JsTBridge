@@ -31,7 +31,7 @@ namespace FEJsTBridge.UseCase
 
             // 表情とトラッキングが書くブレンドシェイプを、競合の判定基準にする
             var reference = new HashSet<string>();
-            foreach (var entry in new[] { faceEmo, jerry }.Where(e => e != null))
+            foreach (var entry in faceEmo.Concat(jerry))
             {
                 foreach (var binding in
                     FxLayerSnapshotReader.CollectBlendShapeBindings(entry.RuntimeController, entry.BasePath))
@@ -42,14 +42,21 @@ namespace FEJsTBridge.UseCase
 
             var report = FxLayerConflictAnalyzer.Analyze(FxLayerSnapshotReader.Read(fx), reference);
 
-            return new FxLayerInspection(report, faceEmo != null, jerry != null);
+            return new FxLayerInspection(report, faceEmo.Count > 0, jerry.Count > 0);
         }
 
-        private static MergeAnimatorEntry FindByParameter(
+        /// <summary>
+        /// 指定したパラメータを持つMerge Animatorを集める
+        /// </summary>
+        /// <remarks>
+        /// 一件だけを選ばないのは、同じツールが複数のMerge Animatorに分かれていることがあるためである。
+        /// マージ先が違えば束縛のパスも変わるので、取りこぼすと競合を見落とす。
+        /// </remarks>
+        private static IReadOnlyList<MergeAnimatorEntry> FindByParameter(
             IEnumerable<MergeAnimatorEntry> entries,
             params string[] requiredParameters)
         {
-            return entries.FirstOrDefault(entry =>
+            return entries.Where(entry =>
             {
                 if (entry.Controller == null)
                 {
@@ -58,7 +65,7 @@ namespace FEJsTBridge.UseCase
 
                 var names = entry.Controller.parameters.Select(parameter => parameter.name).ToArray();
                 return requiredParameters.All(names.Contains);
-            });
+            }).ToArray();
         }
     }
 

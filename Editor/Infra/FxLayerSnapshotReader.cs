@@ -122,31 +122,24 @@ namespace FEJsTBridge.Infra
         /// レイヤーが動かすbehaviour
         /// </summary>
         /// <remarks>
-        /// 同期レイヤーでは、同期元のbehaviourとレイヤーごとの差し替えの、どちらが動くかが状況で変わる。
-        /// 見落とすと除去候補から漏れるため、ここでは両方を候補として数える。
+        /// 同期レイヤーはステートごとにbehaviourを差し替えられる。
+        /// 差し替えたステートでは同期元のbehaviourは動かないため、モーションと同じ規則で解決する。
+        /// ステートマシン自身が持つbehaviourには差し替えがないので、そのまま数える。
         /// </remarks>
         private static IEnumerable<StateMachineBehaviour> CollectBehaviours(
             AnimatorControllerLayer layer, AnimatorStateMachine stateMachine, bool isSynced)
         {
-            foreach (var behaviour in AnimatorGraphWalker.Behaviours(stateMachine))
+            foreach (var behaviour in AnimatorGraphWalker.StateMachineBehaviours(stateMachine))
             {
                 yield return behaviour;
             }
 
-            if (!isSynced)
-            {
-                yield break;
-            }
-
             foreach (var state in AnimatorGraphWalker.States(stateMachine))
             {
-                var overrides = layer.GetOverrideBehaviours(state);
-                if (overrides == null)
-                {
-                    continue;
-                }
+                var overrides = isSynced ? layer.GetOverrideBehaviours(state) : null;
+                var behaviours = overrides != null && overrides.Length > 0 ? overrides : state.behaviours;
 
-                foreach (var behaviour in overrides)
+                foreach (var behaviour in behaviours)
                 {
                     yield return behaviour;
                 }
