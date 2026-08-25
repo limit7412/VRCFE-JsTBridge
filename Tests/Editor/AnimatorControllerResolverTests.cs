@@ -63,10 +63,12 @@ namespace FEJsTBridge.Tests
         }
 
         /// <summary>
-        /// 入れ子のOverride Controllerでも、鍵になるのは元のコントローラのクリップである
+        /// Override Controllerを重ねても、鍵になるのは元のコントローラのクリップである
         /// </summary>
         /// <remarks>
-        /// 内側の差し替え先を鍵にして外側へ登録する形は、Unity側が受け付けない。
+        /// Override Controllerを別のOverride Controllerへ渡しても、階層は2段にならない。
+        /// Unityが基底のAnimatorControllerまで解決するため、外側から見えるのは元のクリップだけで、
+        /// 内側で指定した差し替えは残らない。
         /// </remarks>
         [Test]
         public void CollectOverrides_ReadsTheOutermostController_WhenNested()
@@ -84,23 +86,6 @@ namespace FEJsTBridge.Tests
             var map = AnimatorControllerResolver.CollectOverrides(outer);
 
             Assert.That(AnimatorControllerResolver.Apply(map, original), Is.SameAs(last));
-        }
-
-        [Test]
-        public void CollectOverrides_KeepsInnerOverride_WhenOuterLeavesItUnspecified()
-        {
-            var original = AddState("State");
-            var middle = CreateClip("Middle");
-
-            var inner = CreateOverride(_controller);
-            inner[original] = middle;
-
-            // 外側では差し替えを指定しない
-            var outer = CreateOverride(inner);
-
-            var map = AnimatorControllerResolver.CollectOverrides(outer);
-
-            Assert.That(AnimatorControllerResolver.Apply(map, original), Is.SameAs(middle));
         }
 
         [Test]

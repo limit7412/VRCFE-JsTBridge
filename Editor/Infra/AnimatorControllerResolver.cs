@@ -30,7 +30,10 @@ namespace FEJsTBridge.Infra
         /// <remarks>
         /// 鍵はどの階層でも元のコントローラのクリップである。
         /// 内側から順に重ね、外側で指定があればそちらで上書きする。
-        /// 外側が未指定のままなら、内側の差し替えがそのまま残る。
+        ///
+        /// なお、Override Controllerを別のOverride Controllerへ渡しても階層は2段にならない。
+        /// Unityが基底のAnimatorControllerまで解決するためで、この重ね合わせは
+        /// そうでない持ち方をするアセットに備えたものである。Resolveのたどり方に合わせてある。
         /// </remarks>
         public static IReadOnlyDictionary<AnimationClip, AnimationClip> CollectOverrides(
             RuntimeAnimatorController runtimeController)
