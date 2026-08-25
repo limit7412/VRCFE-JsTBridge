@@ -40,7 +40,8 @@ namespace FEJsTBridge.Infra
                     layer.name,
                     i,
                     CollectBlendShapeBindings(layer, stateMachine, isSynced, overrides, string.Empty),
-                    ChangesTrackingControl(CollectBehaviours(layer, stateMachine, isSynced))));
+                    ChangesTrackingControl(CollectBehaviours(layer, stateMachine, isSynced)),
+                    HasWriteDefaults(stateMachine)));
             }
 
             return snapshots;
@@ -190,6 +191,20 @@ namespace FEJsTBridge.Infra
             }
 
             return string.IsNullOrEmpty(path) ? basePath : basePath + "/" + path;
+        }
+
+        /// <summary>
+        /// Write Defaultsが有効なステートを持つか
+        /// </summary>
+        /// <remarks>
+        /// 有効なステートは、クリップに書いていないプロパティも既定値へ戻す。
+        /// 戻す先はAnimator全体でアニメーションされるプロパティなので、
+        /// マージ後に加わるFaceEmoやJerryのブレンドシェイプも含まれる。
+        /// クリップを読むだけでは何を戻すか分からないため、その旨を伝えるためだけに使う。
+        /// </remarks>
+        private static bool HasWriteDefaults(AnimatorStateMachine stateMachine)
+        {
+            return AnimatorGraphWalker.States(stateMachine).Any(state => state.writeDefaultValues);
         }
 
         /// <summary>

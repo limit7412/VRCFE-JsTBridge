@@ -40,7 +40,11 @@ namespace FEJsTBridge.UseCase
                 }
             }
 
-            var report = FxLayerConflictAnalyzer.Analyze(FxLayerSnapshotReader.Read(fx), reference);
+            // どちらかが見つかっているなら、比較対象が空でも推測しない
+            var report = FxLayerConflictAnalyzer.Analyze(
+                FxLayerSnapshotReader.Read(fx),
+                reference,
+                faceEmo.Count == 0 && jerry.Count == 0);
 
             return new FxLayerInspection(report, faceEmo.Count > 0, jerry.Count > 0);
         }

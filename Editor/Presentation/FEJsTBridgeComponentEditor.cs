@@ -189,7 +189,11 @@ namespace FEJsTBridge.Presentation
         {
             if (!_inspection.Report.HasReference)
             {
-                EditorGUILayout.HelpBox(S("inspector.inspect.no_reference"), MessageType.Warning);
+                // 見つかっているのに基準が空なら、推測ではなく設定を見直してもらう
+                var message = _inspection.FaceEmoFound || _inspection.JerryFound
+                    ? "inspector.inspect.empty_reference"
+                    : "inspector.inspect.no_reference";
+                EditorGUILayout.HelpBox(S(message), MessageType.Warning);
                 return;
             }
 
@@ -201,6 +205,11 @@ namespace FEJsTBridge.Presentation
             if (!_inspection.JerryFound)
             {
                 EditorGUILayout.HelpBox(S("inspector.inspect.no_jerry"), MessageType.Warning);
+            }
+
+            if (_inspection.Report.HasUnjudgedWriteDefaults)
+            {
+                EditorGUILayout.HelpBox(S("inspector.inspect.write_defaults"), MessageType.Info);
             }
         }
 

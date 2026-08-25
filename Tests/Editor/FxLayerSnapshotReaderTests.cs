@@ -234,6 +234,24 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Read_DetectsWriteDefaults()
+        {
+            var state = AddLayerWithClip("Toggle", "Body", "blendShape.Smile");
+            state.writeDefaultValues = true;
+
+            Assert.That(FxLayerSnapshotReader.Read(_controller).Single().HasWriteDefaults, Is.True);
+        }
+
+        [Test]
+        public void Read_ReportsNoWriteDefaults_WhenEveryStateHasThemOff()
+        {
+            var state = AddLayerWithClip("Toggle", "Body", "blendShape.Smile");
+            state.writeDefaultValues = false;
+
+            Assert.That(FxLayerSnapshotReader.Read(_controller).Single().HasWriteDefaults, Is.False);
+        }
+
+        [Test]
         public void CollectBlendShapeBindings_FollowsOverrideController()
         {
             var state = AddLayerWithClip("A", "Body", "blendShape.Smile");

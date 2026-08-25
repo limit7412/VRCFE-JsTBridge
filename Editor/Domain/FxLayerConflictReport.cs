@@ -13,12 +13,14 @@ namespace FEJsTBridge.Domain
             string name,
             int index,
             IReadOnlyCollection<string> blendShapeBindings,
-            bool changesTrackingControl)
+            bool changesTrackingControl,
+            bool hasWriteDefaults = false)
         {
             Name = name;
             Index = index;
             BlendShapeBindings = blendShapeBindings ?? new string[0];
             ChangesTrackingControl = changesTrackingControl;
+            HasWriteDefaults = hasWriteDefaults;
         }
 
         public string Name { get; }
@@ -30,6 +32,9 @@ namespace FEJsTBridge.Domain
 
         /// <summary>Tracking ControlでEyesかMouthを切り替えるか</summary>
         public bool ChangesTrackingControl { get; }
+
+        /// <summary>Write Defaultsが有効なステートを持つか</summary>
+        public bool HasWriteDefaults { get; }
     }
 
     internal enum FxLayerVerdict
@@ -53,7 +58,8 @@ namespace FEJsTBridge.Domain
             FxLayerVerdict verdict,
             IReadOnlyList<string> sharedShapeNames,
             int sharedCount,
-            bool changesTrackingControl)
+            bool changesTrackingControl,
+            bool hasWriteDefaults = false)
         {
             LayerName = layerName;
             LayerIndex = layerIndex;
@@ -61,6 +67,7 @@ namespace FEJsTBridge.Domain
             SharedShapeNames = sharedShapeNames;
             SharedCount = sharedCount;
             ChangesTrackingControl = changesTrackingControl;
+            HasWriteDefaults = hasWriteDefaults;
         }
 
         public string LayerName { get; }
@@ -76,6 +83,9 @@ namespace FEJsTBridge.Domain
         public int SharedCount { get; }
 
         public bool ChangesTrackingControl { get; }
+
+        /// <summary>Write Defaultsが有効なステートを持つか</summary>
+        public bool HasWriteDefaults { get; }
     }
 
     /// <summary>解析の結果全体</summary>
@@ -97,6 +107,17 @@ namespace FEJsTBridge.Domain
 
         public IEnumerable<FxLayerConflict> Candidates =>
             Layers.Where(layer => layer.Verdict == FxLayerVerdict.Candidate);
+
+        /// <summary>
+        /// 候補に挙がらなかったレイヤーに、Write Defaultsが有効なステートがあるか
+        /// </summary>
+        /// <remarks>
+        /// Write Defaultsが有効なステートは、クリップに書いていないプロパティも既定値へ戻す。
+        /// 戻す先には、マージ後に同じAnimatorへ入るFaceEmoやJerryのブレンドシェイプも含まれる。
+        /// クリップを読むだけでは分からないため、候補の一覧が網羅でないことを伝えるために使う。
+        /// </remarks>
+        public bool HasUnjudgedWriteDefaults =>
+            Layers.Any(layer => layer.HasWriteDefaults && layer.Verdict == FxLayerVerdict.NoConflict);
     }
 
     /// <summary>
@@ -145,20 +166,31 @@ namespace FEJsTBridge.Domain
             BridgePlanBuilder.TrackingReapplyLayerName,
         };
 
+        /// <summary>
+        /// レイヤーごとに競合を判定する
+        /// </summary>
+        /// <param name="guessWithoutReference">
+        /// 比較対象が無いとき、ブレンドシェイプを書くこと自体を根拠にしてよいか。
+        /// FaceEmoもJerryも見つからない場合の手がかりとして使う。
+        /// どちらかは見つかっているのに束縛が空、という場合は推測してはいけない。
+        /// 比較の土台が無いまま、無関係なレイヤーまで候補に挙げることになる。
+        /// </param>
         public static FxLayerConflictReport Analyze(
             IReadOnlyList<FxLayerSnapshot> layers,
-            IReadOnlyCollection<string> referenceBindings)
+            IReadOnlyCollection<string> referenceBindings,
+            bool guessWithoutReference = true)
         {
             var hasReference = referenceBindings != null && referenceBindings.Count > 0;
             var reference = hasReference
                 ? new HashSet<string>(referenceBindings)
                 : new HashSet<string>();
+            var guesses = !hasReference && guessWithoutReference;
 
             var results = new List<FxLayerConflict>();
 
             foreach (var layer in layers ?? new FxLayerSnapshot[0])
             {
-                results.Add(Judge(layer, reference, hasReference));
+                results.Add(Judge(layer, reference, hasReference, guesses));
             }
 
             return new FxLayerConflictReport(results, hasReference);
@@ -167,18 +199,36 @@ namespace FEJsTBridge.Domain
         private static FxLayerConflict Judge(
             FxLayerSnapshot layer,
             HashSet<string> reference,
-            bool hasReference)
+            bool hasReference,
+            bool guesses)
         {
             if (IsManagedLayerName(layer.Name))
             {
                 return new FxLayerConflict(
-                    layer.Name, layer.Index, FxLayerVerdict.Managed, new string[0], 0, layer.ChangesTrackingControl);
+                    layer.Name,
+                    layer.Index,
+                    FxLayerVerdict.Managed,
+                    new string[0],
+                    0,
+                    layer.ChangesTrackingControl,
+                    layer.HasWriteDefaults);
             }
 
-            var shared = hasReference
-                ? layer.BlendShapeBindings.Where(reference.Contains).ToArray()
+            string[] shared;
+            if (hasReference)
+            {
+                shared = layer.BlendShapeBindings.Where(reference.Contains).ToArray();
+            }
+            else if (guesses)
+            {
                 // 比較対象が無いときは、ブレンドシェイプを書くこと自体を根拠にする
-                : layer.BlendShapeBindings.ToArray();
+                shared = layer.BlendShapeBindings.ToArray();
+            }
+            else
+            {
+                // 推測してはいけない場合は、Tracking Controlだけで判定する
+                shared = new string[0];
+            }
 
             var conflicts = shared.Length > 0 || layer.ChangesTrackingControl;
 
@@ -188,7 +238,8 @@ namespace FEJsTBridge.Domain
                 conflicts ? FxLayerVerdict.Candidate : FxLayerVerdict.NoConflict,
                 ToShapeNames(shared).Take(SampleCount).ToArray(),
                 shared.Length,
-                layer.ChangesTrackingControl);
+                layer.ChangesTrackingControl,
+                layer.HasWriteDefaults);
         }
 
         /// <summary>

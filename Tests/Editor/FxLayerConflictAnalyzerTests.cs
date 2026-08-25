@@ -16,6 +16,11 @@ namespace FEJsTBridge.Tests
             return new FxLayerSnapshot(name, index, bindings, changesTrackingControl);
         }
 
+        private static FxLayerSnapshot WriteDefaultsLayer(string name, int index, params string[] bindings)
+        {
+            return new FxLayerSnapshot(name, index, bindings, false, true);
+        }
+
         [Test]
         public void Analyze_MarksLayerAsCandidate_WhenItWritesTheSameShapes()
         {
@@ -90,6 +95,45 @@ namespace FEJsTBridge.Tests
                 new[] { FaceShape });
 
             Assert.That(report.Candidates.Single().LayerName, Is.EqualTo("BLINK"));
+        }
+
+        [Test]
+        public void Analyze_DoesNotGuess_WhenReferenceIsEmptyButPackageWasFound()
+        {
+            var report = FxLayerConflictAnalyzer.Analyze(
+                new[]
+                {
+                    Layer("Skirt Toggle", 1, false, ClothShape),
+                    Layer("Right Hand Tracking Control", 2, true),
+                },
+                new string[0],
+                false);
+
+            // ブレンドシェイプでの判定はしないが、Tracking Controlは根拠になる
+            Assert.That(report.Layers[0].Verdict, Is.EqualTo(FxLayerVerdict.NoConflict));
+            Assert.That(report.Layers[1].Verdict, Is.EqualTo(FxLayerVerdict.Candidate));
+        }
+
+        [Test]
+        public void HasUnjudgedWriteDefaults_IsTrue_WhenAnUnlistedLayerHasThem()
+        {
+            var report = FxLayerConflictAnalyzer.Analyze(
+                new[] { WriteDefaultsLayer("Skirt Toggle", 1, ClothShape) },
+                new[] { FaceShape });
+
+            Assert.That(report.Candidates, Is.Empty);
+            Assert.That(report.HasUnjudgedWriteDefaults, Is.True);
+        }
+
+        [Test]
+        public void HasUnjudgedWriteDefaults_IsFalse_WhenTheLayerIsAlreadyACandidate()
+        {
+            var report = FxLayerConflictAnalyzer.Analyze(
+                new[] { WriteDefaultsLayer("Left Hand Face", 1, FaceShape) },
+                new[] { FaceShape });
+
+            Assert.That(report.Candidates.Count(), Is.EqualTo(1));
+            Assert.That(report.HasUnjudgedWriteDefaults, Is.False);
         }
 
         [Test]

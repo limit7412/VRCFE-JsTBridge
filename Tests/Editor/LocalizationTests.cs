@@ -53,6 +53,8 @@ namespace FEJsTBridge.Tests
             "inspector.inspect.multi_edit",
             "inspector.inspect.no_fx",
             "inspector.inspect.no_reference",
+            "inspector.inspect.empty_reference",
+            "inspector.inspect.write_defaults",
             "inspector.inspect.no_face_emo",
             "inspector.inspect.no_jerry",
             "inspector.inspect.no_candidate",
