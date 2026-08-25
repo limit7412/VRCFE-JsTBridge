@@ -39,12 +39,32 @@ Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMF�
 | Bypass Trigger | Facial Expressions Disabled | バイパスの発動条件。`Facial Expressions Disabled` は目か口のどちらかが有効なら発動し、`Lip Tracking Only` は口が有効なときだけ発動する |
 | Enable Tracking Reapply | 有効 | Tracking Controlを再適用するレイヤーを生成するか |
 | Reapply Delay Seconds | 0.2 | バイパスの成立を待つ秒数。0.05 から 1.0 |
+| FX Layers To Remove | (空) | ビルド時に FX から取り除くレイヤーの名前 |
 
 `Lip Tracking Only` は実験的な設定です。
 目だけをトラッキングする構成ではFaceEmoのまばたきとデフォルト表情が目系シェイプと競合するため、この設定でも完全には解決しません。
 
 `Reapply Delay Seconds` は、フェイストラッキングを有効化してもMouthのTracking Controlが追従しないときに増やします。
 待ち時間はアニメーションの正規化時間で計るため、極端に低いフレームレートでは既定値では足りないことがあります。
+
+## 素体の表情レイヤーの扱い
+
+FaceEmo をバイパスすると、FaceEmo はブレンドシェイプの書き込みを止めます。
+このとき、FaceEmo より前にあるアバター素体の表情レイヤーが表に出てきます。
+ジェスチャーで表情が変わる、まばたきが復活する、Tracking Control が切り替わる、といった形で現れます。
+
+通常時は後ろにいる FaceEmo が上書きするため表に出ませんが、バイパスするとその前提が崩れます。
+ダンスギミックなど他のバイパス経路でも同じことが起きるため、FaceEmo は本来、素体の表情レイヤーを削除したうえで使うものです。
+
+**FX Layers To Remove** にレイヤー名を並べると、ビルド時にそのレイヤーを FX から取り除きます。
+アバター素体のアセットは書き換わりません。
+
+対象になりやすいのは、ジェスチャー表情、まばたき、口の制御、Tracking Control の切り替えを行うレイヤーです。
+レイヤー名は、ビルド後の FX を Animator ウィンドウで開くと確認できます。
+`Tools > Modular Avatar > Manual bake avatar` でビルド後のアバターを作れます。
+
+取り除けるのは素体の FX にあるレイヤーだけです。
+Merge Animator であとからマージされるレイヤーは対象外で、指定しても見つからない旨の警告が出ます。
 
 ## 生成されるもの
 

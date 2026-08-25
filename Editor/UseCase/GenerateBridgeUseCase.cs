@@ -109,6 +109,8 @@ namespace FEJsTBridge.UseCase
                 var plan = BridgePlanBuilder.Build(BridgeSettings.FromComponent(primary));
                 var controller = AnimatorControllerWriter.Write(plan, asset => SaveAsset(context, asset));
                 MergeAnimatorInstaller.Install(avatarRoot, controller);
+
+                RemoveConflictingFxLayers(avatarRoot, primary.removeFxLayers);
             }
             finally
             {
@@ -134,6 +136,55 @@ namespace FEJsTBridge.UseCase
                 }
 
                 Object.DestroyImmediate(component);
+            }
+        }
+
+        /// <summary>
+        /// 指定されたFXレイヤーを取り除く
+        ///
+        /// FaceEmoが書き込みを止めている間だけ表に出てくる素体の表情レイヤーが対象になる。
+        /// 取り除く相手はビルド中のFXであり、素体のアセットには触れない。
+        /// </summary>
+        private static void RemoveConflictingFxLayers(GameObject avatarRoot, IReadOnlyList<string> requestedNames)
+        {
+            if (requestedNames == null || requestedNames.Count == 0)
+            {
+                return;
+            }
+
+            var controller = FxLayerRemover.FindFxController(avatarRoot);
+            if (controller == null)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.fx_not_found");
+                return;
+            }
+
+            var plan = FxLayerRemovalPlan.Resolve(FxLayerRemover.GetLayerNames(controller), requestedNames);
+
+            foreach (var missing in plan.MissingNames)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_not_found", missing);
+            }
+
+            if (plan.IsEmpty)
+            {
+                return;
+            }
+
+            var result = FxLayerRemover.Remove(controller, plan.LayerIndices);
+
+            ErrorReport.ReportError(
+                Localization.Localizer,
+                ErrorSeverity.Information,
+                "info.layers_removed",
+                string.Join(", ", result.RemovedLayerNames));
+
+            foreach (var detached in result.DetachedSyncedLayerNames)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.synced_layer_detached", detached);
             }
         }
 

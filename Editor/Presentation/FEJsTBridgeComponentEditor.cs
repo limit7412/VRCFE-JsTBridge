@@ -45,6 +45,10 @@ namespace FEJsTBridge.Presentation
 
             DrawTrackingReapply();
 
+            EditorGUILayout.Space();
+
+            DrawRemoveFxLayers();
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -82,6 +86,13 @@ namespace FEJsTBridge.Presentation
             {
                 EditorGUILayout.HelpBox(S("inspector.bypass_trigger.lip_tracking_only"), MessageType.Warning);
             }
+        }
+
+        private void DrawRemoveFxLayers()
+        {
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("removeFxLayers"), G("prop.remove_fx_layers"), true);
+            EditorGUILayout.HelpBox(S("inspector.remove_fx_layers"), MessageType.Info);
         }
 
         private void DrawTrackingReapply()

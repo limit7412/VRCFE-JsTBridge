@@ -83,3 +83,40 @@ msgstr "Re-apply Delay (seconds)"
 
 msgid "prop.reapply_delay_seconds.tooltip"
 msgstr "Seconds to wait for the bypass to take effect. Increase it when Tracking Control does not follow."
+
+# FX layer removal
+msgid "prop.remove_fx_layers"
+msgstr "FX Layers To Remove"
+
+msgid "prop.remove_fx_layers.tooltip"
+msgstr "Names of the FX layers removed at build time. The avatar's own assets are not modified."
+
+msgid "inspector.remove_fx_layers"
+msgstr "While FaceEmo is bypassed it stops writing, and the avatar's own expression layers surface again.\nList those layers here (gesture expressions, blink, Tracking Control switching, and so on) and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
+
+msgid "warning.fx_not_found"
+msgstr "The FX controller was not found"
+
+msgid "warning.fx_not_found:description"
+msgstr "FX layers to remove are listed, but the avatar has no FX controller."
+
+msgid "warning.layer_not_found"
+msgstr "An FX layer was not found"
+
+msgid "warning.layer_not_found:description"
+msgstr "FX has no layer named {0}, so nothing was removed for it. Check the name."
+
+msgid "warning.layer_not_found:hint"
+msgstr "Layers merged later by Merge Animator are out of scope. Only layers in the avatar's own FX can be removed."
+
+msgid "warning.synced_layer_detached"
+msgstr "A synced layer lost its source"
+
+msgid "warning.synced_layer_detached:description"
+msgstr "The layer {0} referenced was removed, so the reference was cleared."
+
+msgid "info.layers_removed"
+msgstr "FX layers were removed"
+
+msgid "info.layers_removed:description"
+msgstr "{0}"

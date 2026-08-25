@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using VRC.SDKBase;
 
@@ -30,6 +31,9 @@ namespace FEJsTBridge
         [Tooltip("Seconds to wait for the bypass to take effect before re-applying Tracking Control")]
         [Range(MinReapplyDelaySeconds, MaxReapplyDelaySeconds)]
         public float reapplyDelaySeconds = DefaultReapplyDelaySeconds;
+
+        [Tooltip("Names of FX layers to remove at build time. Use it for the avatar's own expression layers, which surface again while FaceEmo is bypassed. The avatar's own assets are not modified")]
+        public List<string> removeFxLayers = new List<string>();
 
         /// <summary>
         /// 再適用の待ち時間の既定値
