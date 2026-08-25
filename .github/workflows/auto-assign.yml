@@ -9,18 +9,21 @@ name: Auto Assign
 # 別のユーザーを指定する場合はリポジトリ変数AUTO_ASSIGNEEへログイン名を設定する。
 # 設定場所は Settings → Secrets and variables → Actions → Variables。
 #
-# 手動で外したアサインを勝手に戻さないよう、
-# 発火時点で誰もアサインされていない場合に限って割り当てる。
+# 作成時点で誰もアサインされていない場合に限って割り当てる。
+# テンプレートや他の自動化が先にアサインしている場合は、その割り当てを尊重する。
 
 on:
+  # 発火は作成時のみとする。
+  # reopenedを含めると、手動で外したアサインをクローズと再オープンで復元してしまい、
+  # 「手動で外したアサインを戻さない」という方針と食い違う。
   issues:
-    types: [opened, reopened]
+    types: [opened]
   # フォークからのPRでもGITHUB_TOKENへ書き込み権限を持たせるため、
   # pull_requestではなくpull_request_targetで受ける。
   # このワークフローはPRのコードをチェックアウトも実行もしないため、
   # pull_request_targetでも取り込んだ変更が動く余地はない。
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened]
 
 permissions:
   # issue本体への割り当てに必要
@@ -42,8 +45,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 再オープン時はペイロードのassigneesが現在の状態とずれうるため、
-          # 割り当ての有無はAPIで取り直して判定する
+          # 発火からジョブ開始までの間に他の自動化や手動でアサインされうるため、
+          # 割り当ての有無はペイロードではなくAPIで取り直して判定する
           assigned=$(gh api "repos/$REPO/issues/$NUMBER" --jq '.assignees | length')
           if [ "$assigned" -gt 0 ]; then
             echo "::notice::#$NUMBER は既にアサイン済みのためスキップします"
@@ -53,9 +56,14 @@ jobs:
           # リポジトリへの権限がないログイン名を渡した場合、
           # APIはエラーを返さずその相手を黙って無視する。
           # 設定ミスに気付けるよう、割り当てた結果を検証する。
+          #
+          # GitHubのログイン名は大文字小文字を区別せず指定できる一方、
+          # レスポンスは正規表記で返る。
+          # AUTO_ASSIGNEEの表記揺れを設定ミスと誤判定しないよう、
+          # 照合は大文字小文字を無視して行う。
           result=$(jq -n --arg login "$ASSIGNEE" '{assignees: [$login]}' \
             | gh api -X POST "repos/$REPO/issues/$NUMBER/assignees" --input - --jq '.assignees[].login')
-          if ! printf '%s\n' "$result" | grep -qxF "$ASSIGNEE"; then
+          if ! printf '%s\n' "$result" | grep -qixF "$ASSIGNEE"; then
             echo "::error::$ASSIGNEE をアサインできませんでした。リポジトリへの権限を持つログイン名か確認してください"
             exit 1
           fi
