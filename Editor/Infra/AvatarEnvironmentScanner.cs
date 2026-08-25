@@ -25,6 +25,35 @@ namespace FEJsTBridge.Infra
             return EnvironmentReport.Detect(CollectParameterNames(avatarRoot));
         }
 
+        /// <summary>
+        /// アバターに載っているMerge Animatorのコントローラを集める
+        /// FaceEmoやJerryのコントローラを、パラメータ名で見分けるために使う
+        /// </summary>
+        public static IReadOnlyList<AnimatorController> CollectMergeAnimatorControllers(GameObject avatarRoot)
+        {
+            var controllers = new List<AnimatorController>();
+            if (avatarRoot == null)
+            {
+                return controllers;
+            }
+
+            foreach (var mergeAnimator in avatarRoot.GetComponentsInChildren<ModularAvatarMergeAnimator>(true))
+            {
+                if (mergeAnimator == null)
+                {
+                    continue;
+                }
+
+                var controller = AnimatorControllerResolver.Resolve(mergeAnimator.animator);
+                if (controller != null && !controllers.Contains(controller))
+                {
+                    controllers.Add(controller);
+                }
+            }
+
+            return controllers;
+        }
+
         private static IEnumerable<IReadOnlyCollection<string>> CollectParameterNames(GameObject avatarRoot)
         {
             foreach (var mergeAnimator in avatarRoot.GetComponentsInChildren<ModularAvatarMergeAnimator>(true))

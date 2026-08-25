@@ -209,41 +209,12 @@ namespace FEJsTBridge.Infra
         {
             foreach (var layer in controller.layers)
             {
-                foreach (var behaviour in CollectBehaviours(layer.stateMachine))
+                foreach (var behaviour in AnimatorGraphWalker.Behaviours(layer.stateMachine))
                 {
                     if (behaviour is VRCAnimatorLayerControl control && control != null)
                     {
                         yield return control;
                     }
-                }
-            }
-        }
-
-        private static IEnumerable<StateMachineBehaviour> CollectBehaviours(AnimatorStateMachine stateMachine)
-        {
-            if (stateMachine == null)
-            {
-                yield break;
-            }
-
-            foreach (var behaviour in stateMachine.behaviours)
-            {
-                yield return behaviour;
-            }
-
-            foreach (var state in stateMachine.states)
-            {
-                foreach (var behaviour in state.state.behaviours)
-                {
-                    yield return behaviour;
-                }
-            }
-
-            foreach (var child in stateMachine.stateMachines)
-            {
-                foreach (var behaviour in CollectBehaviours(child.stateMachine))
-                {
-                    yield return behaviour;
                 }
             }
         }
