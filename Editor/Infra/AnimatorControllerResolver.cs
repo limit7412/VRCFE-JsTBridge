@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.Animations;
 using UnityEngine;
 
@@ -29,8 +28,12 @@ namespace FEJsTBridge.Infra
         /// Override Controllerによるクリップの差し替えを、元のクリップからの対応表にする
         /// </summary>
         /// <remarks>
-        /// Override Controllerが入れ子になっていれば、内側から順に重ねる。
-        /// 内側でA→B、外側でB→Cなら、最終的にA→Cとして扱う。
+        /// 鍵はどの階層でも元のコントローラのクリップである。
+        /// 内側から順に重ね、外側で指定があればそちらで上書きする。
+        ///
+        /// なお、Override Controllerを別のOverride Controllerへ渡しても階層は2段にならない。
+        /// Unityが基底のAnimatorControllerまで解決するためで、この重ね合わせは
+        /// そうでない持ち方をするアセットに備えたものである。Resolveのたどり方に合わせてある。
         /// </remarks>
         public static IReadOnlyDictionary<AnimationClip, AnimationClip> CollectOverrides(
             RuntimeAnimatorController runtimeController)
@@ -46,23 +49,9 @@ namespace FEJsTBridge.Infra
             var map = new Dictionary<AnimationClip, AnimationClip>();
             for (var i = chain.Count - 1; i >= 0; i--)
             {
-                var level = GetOverrides(chain[i]);
-
-                // すでに積んである差し替え先が、さらに外側で差し替えられていれば辿る
-                foreach (var key in map.Keys.ToArray())
+                foreach (var pair in GetOverrides(chain[i]))
                 {
-                    if (level.TryGetValue(map[key], out var replaced))
-                    {
-                        map[key] = replaced;
-                    }
-                }
-
-                foreach (var pair in level)
-                {
-                    if (!map.ContainsKey(pair.Key))
-                    {
-                        map[pair.Key] = pair.Value;
-                    }
+                    map[pair.Key] = pair.Value;
                 }
             }
 

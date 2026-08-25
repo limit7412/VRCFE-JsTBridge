@@ -62,8 +62,16 @@ namespace FEJsTBridge.Tests
             Assert.That(AnimatorControllerResolver.Apply(map, original), Is.SameAs(replacement));
         }
 
+        /// <summary>
+        /// Override Controllerを重ねても、鍵になるのは元のコントローラのクリップである
+        /// </summary>
+        /// <remarks>
+        /// Override Controllerを別のOverride Controllerへ渡しても、階層は2段にならない。
+        /// Unityが基底のAnimatorControllerまで解決するため、外側から見えるのは元のクリップだけで、
+        /// 内側で指定した差し替えは残らない。
+        /// </remarks>
         [Test]
-        public void CollectOverrides_ChainsNestedOverrides()
+        public void CollectOverrides_ReadsTheOutermostController_WhenNested()
         {
             var original = AddState("State");
             var middle = CreateClip("Middle");
@@ -73,7 +81,7 @@ namespace FEJsTBridge.Tests
             inner[original] = middle;
 
             var outer = CreateOverride(inner);
-            outer[middle] = last;
+            outer[original] = last;
 
             var map = AnimatorControllerResolver.CollectOverrides(outer);
 

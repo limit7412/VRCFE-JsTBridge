@@ -147,12 +147,14 @@ namespace FEJsTBridge.Tests
                 Is.EqualTo(FEJsTBridgeComponent.MaxReapplyDelaySeconds));
         }
 
-        [TestCase(false, false, BridgeTrackingState.Tracking, BridgeTrackingState.Animation)]
-        [TestCase(false, true, BridgeTrackingState.Tracking, BridgeTrackingState.Tracking)]
-        [TestCase(true, false, BridgeTrackingState.Animation, BridgeTrackingState.Animation)]
-        [TestCase(true, true, BridgeTrackingState.Animation, BridgeTrackingState.Tracking)]
+        // 期待値を名前で渡す。BridgeTrackingStateはinternalであり、
+        // publicなテストメソッドの引数には置けない (CS0051)
+        [TestCase(false, false, "Tracking", "Animation")]
+        [TestCase(false, true, "Tracking", "Tracking")]
+        [TestCase(true, false, "Animation", "Animation")]
+        [TestCase(true, true, "Animation", "Tracking")]
         public void ApplyStates_TrackingControl_MatchesJerryState(
-            bool eye, bool visemes, BridgeTrackingState expectedEyes, BridgeTrackingState expectedMouth)
+            bool eye, bool visemes, string expectedEyes, string expectedMouth)
         {
             var layer = BridgePlanBuilder.Build(Settings())
                 .FindLayer(BridgePlanBuilder.TrackingReapplyLayerName);
@@ -161,8 +163,8 @@ namespace FEJsTBridge.Tests
 
             Assert.That(state, Is.Not.Null);
             Assert.That(state.TrackingControl, Is.Not.Null);
-            Assert.That(state.TrackingControl.Eyes, Is.EqualTo(expectedEyes));
-            Assert.That(state.TrackingControl.Mouth, Is.EqualTo(expectedMouth));
+            Assert.That(state.TrackingControl.Eyes.ToString(), Is.EqualTo(expectedEyes));
+            Assert.That(state.TrackingControl.Mouth.ToString(), Is.EqualTo(expectedMouth));
         }
 
         [Test]

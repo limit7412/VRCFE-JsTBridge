@@ -65,7 +65,9 @@ namespace FEJsTBridge.Infra
                 target = mergeAnimator.gameObject;
             }
 
-            return RuntimeUtil.RelativePath(avatarRoot, target) ?? string.Empty;
+            // Modular AvatarのRuntimeUtilはinternalなので、その委譲先であるNDMF側を直に呼ぶ。
+            // 同名の型が両方のusingに入るのを避けるため、完全修飾で書く
+            return nadena.dev.ndmf.runtime.RuntimeUtil.RelativePath(avatarRoot, target) ?? string.Empty;
         }
     }
 }

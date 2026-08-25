@@ -95,8 +95,15 @@ namespace FEJsTBridge.Infra
         }
 
         /// <summary>
-        /// 指定索引のレイヤーを取り除く
+        /// 指定した索引のレイヤーを取り除く
         /// </summary>
+        /// <remarks>
+        /// AnimatorController.RemoveLayerは使わない。
+        /// 除去の直後は同期レイヤーのsyncedLayerIndexが古い索引を指しており、
+        /// 自分自身や範囲外を指す状態になる。Unityはこの構成を受け付けず、
+        /// 同期レイヤーごと消してしまう。
+        /// 除去と索引の付け替えをまとめて一度で書き戻し、その状態を作らない。
+        /// </remarks>
         public static FxLayerRemovalResult Remove(AnimatorController controller, IReadOnlyList<int> layerIndices)
         {
             if (controller == null || layerIndices == null || layerIndices.Count == 0)
@@ -121,13 +128,33 @@ namespace FEJsTBridge.Infra
                 newIndices[i] = removing.Contains(i) ? -1 : next++;
             }
 
-            // 索引のずれを避けるため後ろから取り除く
-            foreach (var index in removing.OrderByDescending(index => index))
+            var kept = new List<AnimatorControllerLayer>(layers.Length - removing.Count);
+            var detached = new List<string>();
+
+            for (var i = 0; i < layers.Length; i++)
             {
-                controller.RemoveLayer(index);
+                if (removing.Contains(i))
+                {
+                    continue;
+                }
+
+                var layer = layers[i];
+                var synced = layer.syncedLayerIndex;
+                if (synced >= 0)
+                {
+                    var resolved = synced < newIndices.Length ? newIndices[synced] : -1;
+                    if (resolved < 0)
+                    {
+                        detached.Add(layer.name);
+                    }
+
+                    layer.syncedLayerIndex = resolved;
+                }
+
+                kept.Add(layer);
             }
 
-            var detached = FixSyncedLayerIndices(controller, newIndices);
+            controller.layers = kept.ToArray();
 
             return new FxLayerRemovalResult(removedNames, detached, newIndices);
         }
@@ -226,48 +253,6 @@ namespace FEJsTBridge.Infra
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// 残ったSyncedレイヤーの参照先を、除去後の索引へ付け替える
-        /// 参照先ごと取り除かれていた場合は参照を外し、その名前を返す
-        /// </summary>
-        private static IReadOnlyList<string> FixSyncedLayerIndices(AnimatorController controller, int[] newIndices)
-        {
-            var layers = controller.layers;
-            var detached = new List<string>();
-            var changed = false;
-
-            for (var i = 0; i < layers.Length; i++)
-            {
-                var synced = layers[i].syncedLayerIndex;
-                if (synced < 0 || synced >= newIndices.Length)
-                {
-                    continue;
-                }
-
-                var resolved = newIndices[synced];
-                if (resolved == synced)
-                {
-                    continue;
-                }
-
-                if (resolved < 0)
-                {
-                    detached.Add(layers[i].name);
-                }
-
-                layers[i].syncedLayerIndex = resolved;
-                changed = true;
-            }
-
-            if (changed)
-            {
-                // layersはコピーを返すプロパティなので、書き戻すまで反映されない
-                controller.layers = layers;
-            }
-
-            return detached;
         }
 
         private static VRCAvatarDescriptor FindDescriptor(GameObject avatarRoot)
