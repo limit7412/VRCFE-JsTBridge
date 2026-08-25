@@ -1,0 +1,63 @@
+name: Auto Assign
+
+# 新しく作成されたissueとPRへ、リポジトリオーナーを自動でアサインする。
+#
+# GitHubのREST API上はPRもissueとして扱われるため、
+# 割り当てはissues APIの一本で済ませ、issueとPRで処理を分けていない。
+#
+# アサイン先は既定でリポジトリオーナー(github.repository_owner)とする。
+# 別のユーザーを指定する場合はリポジトリ変数AUTO_ASSIGNEEへログイン名を設定する。
+# 設定場所は Settings → Secrets and variables → Actions → Variables。
+#
+# 手動で外したアサインを勝手に戻さないよう、
+# 発火時点で誰もアサインされていない場合に限って割り当てる。
+
+on:
+  issues:
+    types: [opened, reopened]
+  # フォークからのPRでもGITHUB_TOKENへ書き込み権限を持たせるため、
+  # pull_requestではなくpull_request_targetで受ける。
+  # このワークフローはPRのコードをチェックアウトも実行もしないため、
+  # pull_request_targetでも取り込んだ変更が動く余地はない。
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  # issue本体への割り当てに必要
+  issues: write
+  # PRへの割り当てに必要
+  pull-requests: write
+
+jobs:
+  assign:
+    name: Assign to owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          ASSIGNEE: ${{ vars.AUTO_ASSIGNEE || github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          # 再オープン時はペイロードのassigneesが現在の状態とずれうるため、
+          # 割り当ての有無はAPIで取り直して判定する
+          assigned=$(gh api "repos/$REPO/issues/$NUMBER" --jq '.assignees | length')
+          if [ "$assigned" -gt 0 ]; then
+            echo "::notice::#$NUMBER は既にアサイン済みのためスキップします"
+            exit 0
+          fi
+
+          # リポジトリへの権限がないログイン名を渡した場合、
+          # APIはエラーを返さずその相手を黙って無視する。
+          # 設定ミスに気付けるよう、割り当てた結果を検証する。
+          result=$(jq -n --arg login "$ASSIGNEE" '{assignees: [$login]}' \
+            | gh api -X POST "repos/$REPO/issues/$NUMBER/assignees" --input - --jq '.assignees[].login')
+          if ! printf '%s\n' "$result" | grep -qxF "$ASSIGNEE"; then
+            echo "::error::$ASSIGNEE をアサインできませんでした。リポジトリへの権限を持つログイン名か確認してください"
+            exit 1
+          fi
+
+          echo "::notice::#$NUMBER を $ASSIGNEE へアサインしました"
