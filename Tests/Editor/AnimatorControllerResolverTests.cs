@@ -87,6 +87,23 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void CollectOverrides_KeepsInnerOverride_WhenOuterLeavesItUnspecified()
+        {
+            var original = AddState("State");
+            var middle = CreateClip("Middle");
+
+            var inner = CreateOverride(_controller);
+            inner[original] = middle;
+
+            // 外側では差し替えを指定しない
+            var outer = CreateOverride(inner);
+
+            var map = AnimatorControllerResolver.CollectOverrides(outer);
+
+            Assert.That(AnimatorControllerResolver.Apply(map, original), Is.SameAs(middle));
+        }
+
+        [Test]
         public void Apply_KeepsClip_WhenNotOverridden()
         {
             var clip = CreateClip("Clip");

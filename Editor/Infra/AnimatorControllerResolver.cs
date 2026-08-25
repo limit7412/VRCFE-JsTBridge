@@ -28,15 +28,31 @@ namespace FEJsTBridge.Infra
         /// Override Controllerによるクリップの差し替えを、元のクリップからの対応表にする
         /// </summary>
         /// <remarks>
-        /// 入れ子になっていても、一番外側だけを見る。
-        /// 差し替えの鍵は元のコントローラのクリップであり、途中の差し替え先ではないためである。
+        /// 鍵はどの階層でも元のコントローラのクリップである。
+        /// 内側から順に重ね、外側で指定があればそちらで上書きする。
+        /// 外側が未指定のままなら、内側の差し替えがそのまま残る。
         /// </remarks>
         public static IReadOnlyDictionary<AnimationClip, AnimationClip> CollectOverrides(
             RuntimeAnimatorController runtimeController)
         {
-            return runtimeController is AnimatorOverrideController overrideController
-                ? GetOverrides(overrideController)
-                : new Dictionary<AnimationClip, AnimationClip>();
+            var chain = new List<AnimatorOverrideController>();
+            var current = runtimeController;
+            while (current is AnimatorOverrideController overrideController)
+            {
+                chain.Add(overrideController);
+                current = overrideController.runtimeAnimatorController;
+            }
+
+            var map = new Dictionary<AnimationClip, AnimationClip>();
+            for (var i = chain.Count - 1; i >= 0; i--)
+            {
+                foreach (var pair in GetOverrides(chain[i]))
+                {
+                    map[pair.Key] = pair.Value;
+                }
+            }
+
+            return map;
         }
 
         /// <summary>
