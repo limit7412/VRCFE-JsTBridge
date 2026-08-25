@@ -186,6 +186,9 @@ msgstr "Layer {0}"
 msgid "inspector.inspect.same_name"
 msgstr "{0} other layers share this name (layer {1}). Removal works by name, so adding it removes those too."
 
+msgid "inspector.inspect.empty_name"
+msgstr "This layer has no name. Removal works by name, so it cannot be targeted. Name the layer in the Animator window and inspect again."
+
 msgid "inspector.inspect.add"
 msgstr "Add"
 

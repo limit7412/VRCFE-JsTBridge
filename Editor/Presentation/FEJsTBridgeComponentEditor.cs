@@ -221,6 +221,7 @@ namespace FEJsTBridge.Presentation
         private void DrawCandidate(IReadOnlyList<FxLayerConflict> group)
         {
             var layerName = FxLayerRemovalPlan.NormalizeName(group[0].LayerName);
+            var canAdd = !string.IsNullOrEmpty(layerName);
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -228,10 +229,20 @@ namespace FEJsTBridge.Presentation
                 {
                     EditorGUILayout.LabelField(
                         S("inspector.inspect.layer", layerName, Indices(group.Select(item => item.LayerIndex))));
-                    if (GUILayout.Button(S("inspector.inspect.add"), GUILayout.Width(60f)))
+
+                    // 名前で除去するため、名前の無いレイヤーは指定できない
+                    using (new EditorGUI.DisabledScope(!canAdd))
                     {
-                        AddLayerName(layerName);
+                        if (GUILayout.Button(S("inspector.inspect.add"), GUILayout.Width(60f)) && canAdd)
+                        {
+                            AddLayerName(layerName);
+                        }
                     }
+                }
+
+                if (!canAdd)
+                {
+                    EditorGUILayout.HelpBox(S("inspector.inspect.empty_name"), MessageType.Warning);
                 }
 
                 foreach (var candidate in group)
@@ -331,6 +342,13 @@ namespace FEJsTBridge.Presentation
         {
             // 除去時と同じ規則でそろえてから入れる
             var name = FxLayerRemovalPlan.NormalizeName(layerName);
+
+            // 空名は除去時に落とされる。入れても消えないものを一覧へ残さない
+            if (string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
             var property = serializedObject.FindProperty("removeFxLayers");
 
             for (var i = 0; i < property.arraySize; i++)

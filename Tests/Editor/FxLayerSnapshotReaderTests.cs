@@ -62,6 +62,21 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Read_IgnoresBlendShapeNamedPropertiesOnOtherComponents()
+        {
+            _controller.AddLayer("Toggle");
+            var state = _controller.layers[0].stateMachine.AddState("State");
+            var clip = new AnimationClip { name = "Fake" };
+            _created.Add(clip);
+
+            // 同じ名前でも、SkinnedMeshRenderer以外に書くものはブレンドシェイプではない
+            clip.SetCurve("Body", typeof(Light), "blendShape.Smile", AnimationCurve.Constant(0f, 1f, 1f));
+            state.motion = clip;
+
+            Assert.That(FxLayerSnapshotReader.Read(_controller).Single().BlendShapeBindings, Is.Empty);
+        }
+
+        [Test]
         public void Read_LooksInsideBlendTrees()
         {
             var clip = CreateClip("Body", "blendShape.JawOpen");

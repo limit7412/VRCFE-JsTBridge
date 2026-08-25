@@ -186,6 +186,9 @@ msgstr "レイヤー {0}"
 msgid "inspector.inspect.same_name"
 msgstr "同じ名前のレイヤーが他に{0}枚あります (レイヤー {1})。除去は名前で行うため、追加するとそれらもまとめて消えます。"
 
+msgid "inspector.inspect.empty_name"
+msgstr "このレイヤーには名前がありません。除去は名前で行うため指定できません。Animatorでレイヤーに名前を付けてから、もう一度調べてください。"
+
 msgid "inspector.inspect.add"
 msgstr "追加"
 

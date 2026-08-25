@@ -174,7 +174,9 @@ namespace FEJsTBridge.Infra
 
             foreach (var binding in AnimationUtility.GetCurveBindings(clip))
             {
-                if (!binding.propertyName.StartsWith(BlendShapePrefix))
+                // 型も見る。同じ名前のプロパティを持つ別のコンポーネントと区別できない
+                if (binding.type != typeof(SkinnedMeshRenderer)
+                    || !binding.propertyName.StartsWith(BlendShapePrefix))
                 {
                     continue;
                 }
