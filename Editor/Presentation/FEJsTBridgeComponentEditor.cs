@@ -194,19 +194,21 @@ namespace FEJsTBridge.Presentation
                     ? "inspector.inspect.empty_reference"
                     : "inspector.inspect.no_reference";
                 EditorGUILayout.HelpBox(S(message), MessageType.Warning);
-                return;
             }
-
-            if (!_inspection.FaceEmoFound)
+            else
             {
-                EditorGUILayout.HelpBox(S("inspector.inspect.no_face_emo"), MessageType.Warning);
+                if (!_inspection.FaceEmoFound)
+                {
+                    EditorGUILayout.HelpBox(S("inspector.inspect.no_face_emo"), MessageType.Warning);
+                }
+
+                if (!_inspection.JerryFound)
+                {
+                    EditorGUILayout.HelpBox(S("inspector.inspect.no_jerry"), MessageType.Warning);
+                }
             }
 
-            if (!_inspection.JerryFound)
-            {
-                EditorGUILayout.HelpBox(S("inspector.inspect.no_jerry"), MessageType.Warning);
-            }
-
+            // 比較対象の有無にかかわらず、判定できていないものがあることは伝える
             if (_inspection.Report.HasUnjudgedWriteDefaults)
             {
                 EditorGUILayout.HelpBox(S("inspector.inspect.write_defaults"), MessageType.Info);
