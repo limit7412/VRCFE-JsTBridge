@@ -144,14 +144,11 @@ namespace FEJsTBridge.Presentation
                 return;
             }
 
-            if (!_inspection.Report.HasReference)
-            {
-                EditorGUILayout.HelpBox(S("inspector.inspect.no_reference"), MessageType.Warning);
-            }
+            DrawReferenceWarnings();
 
             // 除去は名前で行うため、同名のレイヤーは一つの候補にまとめる
             var groups = _inspection.Report.Candidates
-                .GroupBy(candidate => candidate.LayerName)
+                .GroupBy(candidate => FxLayerRemovalPlan.NormalizeName(candidate.LayerName))
                 .Select(group => group.ToArray())
                 .ToArray();
 
@@ -185,11 +182,34 @@ namespace FEJsTBridge.Presentation
         }
 
         /// <summary>
+        /// 比較の基準が欠けている場合に断る
+        /// 欠けた側とだけ競合するレイヤーは、競合なしと出てしまう
+        /// </summary>
+        private void DrawReferenceWarnings()
+        {
+            if (!_inspection.Report.HasReference)
+            {
+                EditorGUILayout.HelpBox(S("inspector.inspect.no_reference"), MessageType.Warning);
+                return;
+            }
+
+            if (!_inspection.FaceEmoFound)
+            {
+                EditorGUILayout.HelpBox(S("inspector.inspect.no_face_emo"), MessageType.Warning);
+            }
+
+            if (!_inspection.JerryFound)
+            {
+                EditorGUILayout.HelpBox(S("inspector.inspect.no_jerry"), MessageType.Warning);
+            }
+        }
+
+        /// <summary>
         /// 同じ名前の候補を一件として描く
         /// </summary>
         private void DrawCandidate(IReadOnlyList<FxLayerConflict> group)
         {
-            var layerName = group[0].LayerName;
+            var layerName = FxLayerRemovalPlan.NormalizeName(group[0].LayerName);
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -229,7 +249,8 @@ namespace FEJsTBridge.Presentation
         private void DrawSameNameWarning(string layerName)
         {
             var others = _inspection.Report.Layers
-                .Where(layer => layer.LayerName == layerName && layer.Verdict != FxLayerVerdict.Candidate)
+                .Where(layer => FxLayerRemovalPlan.NormalizeName(layer.LayerName) == layerName
+                    && layer.Verdict != FxLayerVerdict.Candidate)
                 .ToArray();
             if (others.Length == 0)
             {
@@ -297,18 +318,21 @@ namespace FEJsTBridge.Presentation
         /// </summary>
         private void AddLayerName(string layerName)
         {
+            // 除去時と同じ規則でそろえてから入れる
+            var name = FxLayerRemovalPlan.NormalizeName(layerName);
             var property = serializedObject.FindProperty("removeFxLayers");
 
             for (var i = 0; i < property.arraySize; i++)
             {
-                if (property.GetArrayElementAtIndex(i).stringValue == layerName)
+                if (FxLayerRemovalPlan.NormalizeName(
+                        property.GetArrayElementAtIndex(i).stringValue) == name)
                 {
                     return;
                 }
             }
 
             property.arraySize++;
-            property.GetArrayElementAtIndex(property.arraySize - 1).stringValue = layerName;
+            property.GetArrayElementAtIndex(property.arraySize - 1).stringValue = name;
         }
 
         /// <summary>

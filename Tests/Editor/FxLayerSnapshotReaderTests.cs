@@ -179,6 +179,37 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Read_FollowsSyncedLayerChain_ToItsSource()
+        {
+            AddLayerWithClip("Source", "Body", "blendShape.Smile");
+            _controller.AddLayer("Middle");
+            _controller.AddLayer("Last");
+
+            var layers = _controller.layers;
+            layers[1].syncedLayerIndex = 0;
+            layers[2].syncedLayerIndex = 1;
+            _controller.layers = layers;
+
+            var snapshots = FxLayerSnapshotReader.Read(_controller);
+
+            Assert.That(snapshots[2].BlendShapeBindings, Is.EqualTo(new[] { "Body/blendShape.Smile" }));
+        }
+
+        [Test]
+        public void Read_StopsFollowingSyncedLayers_WhenTheyReferenceEachOther()
+        {
+            _controller.AddLayer("A");
+            _controller.AddLayer("B");
+
+            var layers = _controller.layers;
+            layers[0].syncedLayerIndex = 1;
+            layers[1].syncedLayerIndex = 0;
+            _controller.layers = layers;
+
+            Assert.That(FxLayerSnapshotReader.Read(_controller).Count, Is.EqualTo(2));
+        }
+
+        [Test]
         public void Read_IgnoresSourceBehaviours_WhenSyncedLayerOverridesThem()
         {
             _controller.AddLayer("Source");

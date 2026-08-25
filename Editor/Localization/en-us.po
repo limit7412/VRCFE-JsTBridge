@@ -156,6 +156,12 @@ msgstr "The avatar has no FX controller. Check that FX is set to something other
 msgid "inspector.inspect.no_reference"
 msgstr "FaceEmo and Jerry's Templates were not found, so there is nothing to compare against. Layers that write blend shapes are listed as they are, so check each one before adding it."
 
+msgid "inspector.inspect.no_face_emo"
+msgstr "FaceEmo was not found. Its blend shapes are missing from the comparison, so layers that only conflict with FaceEmo are shown as having no conflict."
+
+msgid "inspector.inspect.no_jerry"
+msgstr "Jerry's Templates was not found. Tracking blend shapes are missing from the comparison, so layers that only conflict with tracking are shown as having no conflict."
+
 msgid "inspector.inspect.no_candidate"
 msgstr "No layer looks like it conflicts."
 

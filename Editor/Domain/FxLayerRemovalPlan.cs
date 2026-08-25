@@ -63,7 +63,7 @@ namespace FEJsTBridge.Domain
                 var matched = false;
                 for (var i = 0; i < existingLayerNames.Count; i++)
                 {
-                    if (existingLayerNames[i] == name)
+                    if (NormalizeName(existingLayerNames[i]) == name)
                     {
                         indices.Add(i);
                         matched = true;
@@ -82,6 +82,18 @@ namespace FEJsTBridge.Domain
         }
 
         /// <summary>
+        /// 比較のためにレイヤー名をそろえる
+        /// </summary>
+        /// <remarks>
+        /// 指定名と既存のレイヤー名の両方に掛ける。
+        /// 片側だけ揃えると、前後に空白を持つレイヤーをどう書いても指定できなくなる。
+        /// </remarks>
+        public static string NormalizeName(string name)
+        {
+            return name == null ? string.Empty : name.Trim();
+        }
+
+        /// <summary>
         /// 一覧の空行を落とし、前後の空白を落とす
         /// </summary>
         private static IEnumerable<string> Normalize(IEnumerable<string> requestedNames)
@@ -92,7 +104,7 @@ namespace FEJsTBridge.Domain
             }
 
             return requestedNames
-                .Select(name => name?.Trim())
+                .Select(NormalizeName)
                 .Where(name => !string.IsNullOrEmpty(name));
         }
     }

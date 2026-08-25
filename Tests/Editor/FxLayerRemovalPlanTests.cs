@@ -86,5 +86,22 @@ namespace FEJsTBridge.Tests
         {
             Assert.That(FxLayerRemovalPlan.HasRequestedName(new[] { "", "  Mabataki  " }), Is.True);
         }
+
+        [Test]
+        public void Resolve_MatchesLayerName_IgnoringSurroundingWhitespace()
+        {
+            var plan = FxLayerRemovalPlan.Resolve(new[] { "Base Layer", "Face " }, new[] { "Face" });
+
+            Assert.That(plan.LayerIndices, Is.EqualTo(new[] { 1 }));
+            Assert.That(plan.MissingNames, Is.Empty);
+        }
+
+        [Test]
+        public void Resolve_MatchesLayerWithWhitespace_WhenRequestedNameHasIt()
+        {
+            var plan = FxLayerRemovalPlan.Resolve(new[] { "Base Layer", "Face" }, new[] { " Face " });
+
+            Assert.That(plan.LayerIndices, Is.EqualTo(new[] { 1 }));
+        }
     }
 }

@@ -85,13 +85,30 @@ namespace FEJsTBridge.Infra
         /// レイヤーが実際に再生するステートマシン
         /// 同期レイヤー (Sync) は自分のステートマシンを再生しないため、同期元をたどる
         /// </summary>
+        /// <remarks>
+        /// 同期元がさらに別のレイヤーを同期していることもあるため、終端までたどる。
+        /// 循環していれば、たどるのをやめてその手前を使う。
+        /// </remarks>
         private static AnimatorStateMachine ResolveStateMachine(
             AnimatorControllerLayer[] layers, int index, out bool isSynced)
         {
-            var syncedIndex = layers[index].syncedLayerIndex;
-            isSynced = syncedIndex >= 0 && syncedIndex < layers.Length && syncedIndex != index;
+            var visited = new HashSet<int> { index };
+            var current = index;
 
-            return isSynced ? layers[syncedIndex].stateMachine : layers[index].stateMachine;
+            while (true)
+            {
+                var next = layers[current].syncedLayerIndex;
+                if (next < 0 || next >= layers.Length || !visited.Add(next))
+                {
+                    break;
+                }
+
+                current = next;
+            }
+
+            isSynced = current != index;
+
+            return layers[current].stateMachine;
         }
 
         private static IReadOnlyCollection<string> CollectBlendShapeBindings(

@@ -156,6 +156,12 @@ msgstr "アバターのFXコントローラが見つかりません。FXにDefau
 msgid "inspector.inspect.no_reference"
 msgstr "FaceEmoとJerry's Templatesが見つからないため、比較の基準がありません。ブレンドシェイプを書くレイヤーをそのまま挙げているので、内容を確認してから追加してください。"
 
+msgid "inspector.inspect.no_face_emo"
+msgstr "FaceEmoが見つかりません。FaceEmoが書くブレンドシェイプを基準に入れられないため、FaceEmoとだけ競合するレイヤーは「競合なし」と出ます。"
+
+msgid "inspector.inspect.no_jerry"
+msgstr "Jerry's Templatesが見つかりません。トラッキングが書くブレンドシェイプを基準に入れられないため、トラッキングとだけ競合するレイヤーは「競合なし」と出ます。"
+
 msgid "inspector.inspect.no_candidate"
 msgstr "競合しそうなレイヤーは見つかりませんでした。"
 
