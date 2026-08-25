@@ -22,6 +22,23 @@ FaceEmoには外部連携用のバイパス機構があり、Jerry's Templates�
 Jerry's TemplatesとFaceEmoは依存に含めていません。
 どちらも配布経路が別で、未導入でもビルドは壊れません。
 
+## インストール
+
+### VCC/ALCOM経由（推奨）
+
+1. [VPMリポジトリ](https://limit7412.github.io/vcc-vpm/)をVCC/ALCOMへ追加する
+2. プロジェクトへ「Kx VRC FE-JsT Bridge」を追加する
+
+リリースを公開するとリスティングが自動で作り直されるため、更新はVCC/ALCOMの一覧に出ます。
+
+### 手動インストール
+
+1. [Releases](https://github.com/limit7412/VRCFE-JsTBridge/releases)からzipファイルをダウンロードする
+2. VCCのプロジェクト管理画面で「Add Package」から「Add from Archive」を選ぶ
+3. ダウンロードしたzipファイルを選ぶ
+
+この方法ではVCC/ALCOMが更新を検知しないため、新しいバージョンは手で入れ替えます。
+
 ## 使い方
 
 1. アバタールートに **Kx VRC FE-JsT Bridge** コンポーネントを追加する
