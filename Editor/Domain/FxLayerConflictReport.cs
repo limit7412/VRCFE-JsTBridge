@@ -122,12 +122,18 @@ namespace FEJsTBridge.Domain
             "[ USER EDIT ]",
         };
 
-        /// <summary>FaceEmoとブリッジが生成するレイヤー名</summary>
+        /// <summary>
+        /// FaceEmoとブリッジが生成するレイヤー名
+        /// </summary>
+        /// <remarks>
+        /// 生成されたレイヤーはMerge Animatorでマージされるため、本来は素体のFXに現れない。
+        /// 焼き込み済みのアバターを調べたときのための保険である。
+        /// そのためBLINKやBYPASSのように素体でも使われうる名前は入れない。
+        /// 素体自身のまばたきレイヤーは、FaceEmoと同じブレンドシェイプを書くのなら候補に挙げるべきである。
+        /// </remarks>
         private static readonly string[] ManagedNames =
         {
-            "BLINK",
             "MOUTH MORPH CANCELLER",
-            "BYPASS",
             "LOCAL INDICATOR SOUND",
             "DANCE GIMICK CONTROL",
             "INPUT CONVERTER L",

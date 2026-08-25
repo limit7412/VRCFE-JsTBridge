@@ -23,6 +23,15 @@ namespace FEJsTBridge.Infra
         /// </summary>
         public static AnimatorController FindFxController(GameObject avatarRoot)
         {
+            return AnimatorControllerResolver.Resolve(FindFxRuntimeController(avatarRoot));
+        }
+
+        /// <summary>
+        /// FXに指定されたコントローラを、Override Controllerのまま取り出す
+        /// 何が再生されるかを調べるには、差し替えの情報が要る
+        /// </summary>
+        public static RuntimeAnimatorController FindFxRuntimeController(GameObject avatarRoot)
+        {
             var descriptor = FindDescriptor(avatarRoot);
             if (descriptor == null)
             {
@@ -38,7 +47,7 @@ namespace FEJsTBridge.Infra
 
                 // Defaultを選んだあとも参照が残ることがある。
                 // ビルドでは無視されるコントローラなので、取り除いても出力に反映されない
-                return layer.isDefault ? null : AnimatorControllerResolver.Resolve(layer.animatorController);
+                return layer.isDefault ? null : layer.animatorController;
             }
 
             return null;

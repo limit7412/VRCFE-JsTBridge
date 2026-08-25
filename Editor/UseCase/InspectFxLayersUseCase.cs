@@ -16,8 +16,8 @@ namespace FEJsTBridge.UseCase
     {
         public static FxLayerInspection Inspect(GameObject avatarRoot)
         {
-            var fx = FxLayerRemover.FindFxController(avatarRoot);
-            if (fx == null)
+            var fx = FxLayerRemover.FindFxRuntimeController(avatarRoot);
+            if (AnimatorControllerResolver.Resolve(fx) == null)
             {
                 return FxLayerInspection.NoFx;
             }

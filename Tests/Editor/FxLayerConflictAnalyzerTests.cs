@@ -72,7 +72,7 @@ namespace FEJsTBridge.Tests
                 new[]
                 {
                     Layer("[ USER EDIT ] DEFAULT FACE", 0, false, FaceShape),
-                    Layer("BLINK", 1, false, FaceShape),
+                    Layer("FACE EMOTE CONTROL", 1, false, FaceShape),
                     Layer("MA Responsive: BodyAll", 2, false, FaceShape),
                     Layer(BridgePlanBuilder.TrackingReapplyLayerName, 3, true),
                 },
@@ -80,6 +80,16 @@ namespace FEJsTBridge.Tests
 
             Assert.That(report.Layers.All(layer => layer.Verdict == FxLayerVerdict.Managed));
             Assert.That(report.Candidates, Is.Empty);
+        }
+
+        [Test]
+        public void Analyze_TreatsGenericNameAsCandidate_WhenItWritesSharedShapes()
+        {
+            var report = FxLayerConflictAnalyzer.Analyze(
+                new[] { Layer("BLINK", 1, false, FaceShape) },
+                new[] { FaceShape });
+
+            Assert.That(report.Candidates.Single().LayerName, Is.EqualTo("BLINK"));
         }
 
         [Test]
@@ -113,7 +123,10 @@ namespace FEJsTBridge.Tests
         [TestCase("MA Responsive: BodyAll", true)]
         [TestCase("Modular Avatar: MMD Control", true)]
         [TestCase("[ USER EDIT ] FACE EMOTE PLAYER", true)]
-        [TestCase("BYPASS", true)]
+        [TestCase("FACE EMOTE CONTROL", true)]
+        // 素体でも使われうる名前は、名前だけで除外しない
+        [TestCase("BLINK", false)]
+        [TestCase("BYPASS", false)]
         [TestCase("Left Hand Face", false)]
         [TestCase("", false)]
         public void IsManagedLayerName_DetectsGeneratedLayers(string layerName, bool expected)

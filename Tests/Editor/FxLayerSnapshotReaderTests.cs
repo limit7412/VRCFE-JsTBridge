@@ -166,6 +166,19 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Read_FollowsOverrideController()
+        {
+            var state = AddLayerWithClip("A", "Body", "blendShape.Smile");
+            var overrideController = new AnimatorOverrideController(_controller);
+            _created.Add(overrideController);
+            overrideController[(AnimationClip)state.motion] = CreateClip("Body", "blendShape.JawOpen");
+
+            var snapshot = FxLayerSnapshotReader.Read(overrideController).Single();
+
+            Assert.That(snapshot.BlendShapeBindings, Is.EqualTo(new[] { "Body/blendShape.JawOpen" }));
+        }
+
+        [Test]
         public void CollectBlendShapeBindings_FollowsOverrideController()
         {
             var state = AddLayerWithClip("A", "Body", "blendShape.Smile");

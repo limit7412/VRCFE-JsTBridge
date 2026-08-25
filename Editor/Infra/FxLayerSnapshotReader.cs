@@ -15,16 +15,19 @@ namespace FEJsTBridge.Infra
     {
         private const string BlendShapePrefix = "blendShape.";
 
-        private static readonly IReadOnlyDictionary<AnimationClip, AnimationClip> NoOverrides =
-            new Dictionary<AnimationClip, AnimationClip>();
-
-        public static IReadOnlyList<FxLayerSnapshot> Read(AnimatorController controller)
+        /// <summary>
+        /// レイヤーごとの要約を作る
+        /// Override Controllerが差し替えたクリップは、差し替え後を読む
+        /// </summary>
+        public static IReadOnlyList<FxLayerSnapshot> Read(RuntimeAnimatorController runtimeController)
         {
+            var controller = AnimatorControllerResolver.Resolve(runtimeController);
             if (controller == null)
             {
                 return new FxLayerSnapshot[0];
             }
 
+            var overrides = AnimatorControllerResolver.CollectOverrides(runtimeController);
             var layers = controller.layers;
             var snapshots = new List<FxLayerSnapshot>(layers.Length);
 
@@ -36,7 +39,7 @@ namespace FEJsTBridge.Infra
                 snapshots.Add(new FxLayerSnapshot(
                     layer.name,
                     i,
-                    CollectBlendShapeBindings(layer, stateMachine, isSynced, NoOverrides, string.Empty),
+                    CollectBlendShapeBindings(layer, stateMachine, isSynced, overrides, string.Empty),
                     ChangesTrackingControl(CollectBehaviours(layer, stateMachine, isSynced))));
             }
 

@@ -168,6 +168,12 @@ msgstr "Other layers ({0})"
 msgid "inspector.inspect.layer"
 msgstr "{0} (layer {1})"
 
+msgid "inspector.inspect.layer_index"
+msgstr "Layer {0}"
+
+msgid "inspector.inspect.same_name"
+msgstr "{0} other layers share this name (layer {1}). Removal works by name, so adding it removes those too."
+
 msgid "inspector.inspect.add"
 msgstr "Add"
 

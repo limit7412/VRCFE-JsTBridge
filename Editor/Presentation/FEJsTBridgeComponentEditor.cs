@@ -149,8 +149,13 @@ namespace FEJsTBridge.Presentation
                 EditorGUILayout.HelpBox(S("inspector.inspect.no_reference"), MessageType.Warning);
             }
 
-            var candidates = _inspection.Report.Candidates.ToArray();
-            if (candidates.Length == 0)
+            // 除去は名前で行うため、同名のレイヤーは一つの候補にまとめる
+            var groups = _inspection.Report.Candidates
+                .GroupBy(candidate => candidate.LayerName)
+                .Select(group => group.ToArray())
+                .ToArray();
+
+            if (groups.Length == 0)
             {
                 EditorGUILayout.HelpBox(S("inspector.inspect.no_candidate"), MessageType.Info);
             }
@@ -160,18 +165,18 @@ namespace FEJsTBridge.Presentation
 
                 _inspectionScroll = EditorGUILayout.BeginScrollView(
                     _inspectionScroll, GUILayout.MaxHeight(220f));
-                foreach (var candidate in candidates)
+                foreach (var group in groups)
                 {
-                    DrawCandidate(candidate);
+                    DrawCandidate(group);
                 }
 
                 EditorGUILayout.EndScrollView();
 
                 if (GUILayout.Button(S("inspector.inspect.add_all")))
                 {
-                    foreach (var candidate in candidates)
+                    foreach (var group in groups)
                     {
-                        AddLayerName(candidate.LayerName);
+                        AddLayerName(group[0].LayerName);
                     }
                 }
             }
@@ -179,25 +184,66 @@ namespace FEJsTBridge.Presentation
             DrawOtherLayers();
         }
 
-        private void DrawCandidate(FxLayerConflict candidate)
+        /// <summary>
+        /// 同じ名前の候補を一件として描く
+        /// </summary>
+        private void DrawCandidate(IReadOnlyList<FxLayerConflict> group)
         {
+            var layerName = group[0].LayerName;
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.LabelField(
-                        S("inspector.inspect.layer", candidate.LayerName, candidate.LayerIndex));
+                        S("inspector.inspect.layer", layerName, Indices(group.Select(item => item.LayerIndex))));
                     if (GUILayout.Button(S("inspector.inspect.add"), GUILayout.Width(60f)))
                     {
-                        AddLayerName(candidate.LayerName);
+                        AddLayerName(layerName);
                     }
                 }
 
-                foreach (var reason in DescribeReasons(candidate))
+                foreach (var candidate in group)
                 {
-                    EditorGUILayout.LabelField(reason, EditorStyles.miniLabel);
+                    // 同名が複数あるときは、どのレイヤーの根拠かを添える
+                    if (group.Count > 1)
+                    {
+                        EditorGUILayout.LabelField(
+                            S("inspector.inspect.layer_index", candidate.LayerIndex), EditorStyles.miniLabel);
+                    }
+
+                    foreach (var reason in DescribeReasons(candidate))
+                    {
+                        EditorGUILayout.LabelField(reason, EditorStyles.miniLabel);
+                    }
                 }
+
+                DrawSameNameWarning(layerName);
             }
+        }
+
+        /// <summary>
+        /// 候補と同じ名前で、競合しないレイヤーがある場合に断る
+        /// 除去は名前で行うため、追加するとそれらもまとめて消える
+        /// </summary>
+        private void DrawSameNameWarning(string layerName)
+        {
+            var others = _inspection.Report.Layers
+                .Where(layer => layer.LayerName == layerName && layer.Verdict != FxLayerVerdict.Candidate)
+                .ToArray();
+            if (others.Length == 0)
+            {
+                return;
+            }
+
+            EditorGUILayout.HelpBox(
+                S("inspector.inspect.same_name", others.Length, Indices(others.Select(layer => layer.LayerIndex))),
+                MessageType.Warning);
+        }
+
+        private static string Indices(IEnumerable<int> indices)
+        {
+            return string.Join(", ", indices.Select(index => index.ToString()));
         }
 
         private IEnumerable<string> DescribeReasons(FxLayerConflict candidate)

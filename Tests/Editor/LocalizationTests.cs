@@ -57,6 +57,8 @@ namespace FEJsTBridge.Tests
             "inspector.inspect.candidates",
             "inspector.inspect.others",
             "inspector.inspect.layer",
+            "inspector.inspect.layer_index",
+            "inspector.inspect.same_name",
             "inspector.inspect.add",
             "inspector.inspect.add_all",
             "inspector.inspect.reason.shared",
