@@ -71,6 +71,9 @@ namespace FEJsTBridge.Tests
 
             FxLayerRemover.Remove(_controller, new[] { 1 });
 
+            // 指定した1枚だけが消えていることを先に確かめる
+            Assert.That(LayerNames(), Is.EqualTo(new[] { "Base Layer", "Right Hand Face", "Mabataki" }));
+
             var mabataki = _controller.layers.Single(layer => layer.name == "Mabataki");
             Assert.That(mabataki.syncedLayerIndex, Is.EqualTo(1));
         }
@@ -81,6 +84,9 @@ namespace FEJsTBridge.Tests
             SetSyncedLayerIndex(3, 2);
 
             var result = FxLayerRemover.Remove(_controller, new[] { 2 });
+
+            // 同期元を消しても、同期していたレイヤー自体は残る
+            Assert.That(LayerNames(), Is.EqualTo(new[] { "Base Layer", "Left Hand Face", "Mabataki" }));
 
             var mabataki = _controller.layers.Single(layer => layer.name == "Mabataki");
             Assert.That(mabataki.syncedLayerIndex, Is.EqualTo(-1));
@@ -235,11 +241,32 @@ namespace FEJsTBridge.Tests
             return control;
         }
 
+        /// <summary>
+        /// 同期の設定を書き戻す
+        /// </summary>
+        /// <remarks>
+        /// 書き戻せたことをここで確かめる。
+        /// 後段が「レイヤーが無い」で落ちたとき、原因がこの操作か除去かを見分けられないためである。
+        /// </remarks>
         private void SetSyncedLayerIndex(int layerIndex, int syncedLayerIndex)
         {
             var layers = _controller.layers;
             layers[layerIndex].syncedLayerIndex = syncedLayerIndex;
             _controller.layers = layers;
+
+            Assert.That(
+                LayerNames(),
+                Is.EqualTo(new[] { "Base Layer", "Left Hand Face", "Right Hand Face", "Mabataki" }),
+                "同期を設定した時点でレイヤーの構成が変わっている");
+            Assert.That(
+                _controller.layers[layerIndex].syncedLayerIndex,
+                Is.EqualTo(syncedLayerIndex),
+                "syncedLayerIndexを書き戻せていない");
+        }
+
+        private string[] LayerNames()
+        {
+            return _controller.layers.Select(layer => layer.name).ToArray();
         }
     }
 }

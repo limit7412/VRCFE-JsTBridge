@@ -89,6 +89,7 @@ namespace FEJsTBridge.Infra
         /// <remarks>
         /// 同期元がさらに別のレイヤーを同期していることもあるため、終端までたどる。
         /// 循環していれば、たどるのをやめてその手前を使う。
+        /// Unityは循環した構成を書き戻しの時点で弾くため、この備えは壊れたアセット向けである。
         /// </remarks>
         private static AnimatorStateMachine ResolveStateMachine(
             AnimatorControllerLayer[] layers, int index, out bool isSynced)

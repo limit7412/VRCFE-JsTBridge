@@ -211,20 +211,6 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void Read_StopsFollowingSyncedLayers_WhenTheyReferenceEachOther()
-        {
-            _controller.AddLayer("A");
-            _controller.AddLayer("B");
-
-            var layers = _controller.layers;
-            layers[0].syncedLayerIndex = 1;
-            layers[1].syncedLayerIndex = 0;
-            _controller.layers = layers;
-
-            Assert.That(FxLayerSnapshotReader.Read(_controller).Count, Is.EqualTo(2));
-        }
-
-        [Test]
         public void Read_IgnoresSourceBehaviours_WhenSyncedLayerOverridesThem()
         {
             _controller.AddLayer("Source");
