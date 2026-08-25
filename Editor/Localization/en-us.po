@@ -147,6 +147,9 @@ msgstr "{0} is still a project asset, so its VRC Animator Layer Control indices 
 msgid "inspector.inspect.button"
 msgstr "Find layers to remove"
 
+msgid "inspector.inspect.multi_edit"
+msgstr "Inspection is unavailable while multiple components are selected. Each avatar has its own FX, so select a single component before inspecting."
+
 msgid "inspector.inspect.no_fx"
 msgstr "The avatar has no FX controller. Check that FX is set to something other than Default."
 

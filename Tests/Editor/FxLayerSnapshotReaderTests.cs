@@ -116,6 +116,78 @@ namespace FEJsTBridge.Tests
             Assert.That(FxLayerSnapshotReader.CollectBlendShapeBindings(null), Is.Empty);
         }
 
+        [Test]
+        public void Read_ReadsSyncedLayer_ThroughOverrideMotion()
+        {
+            var sourceState = AddLayerWithClip("Source", "Body", "blendShape.Smile");
+
+            // 同期レイヤー自身のステートマシンは再生されない
+            AddLayerWithClip("Synced", "Body", "blendShape.NotPlayed");
+
+            var layers = _controller.layers;
+            layers[1].syncedLayerIndex = 0;
+            layers[1].SetOverrideMotion(sourceState, CreateClip("Body", "blendShape.JawOpen"));
+            _controller.layers = layers;
+
+            var snapshots = FxLayerSnapshotReader.Read(_controller);
+
+            Assert.That(snapshots[1].BlendShapeBindings, Is.EqualTo(new[] { "Body/blendShape.JawOpen" }));
+        }
+
+        [Test]
+        public void Read_ReadsSyncedLayer_FromSourceMotion_WhenNotOverridden()
+        {
+            AddLayerWithClip("Source", "Body", "blendShape.Smile");
+            _controller.AddLayer("Synced");
+
+            var layers = _controller.layers;
+            layers[1].syncedLayerIndex = 0;
+            _controller.layers = layers;
+
+            var snapshots = FxLayerSnapshotReader.Read(_controller);
+
+            Assert.That(snapshots[1].BlendShapeBindings, Is.EqualTo(new[] { "Body/blendShape.Smile" }));
+        }
+
+        [Test]
+        public void Read_DetectsTrackingControl_OnSyncedLayer()
+        {
+            _controller.AddLayer("Source");
+            var state = _controller.layers[0].stateMachine.AddState("Fist");
+            var control = state.AddStateMachineBehaviour<VRCAnimatorTrackingControl>();
+            control.trackingMouth = VRC_AnimatorTrackingControl.TrackingType.Animation;
+
+            _controller.AddLayer("Synced");
+            var layers = _controller.layers;
+            layers[1].syncedLayerIndex = 0;
+            _controller.layers = layers;
+
+            Assert.That(FxLayerSnapshotReader.Read(_controller)[1].ChangesTrackingControl, Is.True);
+        }
+
+        [Test]
+        public void CollectBlendShapeBindings_FollowsOverrideController()
+        {
+            var state = AddLayerWithClip("A", "Body", "blendShape.Smile");
+            var overrideController = new AnimatorOverrideController(_controller);
+            _created.Add(overrideController);
+            overrideController[(AnimationClip)state.motion] = CreateClip("Body", "blendShape.JawOpen");
+
+            Assert.That(
+                FxLayerSnapshotReader.CollectBlendShapeBindings(overrideController),
+                Is.EqualTo(new[] { "Body/blendShape.JawOpen" }));
+        }
+
+        [Test]
+        public void CollectBlendShapeBindings_PrependsBasePath()
+        {
+            AddLayerWithClip("A", "Body", "blendShape.Smile");
+
+            Assert.That(
+                FxLayerSnapshotReader.CollectBlendShapeBindings(_controller, "Prefab/Face"),
+                Is.EqualTo(new[] { "Prefab/Face/Body/blendShape.Smile" }));
+        }
+
         private AnimatorState AddLayerWithClip(string layerName, string path, string property)
         {
             _controller.AddLayer(layerName);

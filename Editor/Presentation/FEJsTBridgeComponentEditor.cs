@@ -118,6 +118,15 @@ namespace FEJsTBridge.Presentation
         /// </summary>
         private void DrawInspection()
         {
+            // 追加先のserializedObjectは選択中の全コンポーネントを指す。
+            // 別のアバターの候補名まで書き込まないよう、複数選択中は調べない
+            if (targets.Length > 1)
+            {
+                _inspection = null;
+                EditorGUILayout.HelpBox(S("inspector.inspect.multi_edit"), MessageType.Info);
+                return;
+            }
+
             if (GUILayout.Button(S("inspector.inspect.button")))
             {
                 _inspection = InspectFxLayersUseCase.Inspect(FindAvatarRoot());

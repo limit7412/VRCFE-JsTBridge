@@ -50,6 +50,7 @@ namespace FEJsTBridge.Tests
             "warning.layer_control_not_editable",
             "warning.layer_control_not_editable:description",
             "inspector.inspect.button",
+            "inspector.inspect.multi_edit",
             "inspector.inspect.no_fx",
             "inspector.inspect.no_reference",
             "inspector.inspect.no_candidate",

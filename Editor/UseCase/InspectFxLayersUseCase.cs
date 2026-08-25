@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Animations;
 using UnityEngine;
 using FEJsTBridge.Domain;
 using FEJsTBridge.Infra;
@@ -23,18 +22,19 @@ namespace FEJsTBridge.UseCase
                 return FxLayerInspection.NoFx;
             }
 
-            var mergeAnimatorControllers = AvatarEnvironmentScanner.CollectMergeAnimatorControllers(avatarRoot);
-            var faceEmo = FindByParameter(mergeAnimatorControllers, BridgeParameterNames.ForceBypassEnable);
+            var entries = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(avatarRoot);
+            var faceEmo = FindByParameter(entries, BridgeParameterNames.ForceBypassEnable);
             var jerry = FindByParameter(
-                mergeAnimatorControllers,
+                entries,
                 BridgeParameterNames.FacialExpressionsDisabled,
                 BridgeParameterNames.EyeTrackingActive);
 
             // 表情とトラッキングが書くブレンドシェイプを、競合の判定基準にする
             var reference = new HashSet<string>();
-            foreach (var controller in new[] { faceEmo, jerry }.Where(c => c != null))
+            foreach (var entry in new[] { faceEmo, jerry }.Where(e => e != null))
             {
-                foreach (var binding in FxLayerSnapshotReader.CollectBlendShapeBindings(controller))
+                foreach (var binding in
+                    FxLayerSnapshotReader.CollectBlendShapeBindings(entry.RuntimeController, entry.BasePath))
                 {
                     reference.Add(binding);
                 }
@@ -45,13 +45,18 @@ namespace FEJsTBridge.UseCase
             return new FxLayerInspection(report, faceEmo != null, jerry != null);
         }
 
-        private static AnimatorController FindByParameter(
-            IEnumerable<AnimatorController> controllers,
+        private static MergeAnimatorEntry FindByParameter(
+            IEnumerable<MergeAnimatorEntry> entries,
             params string[] requiredParameters)
         {
-            return controllers.FirstOrDefault(controller =>
+            return entries.FirstOrDefault(entry =>
             {
-                var names = controller.parameters.Select(parameter => parameter.name).ToArray();
+                if (entry.Controller == null)
+                {
+                    return false;
+                }
+
+                var names = entry.Controller.parameters.Select(parameter => parameter.name).ToArray();
                 return requiredParameters.All(names.Contains);
             });
         }

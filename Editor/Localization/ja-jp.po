@@ -147,6 +147,9 @@ msgstr "{0}がプロジェクトのアセットのままのため、VRC Animator
 msgid "inspector.inspect.button"
 msgstr "除去候補を調べる"
 
+msgid "inspector.inspect.multi_edit"
+msgstr "複数のコンポーネントを選択している間は、除去候補を調べられません。アバターごとにFXが異なるため、一つだけ選択してから調べてください。"
+
 msgid "inspector.inspect.no_fx"
 msgstr "アバターのFXコントローラが見つかりません。FXにDefault以外のコントローラが割り当てられているか確認してください。"
 

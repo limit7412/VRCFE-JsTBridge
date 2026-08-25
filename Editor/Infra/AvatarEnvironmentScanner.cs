@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using UnityEditor.Animations;
+using System.Linq;
 using UnityEngine;
 using nadena.dev.modular_avatar.core;
 using FEJsTBridge.Domain;
@@ -26,32 +26,38 @@ namespace FEJsTBridge.Infra
         }
 
         /// <summary>
-        /// アバターに載っているMerge Animatorのコントローラを集める
+        /// アバターに載っているMerge Animatorを集める
         /// FaceEmoやJerryのコントローラを、パラメータ名で見分けるために使う
         /// </summary>
-        public static IReadOnlyList<AnimatorController> CollectMergeAnimatorControllers(GameObject avatarRoot)
+        public static IReadOnlyList<MergeAnimatorEntry> CollectMergeAnimatorEntries(GameObject avatarRoot)
         {
-            var controllers = new List<AnimatorController>();
+            var entries = new List<MergeAnimatorEntry>();
             if (avatarRoot == null)
             {
-                return controllers;
+                return entries;
             }
 
             foreach (var mergeAnimator in avatarRoot.GetComponentsInChildren<ModularAvatarMergeAnimator>(true))
             {
-                if (mergeAnimator == null)
+                if (mergeAnimator == null || mergeAnimator.animator == null)
                 {
                     continue;
                 }
 
-                var controller = AnimatorControllerResolver.Resolve(mergeAnimator.animator);
-                if (controller != null && !controllers.Contains(controller))
+                var basePath = MergeAnimatorEntry.GetBasePath(mergeAnimator, avatarRoot);
+                if (entries.Any(entry =>
+                        entry.RuntimeController == mergeAnimator.animator && entry.BasePath == basePath))
                 {
-                    controllers.Add(controller);
+                    continue;
                 }
+
+                entries.Add(new MergeAnimatorEntry(
+                    mergeAnimator.animator,
+                    AnimatorControllerResolver.Resolve(mergeAnimator.animator),
+                    basePath));
             }
 
-            return controllers;
+            return entries;
         }
 
         private static IEnumerable<IReadOnlyCollection<string>> CollectParameterNames(GameObject avatarRoot)
