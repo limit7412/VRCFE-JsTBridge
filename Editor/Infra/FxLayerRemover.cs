@@ -95,9 +95,6 @@ namespace FEJsTBridge.Infra
         }
 
         /// <summary>
-        /// 指定索引のレイヤーを取り除く
-        /// </summary>
-        /// <summary>
         /// 指定した索引のレイヤーを取り除く
         /// </summary>
         /// <remarks>
@@ -162,6 +159,101 @@ namespace FEJsTBridge.Infra
             return new FxLayerRemovalResult(removedNames, detached, newIndices);
         }
 
+        /// <summary>
+        /// FXのレイヤーを索引で指すVRCAnimatorLayerControlを、除去後の索引へ付け替える
+        ///
+        /// 索引は数値でしか持てないため、付け替えないと別のレイヤーを操作してしまう。
+        /// 指していたレイヤーごと除去された場合は、範囲外の索引にして無効化する
+        /// (VRChatは範囲外の索引を無視する)。
+        /// </summary>
+        /// <param name="isEditable">
+        /// 書き換えてよいコントローラかの判定。ビルド中の複製かどうかはNDMFにしか分からないため、
+        /// 呼び出し側から渡す
+        /// </param>
+        public static LayerControlRemapResult RemapFxLayerControls(
+            IEnumerable<AnimatorController> controllers,
+            IReadOnlyList<int> newIndices,
+            Func<AnimatorController, bool> isEditable)
+        {
+            var detachedOwners = new List<string>();
+            var skippedControllers = new List<string>();
+            var remappedCount = 0;
+
+            if (controllers == null || newIndices == null)
+            {
+                return LayerControlRemapResult.Empty;
+            }
+
+            foreach (var controller in controllers)
+            {
+                if (controller == null)
+                {
+                    continue;
+                }
+
+                var targets = CollectFxLayerControls(controller)
+                    .Where(control => NeedsRemap(control, newIndices))
+                    .ToArray();
+                if (targets.Length == 0)
+                {
+                    continue;
+                }
+
+                // 複製されていないアセットは書き換えない
+                if (isEditable != null && !isEditable(controller))
+                {
+                    skippedControllers.Add(controller.name);
+                    continue;
+                }
+
+                foreach (var control in targets)
+                {
+                    var resolved = newIndices[control.layer];
+                    if (resolved < 0)
+                    {
+                        detachedOwners.Add(controller.name);
+                        control.layer = -1;
+                    }
+                    else
+                    {
+                        control.layer = resolved;
+                    }
+
+                    remappedCount++;
+                }
+            }
+
+            return new LayerControlRemapResult(remappedCount, detachedOwners, skippedControllers);
+        }
+
+        private static bool NeedsRemap(VRCAnimatorLayerControl control, IReadOnlyList<int> newIndices)
+        {
+            if (control.playable != VRCAnimatorLayerControl.BlendableLayer.FX)
+            {
+                return false;
+            }
+
+            if (control.layer < 0 || control.layer >= newIndices.Count)
+            {
+                return false;
+            }
+
+            return newIndices[control.layer] != control.layer;
+        }
+
+        private static IEnumerable<VRCAnimatorLayerControl> CollectFxLayerControls(AnimatorController controller)
+        {
+            foreach (var layer in controller.layers)
+            {
+                foreach (var behaviour in AnimatorGraphWalker.Behaviours(layer.stateMachine))
+                {
+                    if (behaviour is VRCAnimatorLayerControl control && control != null)
+                    {
+                        yield return control;
+                    }
+                }
+            }
+        }
 
         private static VRCAvatarDescriptor FindDescriptor(GameObject avatarRoot)
         {
