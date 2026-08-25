@@ -120,3 +120,25 @@ msgstr "FX layers were removed"
 
 msgid "info.layers_removed:description"
 msgstr "{0}"
+
+# Safeguards for FX layer removal
+msgid "warning.fx_not_editable"
+msgstr "The FX controller cannot be edited"
+
+msgid "warning.fx_not_editable:description"
+msgstr "FX is still a project asset, so the layer removal was skipped. This keeps the avatar's own asset intact."
+
+msgid "warning.fx_not_editable:hint"
+msgstr "Modular Avatar clones the controllers during the build, so this warning does not normally appear."
+
+msgid "warning.layer_control_detached"
+msgstr "A layer control lost its target"
+
+msgid "warning.layer_control_detached:description"
+msgstr "A VRC Animator Layer Control in {0} pointed at a removed FX layer. Its target was cleared so that it does not drive a different layer."
+
+msgid "warning.layer_control_not_editable"
+msgstr "Layer control indices cannot be remapped"
+
+msgid "warning.layer_control_not_editable:description"
+msgstr "{0} is still a project asset, so its VRC Animator Layer Control indices could not be remapped. Controls pointing after a removed layer now drive a different layer."

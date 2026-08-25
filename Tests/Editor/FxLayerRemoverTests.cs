@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEditor.Animations;
+using VRC.SDK3.Avatars.Components;
 using FEJsTBridge.Infra;
 using Object = UnityEngine.Object;
 
@@ -85,6 +86,73 @@ namespace FEJsTBridge.Tests
         public void GetLayerNames_ReturnsEmpty_ForNull()
         {
             Assert.That(FxLayerRemover.GetLayerNames(null), Is.Empty);
+        }
+
+        [Test]
+        public void Remove_ReturnsIndexMap_ForRemainingLayers()
+        {
+            var result = FxLayerRemover.Remove(_controller, new[] { 1 });
+
+            // 除去したレイヤーは-1、後ろのレイヤーは1つ前へ詰まる
+            Assert.That(result.NewLayerIndices, Is.EqualTo(new[] { 0, -1, 1, 2 }));
+        }
+
+        [Test]
+        public void RemapFxLayerControls_ShiftsIndex_WhenTargetMovedForward()
+        {
+            var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 3);
+
+            var result = FxLayerRemover.RemapFxLayerControls(
+                new[] { _controller }, new[] { 0, -1, 1, 2 });
+
+            Assert.That(control.layer, Is.EqualTo(2));
+            Assert.That(result.RemappedCount, Is.EqualTo(1));
+            Assert.That(result.DetachedOwners, Is.Empty);
+        }
+
+        [Test]
+        public void RemapFxLayerControls_ClearsTarget_WhenTargetWasRemoved()
+        {
+            var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 1);
+
+            var result = FxLayerRemover.RemapFxLayerControls(
+                new[] { _controller }, new[] { 0, -1, 1, 2 });
+
+            // 範囲外の索引はVRChatに無視されるため、誤爆させずに済む
+            Assert.That(control.layer, Is.EqualTo(-1));
+            Assert.That(result.DetachedOwners, Is.EqualTo(new[] { _controller.name }));
+        }
+
+        [Test]
+        public void RemapFxLayerControls_LeavesOtherPlayableLayersAlone()
+        {
+            var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.Gesture, 3);
+
+            var result = FxLayerRemover.RemapFxLayerControls(
+                new[] { _controller }, new[] { 0, -1, 1, 2 });
+
+            Assert.That(control.layer, Is.EqualTo(3));
+            Assert.That(result.RemappedCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void RemapFxLayerControls_LeavesIndexOutsideTheMapAlone()
+        {
+            var control = AddLayerControl(_controller, VRCAnimatorLayerControl.BlendableLayer.FX, 9);
+
+            FxLayerRemover.RemapFxLayerControls(new[] { _controller }, new[] { 0, -1, 1, 2 });
+
+            Assert.That(control.layer, Is.EqualTo(9));
+        }
+
+        private static VRCAnimatorLayerControl AddLayerControl(
+            AnimatorController controller, VRCAnimatorLayerControl.BlendableLayer playable, int layer)
+        {
+            var state = controller.layers[0].stateMachine.AddState("Control");
+            var control = state.AddStateMachineBehaviour<VRCAnimatorLayerControl>();
+            control.playable = playable;
+            control.layer = layer;
+            return control;
         }
 
         private void SetSyncedLayerIndex(int layerIndex, int syncedLayerIndex)

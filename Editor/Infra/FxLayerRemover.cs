@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.Animations;
-using VRC.SDK3.Avatars.Components;
 using UnityEngine;
+using VRC.SDK3.Avatars.Components;
 
 namespace FEJsTBridge.Infra
 {
@@ -12,6 +13,7 @@ namespace FEJsTBridge.Infra
     /// 取り除く相手はビルド中のFXであり、素体のアセットではない。
     /// Modular AvatarがResolvingフェーズで入力コントローラを複製するため、
     /// Generatingフェーズで触るコントローラはすでに複製されている。
+    /// 複製されていないアセットを渡された場合に備え、書き換える側で永続アセットかを確かめる。
     /// </summary>
     internal static class FxLayerRemover
     {
@@ -21,7 +23,7 @@ namespace FEJsTBridge.Infra
         /// </summary>
         public static AnimatorController FindFxController(GameObject avatarRoot)
         {
-            var descriptor = avatarRoot != null ? avatarRoot.GetComponent<VRCAvatarDescriptor>() : null;
+            var descriptor = FindDescriptor(avatarRoot);
             if (descriptor == null)
             {
                 return null;
@@ -31,11 +33,37 @@ namespace FEJsTBridge.Infra
             {
                 if (layer.type == VRCAvatarDescriptor.AnimLayerType.FX)
                 {
-                    return layer.animatorController as AnimatorController;
+                    return AnimatorControllerResolver.Resolve(layer.animatorController);
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// アバターが持つ全プレイアブルレイヤーのコントローラを集める
+        /// FXのレイヤーを指すVRCAnimatorLayerControlは、FX以外のコントローラにも置かれうる
+        /// </summary>
+        public static IReadOnlyList<AnimatorController> CollectAvatarControllers(GameObject avatarRoot)
+        {
+            var descriptor = FindDescriptor(avatarRoot);
+            if (descriptor == null)
+            {
+                return new AnimatorController[0];
+            }
+
+            var controllers = new List<AnimatorController>();
+
+            foreach (var layer in descriptor.baseAnimationLayers.Concat(descriptor.specialAnimationLayers))
+            {
+                var controller = AnimatorControllerResolver.Resolve(layer.animatorController);
+                if (controller != null && !controllers.Contains(controller))
+                {
+                    controllers.Add(controller);
+                }
+            }
+
+            return controllers;
         }
 
         public static IReadOnlyList<string> GetLayerNames(AnimatorController controller)
@@ -55,14 +83,14 @@ namespace FEJsTBridge.Infra
         {
             if (controller == null || layerIndices == null || layerIndices.Count == 0)
             {
-                return new FxLayerRemovalResult(new string[0], new string[0]);
+                return FxLayerRemovalResult.Empty;
             }
 
             var layers = controller.layers;
             var removing = new HashSet<int>(layerIndices.Where(index => index >= 0 && index < layers.Length));
             if (removing.Count == 0)
             {
-                return new FxLayerRemovalResult(new string[0], new string[0]);
+                return FxLayerRemovalResult.Empty;
             }
 
             var removedNames = removing.OrderBy(index => index).Select(index => layers[index].name).ToArray();
@@ -83,7 +111,127 @@ namespace FEJsTBridge.Infra
 
             var detached = FixSyncedLayerIndices(controller, newIndices);
 
-            return new FxLayerRemovalResult(removedNames, detached);
+            return new FxLayerRemovalResult(removedNames, detached, newIndices);
+        }
+
+        /// <summary>
+        /// FXのレイヤーを索引で指すVRCAnimatorLayerControlを、除去後の索引へ付け替える
+        ///
+        /// 索引は数値でしか持てないため、付け替えないと別のレイヤーを操作してしまう。
+        /// 指していたレイヤーごと除去された場合は、範囲外の索引にして無効化する
+        /// (VRChatは範囲外の索引を無視する)。
+        /// </summary>
+        public static LayerControlRemapResult RemapFxLayerControls(
+            IEnumerable<AnimatorController> controllers,
+            IReadOnlyList<int> newIndices)
+        {
+            var detachedOwners = new List<string>();
+            var skippedControllers = new List<string>();
+            var remappedCount = 0;
+
+            if (controllers == null || newIndices == null)
+            {
+                return LayerControlRemapResult.Empty;
+            }
+
+            foreach (var controller in controllers)
+            {
+                if (controller == null)
+                {
+                    continue;
+                }
+
+                var targets = CollectFxLayerControls(controller)
+                    .Where(control => NeedsRemap(control, newIndices))
+                    .ToArray();
+                if (targets.Length == 0)
+                {
+                    continue;
+                }
+
+                // 複製されていないアセットは書き換えない
+                if (EditorUtility.IsPersistent(controller))
+                {
+                    skippedControllers.Add(controller.name);
+                    continue;
+                }
+
+                foreach (var control in targets)
+                {
+                    var resolved = newIndices[control.layer];
+                    if (resolved < 0)
+                    {
+                        detachedOwners.Add(controller.name);
+                        control.layer = -1;
+                    }
+                    else
+                    {
+                        control.layer = resolved;
+                    }
+
+                    remappedCount++;
+                }
+            }
+
+            return new LayerControlRemapResult(remappedCount, detachedOwners, skippedControllers);
+        }
+
+        private static bool NeedsRemap(VRCAnimatorLayerControl control, IReadOnlyList<int> newIndices)
+        {
+            if (control.playable != VRCAnimatorLayerControl.BlendableLayer.FX)
+            {
+                return false;
+            }
+
+            if (control.layer < 0 || control.layer >= newIndices.Count)
+            {
+                return false;
+            }
+
+            return newIndices[control.layer] != control.layer;
+        }
+
+        private static IEnumerable<VRCAnimatorLayerControl> CollectFxLayerControls(AnimatorController controller)
+        {
+            foreach (var layer in controller.layers)
+            {
+                foreach (var behaviour in CollectBehaviours(layer.stateMachine))
+                {
+                    if (behaviour is VRCAnimatorLayerControl control && control != null)
+                    {
+                        yield return control;
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<StateMachineBehaviour> CollectBehaviours(AnimatorStateMachine stateMachine)
+        {
+            if (stateMachine == null)
+            {
+                yield break;
+            }
+
+            foreach (var behaviour in stateMachine.behaviours)
+            {
+                yield return behaviour;
+            }
+
+            foreach (var state in stateMachine.states)
+            {
+                foreach (var behaviour in state.state.behaviours)
+                {
+                    yield return behaviour;
+                }
+            }
+
+            foreach (var child in stateMachine.stateMachines)
+            {
+                foreach (var behaviour in CollectBehaviours(child.stateMachine))
+                {
+                    yield return behaviour;
+                }
+            }
         }
 
         /// <summary>
@@ -127,19 +275,58 @@ namespace FEJsTBridge.Infra
 
             return detached;
         }
+
+        private static VRCAvatarDescriptor FindDescriptor(GameObject avatarRoot)
+        {
+            return avatarRoot != null ? avatarRoot.GetComponent<VRCAvatarDescriptor>() : null;
+        }
     }
 
     internal sealed class FxLayerRemovalResult
     {
-        public FxLayerRemovalResult(IReadOnlyList<string> removedLayerNames, IReadOnlyList<string> detachedSyncedLayerNames)
+        public static readonly FxLayerRemovalResult Empty =
+            new FxLayerRemovalResult(new string[0], new string[0], new int[0]);
+
+        public FxLayerRemovalResult(
+            IReadOnlyList<string> removedLayerNames,
+            IReadOnlyList<string> detachedSyncedLayerNames,
+            IReadOnlyList<int> newLayerIndices)
         {
             RemovedLayerNames = removedLayerNames;
             DetachedSyncedLayerNames = detachedSyncedLayerNames;
+            NewLayerIndices = newLayerIndices;
         }
 
         public IReadOnlyList<string> RemovedLayerNames { get; }
 
         /// <summary>参照先を失ったSyncedレイヤーの名前</summary>
         public IReadOnlyList<string> DetachedSyncedLayerNames { get; }
+
+        /// <summary>除去前の索引から除去後の索引への対応表。除去されたレイヤーは -1</summary>
+        public IReadOnlyList<int> NewLayerIndices { get; }
+    }
+
+    internal sealed class LayerControlRemapResult
+    {
+        public static readonly LayerControlRemapResult Empty =
+            new LayerControlRemapResult(0, new string[0], new string[0]);
+
+        public LayerControlRemapResult(
+            int remappedCount,
+            IReadOnlyList<string> detachedOwners,
+            IReadOnlyList<string> skippedControllers)
+        {
+            RemappedCount = remappedCount;
+            DetachedOwners = detachedOwners;
+            SkippedControllers = skippedControllers;
+        }
+
+        public int RemappedCount { get; }
+
+        /// <summary>指していたレイヤーごと除去されたVRCAnimatorLayerControlを持つコントローラ名</summary>
+        public IReadOnlyList<string> DetachedOwners { get; }
+
+        /// <summary>永続アセットのため書き換えなかったコントローラ名</summary>
+        public IReadOnlyList<string> SkippedControllers { get; }
     }
 }

@@ -48,13 +48,8 @@ namespace FEJsTBridge.Infra
         /// </summary>
         internal static IReadOnlyCollection<string> GetParameterNames(RuntimeAnimatorController runtimeController)
         {
-            var resolved = runtimeController;
-            while (resolved is AnimatorOverrideController overrideController)
-            {
-                resolved = overrideController.runtimeAnimatorController;
-            }
-
-            if (!(resolved is AnimatorController controller))
+            var controller = AnimatorControllerResolver.Resolve(runtimeController);
+            if (controller == null)
             {
                 return null;
             }

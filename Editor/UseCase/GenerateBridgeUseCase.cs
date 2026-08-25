@@ -173,6 +173,15 @@ namespace FEJsTBridge.UseCase
                 return;
             }
 
+            // ビルド中のFXはModular Avatarが複製したものである。
+            // 複製されていない場合は素体のアセットそのものなので、書き換えずに知らせる
+            if (EditorUtility.IsPersistent(controller))
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.fx_not_editable");
+                return;
+            }
+
             var result = FxLayerRemover.Remove(controller, plan.LayerIndices);
 
             ErrorReport.ReportError(
@@ -185,6 +194,30 @@ namespace FEJsTBridge.UseCase
             {
                 ErrorReport.ReportError(
                     Localization.Localizer, ErrorSeverity.NonFatal, "warning.synced_layer_detached", detached);
+            }
+
+            RemapFxLayerControls(avatarRoot, result.NewLayerIndices);
+        }
+
+        /// <summary>
+        /// FXのレイヤーを索引で指すVRCAnimatorLayerControlを、除去後の索引へ付け替える
+        /// 付け替えないと、除去でずれた分だけ別のレイヤーを操作してしまう
+        /// </summary>
+        private static void RemapFxLayerControls(GameObject avatarRoot, IReadOnlyList<int> newLayerIndices)
+        {
+            var remap = FxLayerRemover.RemapFxLayerControls(
+                FxLayerRemover.CollectAvatarControllers(avatarRoot), newLayerIndices);
+
+            foreach (var owner in remap.DetachedOwners.Distinct())
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_control_detached", owner);
+            }
+
+            foreach (var skipped in remap.SkippedControllers.Distinct())
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_control_not_editable", skipped);
             }
         }
 

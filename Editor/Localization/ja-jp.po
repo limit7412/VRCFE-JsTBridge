@@ -120,3 +120,25 @@ msgstr "FXレイヤーを取り除きました"
 
 msgid "info.layers_removed:description"
 msgstr "{0}"
+
+# FXレイヤー除去の安全側の処理
+msgid "warning.fx_not_editable"
+msgstr "FXコントローラを書き換えられません"
+
+msgid "warning.fx_not_editable:description"
+msgstr "FXがプロジェクトのアセットのままのため、レイヤーの除去を見送りました。素体のアセットを壊さないための処置です。"
+
+msgid "warning.fx_not_editable:hint"
+msgstr "Modular Avatarがビルド中にコントローラを複製するため、通常はこの警告は出ません。"
+
+msgid "warning.layer_control_detached"
+msgstr "レイヤー操作の参照先が無くなりました"
+
+msgid "warning.layer_control_detached:description"
+msgstr "{0}にあるVRC Animator Layer Controlが、除去したFXレイヤーを指していました。誤って別のレイヤーを操作しないよう、参照を無効にしました。"
+
+msgid "warning.layer_control_not_editable"
+msgstr "レイヤー操作の索引を付け替えられません"
+
+msgid "warning.layer_control_not_editable:description"
+msgstr "{0}がプロジェクトのアセットのままのため、VRC Animator Layer Controlの索引を付け替えられませんでした。除去したレイヤーより後ろを指す操作が、別のレイヤーへずれます。"
