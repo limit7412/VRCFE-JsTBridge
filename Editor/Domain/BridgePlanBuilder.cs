@@ -78,6 +78,12 @@ namespace FEJsTBridge.Domain
         /// JerryとFaceEmoはどちらもステート突入時にTracking Controlを一度だけ適用する。
         /// バイパスはDriverの連鎖で成立するぶんFaceEmo側の適用が必ず後になり、
         /// Jerryの適用を上書きしてしまうため、さらに後から適用し直す。
+        ///
+        /// 適用し直しは一度きりにせず、バイパス継続中はApplyからArmedへ周期的に戻して繰り返す。
+        /// 後からjoinした人のクライアントではアバターのロード中にフレームが大きく落ち、
+        /// FaceEmo側の適用がReapplyDelaySecondsを超えて遅れることがある。
+        /// 一度きりだと逆転した適用順のまま残るが、同じ値のTracking Controlの再適用は
+        /// 見た目を変えないため、繰り返しても既にいる人には影響しない。
         /// </summary>
         private static BridgeLayerPlan BuildTrackingReapplyLayer(BridgeSettings settings)
         {
@@ -134,6 +140,15 @@ namespace FEJsTBridge.Domain
                     from,
                     WaitStateName,
                     new[] { TriggerOff(settings) }));
+
+                // 空クリップを1周したらArmedへ戻り、Tracking Controlを適用し直す。
+                // 条件付きの3本を先に並べてあるため、切替追従と解除はこのループより優先される
+                transitions.Add(new BridgeTransitionPlan(
+                    from,
+                    ArmedStateName,
+                    new BridgeConditionPlan[0],
+                    hasExitTime: true,
+                    exitTime: 1.0f));
             }
 
             return new BridgeLayerPlan(TrackingReapplyLayerName, WaitStateName, states, transitions);
