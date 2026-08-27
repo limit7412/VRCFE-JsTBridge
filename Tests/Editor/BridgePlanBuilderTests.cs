@@ -210,7 +210,7 @@ namespace FEJsTBridge.Tests
         [TestCase(false, true)]
         [TestCase(true, false)]
         [TestCase(true, true)]
-        public void ApplyStates_HaveThreeOutgoingTransitions_ForEyeFlipVisemesFlipAndRelease(bool eye, bool visemes)
+        public void ApplyStates_HaveFourOutgoingTransitions_ForEyeFlipVisemesFlipReleaseAndRearm(bool eye, bool visemes)
         {
             var settings = Settings();
             var layer = BridgePlanBuilder.Build(settings)
@@ -218,10 +218,10 @@ namespace FEJsTBridge.Tests
 
             var transitions = layer.TransitionsFrom(BridgePlanBuilder.ApplyStateName(eye, visemes));
 
-            Assert.That(transitions.Count, Is.EqualTo(3));
-            Assert.That(transitions.All(transition => !transition.HasExitTime));
+            Assert.That(transitions.Count, Is.EqualTo(4));
 
             var eyeFlip = transitions.Single(t => t.To == BridgePlanBuilder.ApplyStateName(!eye, visemes));
+            Assert.That(eyeFlip.HasExitTime, Is.False);
             AssertCondition(
                 eyeFlip.Conditions.Single(),
                 BridgeParameterNames.EyeTrackingActive,
@@ -229,6 +229,7 @@ namespace FEJsTBridge.Tests
                 0.5f);
 
             var visemesFlip = transitions.Single(t => t.To == BridgePlanBuilder.ApplyStateName(eye, !visemes));
+            Assert.That(visemesFlip.HasExitTime, Is.False);
             AssertCondition(
                 visemesFlip.Conditions.Single(),
                 BridgeParameterNames.VisemesEnable,
@@ -236,9 +237,18 @@ namespace FEJsTBridge.Tests
                 0f);
 
             var release = transitions.Single(t => t.To == BridgePlanBuilder.WaitStateName);
+            Assert.That(release.HasExitTime, Is.False);
             var expectedOff = BridgePlanBuilder.TriggerOff(settings);
             AssertCondition(
                 release.Conditions.Single(), expectedOff.Parameter, expectedOff.Mode, expectedOff.Threshold);
+
+            var rearm = transitions.Single(t => t.To == BridgePlanBuilder.ArmedStateName);
+            Assert.That(rearm.HasExitTime, Is.True);
+            Assert.That(rearm.ExitTime, Is.EqualTo(1.0f));
+            Assert.That(rearm.Conditions, Is.Empty);
+
+            // 条件付きの3本が優先されるよう、ループは記載順の最後に置く
+            Assert.That(transitions[transitions.Count - 1], Is.SameAs(rearm));
         }
 
         private static void AssertCondition(
