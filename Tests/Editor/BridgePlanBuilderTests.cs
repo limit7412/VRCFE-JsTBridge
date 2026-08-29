@@ -97,8 +97,10 @@ namespace FEJsTBridge.Tests
         {
             var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
 
-            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName).Single();
-            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName).Single();
+            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName)
+                .Single(t => t.To == BridgePlanBuilder.BypassStateName);
+            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName)
+                .Single(t => t.To == BridgePlanBuilder.IdleStateName);
 
             AssertCondition(on.Conditions.Single(),
                 BridgeParameterNames.FacialExpressionsDisabled, BridgeConditionMode.If, 0f);
@@ -114,13 +116,34 @@ namespace FEJsTBridge.Tests
             var layer = BridgePlanBuilder.Build(Settings(BypassTrigger.LipTrackingOnly))
                 .FindLayer(BridgePlanBuilder.BypassLayerName);
 
-            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName).Single();
-            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName).Single();
+            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName)
+                .Single(t => t.To == BridgePlanBuilder.BypassStateName);
+            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName)
+                .Single(t => t.To == BridgePlanBuilder.IdleStateName);
 
             AssertCondition(on.Conditions.Single(),
                 BridgeParameterNames.LipTrackingActive, BridgeConditionMode.Greater, 0.5f);
             AssertCondition(off.Conditions.Single(),
                 BridgeParameterNames.LipTrackingActive, BridgeConditionMode.Less, 0.5f);
+        }
+
+        [TestCase(BridgePlanBuilder.IdleStateName)]
+        [TestCase(BridgePlanBuilder.BypassStateName)]
+        public void BypassLayer_States_ReenterThemselves_ToRefireDriver(string stateName)
+        {
+            var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
+
+            var transitions = layer.TransitionsFrom(stateName);
+
+            Assert.That(transitions.Count, Is.EqualTo(2));
+
+            var loop = transitions.Single(t => t.To == stateName);
+            Assert.That(loop.HasExitTime, Is.True);
+            Assert.That(loop.ExitTime, Is.EqualTo(1.0f));
+            Assert.That(loop.Conditions, Is.Empty);
+
+            // トリガーの切替が優先されるよう、ループは記載順の最後に置く
+            Assert.That(transitions[transitions.Count - 1], Is.SameAs(loop));
         }
 
         [Test]

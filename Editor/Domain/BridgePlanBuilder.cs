@@ -47,7 +47,14 @@ namespace FEJsTBridge.Domain
         }
 
         /// <summary>
-        /// トリガーをCN_FORCE_BYPASS_ENABLEへ写すだけのレイヤー
+        /// トリガーをCN_FORCE_BYPASS_ENABLEへ写すレイヤー
+        ///
+        /// 写しは一度きりにせず、空クリップを1周するたびに同じステートへ入り直して
+        /// Driverを発火し直す。アバターのロード中はDriverの書き込みが失われることがあり、
+        /// ステートが目的地に着いたまま値だけが既定へ戻ると、装着者がトラッキングを
+        /// 切り替え直すまでバイパスが成立しない。FaceEmo側の遷移はこの値そのものを
+        /// 条件に持つため、書き直しさえ届けば以降の連鎖はFaceEmoの中で復旧する。
+        /// 同じ値の書き直しは無害で、非同期パラメータのため同期帯域も使わない。
         /// </summary>
         private static BridgeLayerPlan BuildBypassLayer(BridgeSettings settings)
         {
@@ -67,6 +74,21 @@ namespace FEJsTBridge.Domain
             {
                 new BridgeTransitionPlan(IdleStateName, BypassStateName, new[] { TriggerOn(settings) }),
                 new BridgeTransitionPlan(BypassStateName, IdleStateName, new[] { TriggerOff(settings) }),
+
+                // 空クリップを1周したら同じステートへ入り直し、Driverを発火し直す。
+                // 条件付きの遷移を記載順の先に置いてあるため、トリガーの切替はループより優先される
+                new BridgeTransitionPlan(
+                    IdleStateName,
+                    IdleStateName,
+                    new BridgeConditionPlan[0],
+                    hasExitTime: true,
+                    exitTime: 1.0f),
+                new BridgeTransitionPlan(
+                    BypassStateName,
+                    BypassStateName,
+                    new BridgeConditionPlan[0],
+                    hasExitTime: true,
+                    exitTime: 1.0f),
             };
 
             return new BridgeLayerPlan(BypassLayerName, IdleStateName, states, transitions);
@@ -203,6 +225,8 @@ namespace FEJsTBridge.Domain
 
         private static BridgeConditionPlan VisemesCondition(bool enabled)
         {
+            // Jerry自身のMouth切替はメニューの同期パラメータをそのまま条件に持つため、
+            // 同じ値を読めばApplyステートの選択がJerryの適用と一致する
             return new BridgeConditionPlan(
                 BridgeParameterNames.VisemesEnable,
                 enabled ? BridgeConditionMode.If : BridgeConditionMode.IfNot);

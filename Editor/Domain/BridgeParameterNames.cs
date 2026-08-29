@@ -18,8 +18,14 @@ namespace FEJsTBridge.Domain
         /// <summary>口のトラッキングの有効状態。animator上はFloatだが値は0か1しか取らない</summary>
         public const string LipTrackingActive = "LipTrackingActive";
 
-        /// <summary>Jerryがリップシンクの有効状態を持つ非同期パラメータ</summary>
-        public const string VisemesEnable = "State/VisemesEnable";
+        /// <summary>
+        /// Jerryのメニューでリップシンクを切り替える同期パラメータ
+        ///
+        /// Jerry内部には非同期の写し（State/VisemesEnable）もあるが、写しは各クライアントの
+        /// Driver実行で作られるため、アバターのロード中に失われると値が既定へ戻ったまま残る。
+        /// 同期パラメータは値そのものが届き直すため、ブリッジはこちらを読む。
+        /// </summary>
+        public const string VisemesEnable = "VisemesEnable";
 
         /// <summary>FaceEmoのバイパスを起動する外部連携用パラメータ</summary>
         public const string ForceBypassEnable = "CN_FORCE_BYPASS_ENABLE";

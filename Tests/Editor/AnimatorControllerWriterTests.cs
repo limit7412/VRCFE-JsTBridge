@@ -161,7 +161,8 @@ namespace FEJsTBridge.Tests
             var controller = Write(Settings());
             var bypassLayer = controller.layers[0].stateMachine;
 
-            var transition = FindState(bypassLayer, BridgePlanBuilder.IdleStateName).transitions.Single();
+            var transition = FindState(bypassLayer, BridgePlanBuilder.IdleStateName).transitions
+                .Single(t => t.destinationState.name == BridgePlanBuilder.BypassStateName);
 
             Assert.That(transition.destinationState.name, Is.EqualTo(BridgePlanBuilder.BypassStateName));
             Assert.That(transition.hasExitTime, Is.False);
@@ -170,6 +171,20 @@ namespace FEJsTBridge.Tests
             Assert.That(transition.conditions[0].parameter,
                 Is.EqualTo(BridgeParameterNames.FacialExpressionsDisabled));
             Assert.That(transition.conditions[0].mode, Is.EqualTo(AnimatorConditionMode.If));
+        }
+
+        [Test]
+        public void Write_WritesSelfTransition_ForBypassStates()
+        {
+            var controller = Write(Settings());
+            var bypassLayer = controller.layers[0].stateMachine;
+
+            var bypass = FindState(bypassLayer, BridgePlanBuilder.BypassStateName);
+            var loop = bypass.transitions.Single(t => t.destinationState == bypass);
+
+            Assert.That(loop.hasExitTime, Is.True);
+            Assert.That(loop.exitTime, Is.EqualTo(1.0f));
+            Assert.That(loop.conditions, Is.Empty);
         }
 
         [Test]
