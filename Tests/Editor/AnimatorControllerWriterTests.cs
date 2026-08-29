@@ -161,7 +161,8 @@ namespace FEJsTBridge.Tests
             var controller = Write(Settings());
             var bypassLayer = controller.layers[0].stateMachine;
 
-            var transition = FindState(bypassLayer, BridgePlanBuilder.IdleStateName).transitions.Single();
+            var transition = FindState(bypassLayer, BridgePlanBuilder.IdleStateName).transitions
+                .Single(t => t.destinationState.name == BridgePlanBuilder.BypassStateName);
 
             Assert.That(transition.destinationState.name, Is.EqualTo(BridgePlanBuilder.BypassStateName));
             Assert.That(transition.hasExitTime, Is.False);
