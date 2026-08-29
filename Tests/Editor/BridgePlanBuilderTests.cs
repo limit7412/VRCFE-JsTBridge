@@ -129,7 +129,7 @@ namespace FEJsTBridge.Tests
 
         [TestCase(BridgePlanBuilder.IdleStateName)]
         [TestCase(BridgePlanBuilder.BypassStateName)]
-        public void BypassLayer_States_ReenterThemselves_ToRefireDriver(string stateName)
+        public void BypassLayer_States_ExitToRedrive_ToRefireDriver(string stateName)
         {
             var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
 
@@ -137,13 +137,38 @@ namespace FEJsTBridge.Tests
 
             Assert.That(transitions.Count, Is.EqualTo(2));
 
-            var loop = transitions.Single(t => t.To == stateName);
+            var loop = transitions.Single(t => t.To == BridgePlanBuilder.RedriveStateName);
             Assert.That(loop.HasExitTime, Is.True);
             Assert.That(loop.ExitTime, Is.EqualTo(1.0f));
             Assert.That(loop.Conditions, Is.Empty);
 
             // トリガーの切替が優先されるよう、ループは記載順の最後に置く
             Assert.That(transitions[transitions.Count - 1], Is.SameAs(loop));
+        }
+
+        [Test]
+        public void RedriveState_ReturnsImmediately_ToStateMatchingTrigger()
+        {
+            var settings = Settings();
+            var layer = BridgePlanBuilder.Build(settings).FindLayer(BridgePlanBuilder.BypassLayerName);
+
+            Assert.That(layer.States.Count, Is.EqualTo(3));
+            Assert.That(layer.FindState(BridgePlanBuilder.RedriveStateName).Driver, Is.Null);
+
+            var transitions = layer.TransitionsFrom(BridgePlanBuilder.RedriveStateName);
+            Assert.That(transitions.Count, Is.EqualTo(2));
+
+            var toBypass = transitions.Single(t => t.To == BridgePlanBuilder.BypassStateName);
+            var expectedOn = BridgePlanBuilder.TriggerOn(settings);
+            Assert.That(toBypass.HasExitTime, Is.False);
+            AssertCondition(
+                toBypass.Conditions.Single(), expectedOn.Parameter, expectedOn.Mode, expectedOn.Threshold);
+
+            var toIdle = transitions.Single(t => t.To == BridgePlanBuilder.IdleStateName);
+            var expectedOff = BridgePlanBuilder.TriggerOff(settings);
+            Assert.That(toIdle.HasExitTime, Is.False);
+            AssertCondition(
+                toIdle.Conditions.Single(), expectedOff.Parameter, expectedOff.Mode, expectedOff.Threshold);
         }
 
         [Test]

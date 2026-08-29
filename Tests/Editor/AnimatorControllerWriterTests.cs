@@ -174,20 +174,6 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void Write_WritesSelfTransition_ForBypassStates()
-        {
-            var controller = Write(Settings());
-            var bypassLayer = controller.layers[0].stateMachine;
-
-            var bypass = FindState(bypassLayer, BridgePlanBuilder.BypassStateName);
-            var loop = bypass.transitions.Single(t => t.destinationState == bypass);
-
-            Assert.That(loop.hasExitTime, Is.True);
-            Assert.That(loop.exitTime, Is.EqualTo(1.0f));
-            Assert.That(loop.conditions, Is.Empty);
-        }
-
-        [Test]
         public void Write_UsesExitTime_ForArmedTransitions()
         {
             var controller = Write(Settings());

@@ -13,6 +13,7 @@ namespace FEJsTBridge.Domain
 
         public const string IdleStateName = "Idle";
         public const string BypassStateName = "Bypass";
+        public const string RedriveStateName = "Redrive";
         public const string WaitStateName = "Wait";
         public const string ArmedStateName = "Armed";
 
@@ -49,12 +50,17 @@ namespace FEJsTBridge.Domain
         /// <summary>
         /// トリガーをCN_FORCE_BYPASS_ENABLEへ写すレイヤー
         ///
-        /// 写しは一度きりにせず、空クリップを1周するたびに同じステートへ入り直して
-        /// Driverを発火し直す。アバターのロード中はDriverの書き込みが失われることがあり、
-        /// ステートが目的地に着いたまま値だけが既定へ戻ると、装着者がトラッキングを
-        /// 切り替え直すまでバイパスが成立しない。FaceEmo側の遷移はこの値そのものを
-        /// 条件に持つため、書き直しさえ届けば以降の連鎖はFaceEmoの中で復旧する。
+        /// 写しは一度きりにせず、空クリップを1周するたびにRedriveを経由して
+        /// 元のステートへ入り直し、Driverを発火し直す。アバターのロード中は
+        /// Driverの書き込みが失われることがあり、ステートが目的地に着いたまま
+        /// 値だけが既定へ戻ると、装着者がトラッキングを切り替え直すまで
+        /// バイパスが成立しない。FaceEmo側の遷移はこの値そのものを条件に持つため、
+        /// 書き直しさえ届けば以降の連鎖はFaceEmoの中で復旧する。
         /// 同じ値の書き直しは無害で、非同期パラメータのため同期帯域も使わない。
+        ///
+        /// 入り直しに自己遷移を使わないのは、通常遷移の自己遷移で突入時の挙動が
+        /// 再実行されるかをUnityが仕様として明言していないため。別ステートを
+        /// 経由する形はTrackingReapplyのArmedと同じ、確実に動く構造である。
         /// </summary>
         private static BridgeLayerPlan BuildBypassLayer(BridgeSettings settings)
         {
@@ -68,6 +74,7 @@ namespace FEJsTBridge.Domain
                     BypassStateName,
                     DefaultClipLengthSeconds,
                     driver: BypassDriver(1f)),
+                new BridgeStatePlan(RedriveStateName, DefaultClipLengthSeconds),
             };
 
             var transitions = new[]
@@ -75,20 +82,26 @@ namespace FEJsTBridge.Domain
                 new BridgeTransitionPlan(IdleStateName, BypassStateName, new[] { TriggerOn(settings) }),
                 new BridgeTransitionPlan(BypassStateName, IdleStateName, new[] { TriggerOff(settings) }),
 
-                // 空クリップを1周したら同じステートへ入り直し、Driverを発火し直す。
-                // 条件付きの遷移を記載順の先に置いてあるため、トリガーの切替はループより優先される
+                // 空クリップを1周したらRedriveへ抜ける。条件付きの遷移を記載順の
+                // 先に置いてあるため、トリガーの切替はこのループより優先される
                 new BridgeTransitionPlan(
                     IdleStateName,
-                    IdleStateName,
+                    RedriveStateName,
                     new BridgeConditionPlan[0],
                     hasExitTime: true,
                     exitTime: 1.0f),
                 new BridgeTransitionPlan(
                     BypassStateName,
-                    BypassStateName,
+                    RedriveStateName,
                     new BridgeConditionPlan[0],
                     hasExitTime: true,
                     exitTime: 1.0f),
+
+                // Redriveはトリガーの現在値に合うステートへ即座に戻る中継で、
+                // 戻った先の突入でDriverが発火し直す。滞在は実質1フレームのため、
+                // トリガー切替への応答は経由してもほぼ遅れない
+                new BridgeTransitionPlan(RedriveStateName, BypassStateName, new[] { TriggerOn(settings) }),
+                new BridgeTransitionPlan(RedriveStateName, IdleStateName, new[] { TriggerOff(settings) }),
             };
 
             return new BridgeLayerPlan(BypassLayerName, IdleStateName, states, transitions);
