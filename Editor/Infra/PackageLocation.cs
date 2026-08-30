@@ -2,24 +2,34 @@ using System;
 using System.IO;
 using UnityEditor.Compilation;
 using UnityEngine;
+using FEJsTBridge.Domain;
 
 namespace FEJsTBridge.Infra
 {
     /// <summary>
-    /// 手元に入っているパッケージの版を、asmdefの位置を起点に読む。
+    /// 手元に入っているパッケージの形態と版を、asmdefの位置を起点に調べる。
     ///
-    /// Assets/配下・Packages/配下のどちらに置かれても解決できるよう、
-    /// Localization.GetLocalizationRootと同じくasmdefから辿る。
+    /// 解決の規則はPackageInstallationが持ち、ここはUnityへの問い合わせとファイルの読み取りを担う。
     /// 結果はドメインリロードまで変わらないため、一度求めたら使い回す
     /// </summary>
     internal static class PackageLocation
     {
         private const string EditorAssemblyName = "FEJsTBridge.Editor";
-        private const string EditorDirectoryName = "Editor";
         private const string ManifestFileName = "package.json";
 
         private static bool _resolved;
+        private static InstallLocation _location;
         private static string _version;
+
+        /// <summary>インストール形態。判別できなければUnknown</summary>
+        public static InstallLocation Location
+        {
+            get
+            {
+                Resolve();
+                return _location;
+            }
+        }
 
         /// <summary>package.jsonが持つ手元の版。読めなければnull</summary>
         public static string Version
@@ -41,7 +51,7 @@ namespace FEJsTBridge.Infra
             _resolved = true;
 
             var asmdefPath = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(EditorAssemblyName);
-            if (!TryResolvePackageRoot(asmdefPath, out var packageRoot))
+            if (!PackageInstallation.TryResolve(asmdefPath, out _location, out var packageRoot))
             {
                 return;
             }
@@ -49,43 +59,10 @@ namespace FEJsTBridge.Infra
             _version = ReadVersion(packageRoot);
         }
 
-        /// <summary>
-        /// 「ルート/Editor/なにか.asmdef」の形を前提に、パッケージのルートを取り出す。
-        ///
-        /// 形が合わないパスでは偽を返す。
-        /// ルートが分からなければpackage.jsonも読めず、手元の版が確かめられない
-        /// </summary>
-        internal static bool TryResolvePackageRoot(string editorAsmdefPath, out string packageRoot)
-        {
-            packageRoot = null;
-
-            if (string.IsNullOrWhiteSpace(editorAsmdefPath))
-            {
-                return false;
-            }
-
-            // Unityのパスは`/`区切りだが、環境によっては`\`が混ざったものが返る
-            var segments = editorAsmdefPath.Trim().Replace('\\', '/').Split('/');
-
-            // ルート・Editor・asmdefの3要素が最低限必要
-            if (segments.Length < 3)
-            {
-                return false;
-            }
-
-            if (!string.Equals(segments[segments.Length - 2], EditorDirectoryName, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            packageRoot = string.Join("/", segments, 0, segments.Length - 2);
-            return true;
-        }
-
         private static string ReadVersion(string packageRoot)
         {
-            // リリース時にrelease.ymlがタグでversionを書き換えてからzipへ入れるため、
-            // 配布物のpackage.jsonは常にそのリリースの版を持つ
+            // リリース時にbuild-packages.shがタグでversionを書き換えてから配布物へ入れるため、
+            // VPM用zipもbooth用unitypackageも、package.jsonは常にそのリリースの版を持つ
             try
             {
                 var manifestPath = Path.Combine(packageRoot, ManifestFileName);

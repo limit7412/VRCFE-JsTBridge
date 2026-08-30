@@ -82,14 +82,14 @@ jobs:
           fi
 
           # zipへ実際に入るファイルだけを対象とする。
-          # 判定の対象は「Create package zip」が固める内容と一致させること。
+          # 判定の対象は`build-packages.sh`が固める内容と一致させること。
           # 一致していないと、パッケージの中身が同じプレリリースが積み上がるか、
           # 逆に中身が変わったのに作られないかのどちらかが起きる。
           #
           # テストコード(Tests/)とREADMEはzipへ入らないため対象外。
-          # このワークフロー自身も対象に含めない。手順を変えてもzipの中身は変わらず、
-          # 中身の同じプレリリースが増えるだけになる。
-          # 手順を変えて作り直したいときは`workflow_dispatch`から実行する。
+          # このワークフロー自身と生成スクリプトも対象に含めない。手順の変更でzipの中身が
+          # 変わることはあるが、その頻度でプレリリースを積むより、作り直したいときに
+          # `workflow_dispatch`から実行する方が扱いやすい。
           RELEVANT=false
           COUNT=0
           while IFS=$'\t' read -r NEW_PATH OLD_PATH; do
@@ -182,37 +182,10 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
-      # 以降のzip生成はrelease.ymlの同名ステップと同じ内容にする。
-      # 片方だけ変更するとプレリリースと安定版で中身の違うパッケージができるため、
-      # 変更する場合は両方を揃えること。
-      - name: Update package.json version
-        run: |
-          jq '.version = "${{ steps.version.outputs.version }}"' package.json > package.json.tmp
-          mv package.json.tmp package.json
-
-      - name: Create package zip
-        run: |
-          PACKAGE_NAME="com.qazx7412.kx-vrc-fe-jst-bridge"
-          ZIP_NAME="${PACKAGE_NAME}-${{ steps.version.outputs.version }}.zip"
-
-          # Create zip with package contents
-          #
-          # `.meta`も含める。Unityはアセットへの参照を`.meta`のGUIDで解決するため、
-          # 配布物から外すと導入のたびにGUIDが振り直され、更新後のアバターで
-          # コンポーネントがMissing Scriptになる。
-          # ディレクトリ自身の`.meta`はパッケージ直下にあるので個別に指定する。
-          zip -r "$ZIP_NAME" \
-            package.json \
-            package.json.meta \
-            LICENSE \
-            LICENSE.meta \
-            Runtime/ \
-            Runtime.meta \
-            Editor/ \
-            Editor.meta
-
-          echo "Created: $ZIP_NAME"
-          ls -la "$ZIP_NAME"
+      # VPM用とbooth用のzipを作る。
+      # 生成の中身はrelease.ymlと共通のスクリプトにあり、片方だけ変わることはない
+      - name: Build packages
+        run: .github/scripts/build-packages.sh "${{ steps.version.outputs.version }}"
 
       - name: Create pre-release
         uses: softprops/action-gh-release@v3

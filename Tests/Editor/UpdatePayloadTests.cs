@@ -4,10 +4,9 @@ using FEJsTBridge.Infra;
 namespace FEJsTBridge.Tests
 {
     /// <summary>
-    /// 更新確認が読み取る2つのJSON (releases/latestの応答とpackage.json) と、
-    /// package.jsonの置き場所の解釈の検証
+    /// 更新確認が読み取る2つのJSON (releases/latestの応答とpackage.json) の解釈の検証
     ///
-    /// どのJSONも手元で作ったものではないため、想定と違う形が来ても
+    /// どちらも手元で作ったものではないため、想定と違う形が来ても
     /// 例外を投げずに「分からなかった」として返ることを確かめる。
     /// </summary>
     public class UpdatePayloadTests
@@ -72,34 +71,6 @@ namespace FEJsTBridge.Tests
         {
             Assert.That(PackageLocation.TryParseVersion(json, out var version), Is.False);
             Assert.That(version, Is.Null);
-        }
-
-        // Assets/配下・Packages/配下のどちらへ置かれてもpackage.jsonへ辿り着けること
-        [TestCase(
-            "Packages/com.qazx7412.kx-vrc-fe-jst-bridge/Editor/FEJsTBridge.Editor.asmdef",
-            "Packages/com.qazx7412.kx-vrc-fe-jst-bridge")]
-        [TestCase(
-            "Assets/AtelierKairox/VRCFE-JsTBridge/Editor/FEJsTBridge.Editor.asmdef",
-            "Assets/AtelierKairox/VRCFE-JsTBridge")]
-        [TestCase(
-            @"Packages\com.qazx7412.kx-vrc-fe-jst-bridge\Editor\FEJsTBridge.Editor.asmdef",
-            "Packages/com.qazx7412.kx-vrc-fe-jst-bridge")]
-        public void TryResolvePackageRoot_TakesTheDirectoryAboveEditor(string asmdefPath, string expected)
-        {
-            Assert.That(PackageLocation.TryResolvePackageRoot(asmdefPath, out var root), Is.True);
-            Assert.That(root, Is.EqualTo(expected));
-        }
-
-        [TestCase((string)null)]
-        [TestCase("")]
-        [TestCase("   ")]
-        [TestCase("FEJsTBridge.Editor.asmdef")]
-        [TestCase("Packages/com.qazx7412.kx-vrc-fe-jst-bridge/FEJsTBridge.Editor.asmdef")]
-        [TestCase("Packages/com.qazx7412.kx-vrc-fe-jst-bridge/Runtime/FEJsTBridge.Runtime.asmdef")]
-        public void TryResolvePackageRoot_Fails_WhenThePathIsNotUnderEditor(string asmdefPath)
-        {
-            Assert.That(PackageLocation.TryResolvePackageRoot(asmdefPath, out var root), Is.False);
-            Assert.That(root, Is.Null);
         }
     }
 }

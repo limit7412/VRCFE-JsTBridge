@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using FEJsTBridge.Domain;
 using FEJsTBridge.Infra;
 using static FEJsTBridge.Localization;
 
@@ -8,11 +9,10 @@ namespace FEJsTBridge.Presentation
     /// <summary>
     /// 更新の確認についての問いかけと、新しい版が出ているときの案内をインスペクタの先頭へ描く。
     ///
-    /// 案内はインストール形態で分けない。
-    /// このパッケージの配布はzip1種類で、VCC/ALCOM経由でも手動の「Add from Archive」でも
-    /// `Packages/`配下へ入るため、置き場所から更新の手段は判別できない。
-    /// 版を差し替える主体はVCC/ALCOMであり、こちらでファイルを置き換えると
-    /// vpm-manifest.jsonの記録と実態がずれるので、案内するのは入手先までにとどめる
+    /// 案内の文面はインストール形態で変わる。
+    /// VPM版の版数はVCC/ALCOMがvpm-manifest.jsonで管理しているため、
+    /// こちらでファイルを置き換えると管理側の記録と実態がずれる。
+    /// booth版には版を管理する主体がおらず、入れ直しが更新の手段になる
     /// </summary>
     internal static class UpdateNotice
     {
@@ -57,7 +57,7 @@ namespace FEJsTBridge.Presentation
                 return;
             }
 
-            EditorGUILayout.HelpBox(S("update.available", tag), MessageType.Info);
+            EditorGUILayout.HelpBox(DescribeUpdate(tag), MessageType.Info);
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button(S("update.open_releases")))
@@ -72,6 +72,19 @@ namespace FEJsTBridge.Presentation
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space();
+        }
+
+        private static string DescribeUpdate(string tag)
+        {
+            switch (PackageLocation.Location)
+            {
+                case InstallLocation.Vpm:
+                    return S("update.available.vpm", tag);
+                case InstallLocation.Booth:
+                    return S("update.available.booth", tag);
+                default:
+                    return S("update.available.unknown", tag);
+            }
         }
     }
 

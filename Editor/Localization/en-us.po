@@ -220,8 +220,14 @@ msgstr "Check for updates"
 msgid "update.consent.disable"
 msgstr "Do not check"
 
-msgid "update.available"
-msgstr "Version {0} is available.\nUpdate through VCC/ALCOM if you installed it that way, or reinstall with the new zip from Releases if you added it by hand."
+msgid "update.available.vpm"
+msgstr "Version {0} is available.\nUpdate through VCC/ALCOM."
+
+msgid "update.available.booth"
+msgstr "Version {0} is available.\nDownload it from Releases, then delete the existing folder under Assets and import it again."
+
+msgid "update.available.unknown"
+msgstr "Version {0} is available."
 
 msgid "update.open_releases"
 msgstr "Open Releases"

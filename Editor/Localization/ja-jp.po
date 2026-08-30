@@ -220,8 +220,14 @@ msgstr "確認する"
 msgid "update.consent.disable"
 msgstr "確認しない"
 
-msgid "update.available"
-msgstr "新しいバージョン {0} が公開されています。\nVCC/ALCOM経由で入れた場合はVCC/ALCOMから、zipから手で入れた場合はReleasesの新しいzipで入れ直してください。"
+msgid "update.available.vpm"
+msgstr "新しいバージョン {0} が公開されています。\nVCC/ALCOMから更新してください。"
+
+msgid "update.available.booth"
+msgstr "新しいバージョン {0} が公開されています。\nReleasesから最新版を入手し、Assets配下の既存フォルダを削除してから入れ直してください。"
+
+msgid "update.available.unknown"
+msgstr "新しいバージョン {0} が公開されています。"
 
 msgid "update.open_releases"
 msgstr "Releasesを開く"
