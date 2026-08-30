@@ -136,6 +136,20 @@ namespace FEJsTBridge.Domain
             return latest.CompareTo(current) > 0;
         }
 
+        /// <summary>
+        /// 2つの表記が同じ版を指すか。
+        ///
+        /// `v0.2.0`と`0.2.0`、`0.2`と`0.2.0`は同じ版として扱う。
+        /// タグとpackage.jsonのversionは書き方が揃うとは限らないため、文字列では比べられない。
+        /// 自己更新が取りに行くのは安定版だけなので、プレリリースは同じ版とみなさない
+        /// </summary>
+        public static bool IsSameVersion(string leftText, string rightText)
+        {
+            return TryParse(leftText, out var left)
+                && TryParse(rightText, out var right)
+                && left.Equals(right);
+        }
+
         public int CompareTo(PackageVersion other)
         {
             var major = Major.CompareTo(other.Major);
