@@ -44,6 +44,11 @@ PINNED_GUIDS = {
 PACKAGE_NAME = "com.qazx7412.kx-vrc-fe-jst-bridge"
 BOOTH_BASENAME = "VRCFE-JsTBridge"
 
+# 自己更新側が同じ前提を持つファイル。
+# booth版はエディタから自分自身を入れ替えるため、取り込み先と、
+# 「このパッケージのunitypackageなら必ず持つ」とされる同梱物が、ここと一致していなければならない
+SELF_UPDATE_PLAN = "Editor/Domain/SelfUpdatePlan.cs"
+
 GUID_PATTERN = re.compile(r"^guid: ([0-9a-f]{32})$", re.MULTILINE)
 
 # 同じ入力から同じバイト列を出すための固定値。
@@ -305,6 +310,9 @@ def command_verify(args):
                     f"取り込み先が`{UNITY_ROOT}`の外を指している: {pathname}",
                 )
 
+    # 自己更新側の前提と食い違っていないか
+    failures.extend(_diff_against_self_update_plan(repo_root, files))
+
     # 既存の`.meta`のGUIDが変わっていないか
     if args.base_ref:
         failures.extend(_diff_guids_against(repo_root, args.base_ref, set(guids.values())))
@@ -315,6 +323,47 @@ def command_verify(args):
 
     print(f"OK: ファイル{len(files)}件、フォルダ{len(folders) + 1}件、エントリ{entry_count}件")
     return 0
+
+
+def _diff_against_self_update_plan(repo_root, files):
+    """自己更新が持つ取り込み先と必須の同梱物が、この配布物と噛み合うか調べる。
+
+    取り込み先がずれると、更新は手元のフォルダを置き換えず、
+    自己更新側の位置へもう一組を作る。同じアセンブリが二組できてコンパイルが通らなくなる。
+
+    必須の同梱物がずれると、配布物が「別のパッケージ」として弾かれ、
+    booth版の利用者はエディタから更新できなくなる
+    """
+    plan = repo_root / SELF_UPDATE_PLAN
+    if not plan.exists():
+        return [f"自己更新の前提を読めない: {SELF_UPDATE_PLAN} が無い"]
+
+    source = plan.read_text(encoding="utf-8")
+
+    root_match = re.search(r'InstallRoot = "([^"]+)"', source)
+    if not root_match:
+        return [f"自己更新の取り込み先を読み取れない: {SELF_UPDATE_PLAN}"]
+
+    problems = []
+    if root_match.group(1) != UNITY_ROOT:
+        problems.append(
+            f"取り込み先が食い違っている: {SELF_UPDATE_PLAN} は {root_match.group(1)}、"
+            f"こちらは {UNITY_ROOT}"
+        )
+
+    # `InstallRoot + "/Editor/..."`の形で並ぶ。ルート自身は接尾辞を持たない
+    required = re.search(r"RequiredPathnames =\s*\{(.*?)\}", source, re.DOTALL)
+    if not required:
+        return problems + [f"自己更新の必須同梱物を読み取れない: {SELF_UPDATE_PLAN}"]
+
+    shipped = set(files)
+    for suffix in re.findall(r'InstallRoot \+ "/([^"]+)"', required.group(1)):
+        if suffix not in shipped:
+            problems.append(
+                f"自己更新が必須としている同梱物が配布物に無い: {suffix} ({SELF_UPDATE_PLAN})"
+            )
+
+    return problems
 
 
 def _diff_guids_against(repo_root, base_ref, shipped_guids):
