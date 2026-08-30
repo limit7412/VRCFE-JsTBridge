@@ -26,6 +26,7 @@ namespace FEJsTBridge.Tests
         private static readonly string[] RequiredKeys =
         {
             "common.ok",
+            "common.cancel",
             "dialog.title",
             "inspector.description",
             "inspector.bypass_trigger.lip_tracking_only",
@@ -89,6 +90,26 @@ namespace FEJsTBridge.Tests
             "update.dismiss",
             "update.settings.enabled",
             "update.settings.description",
+            "update.available.booth_updatable",
+            "update.run",
+            "update.confirm",
+            "update.announce.message",
+            "update.announce.update",
+            "update.announce.later",
+            "update.completed",
+            "update.incomplete",
+            "update.error.unsupported",
+            "update.error.release_missing",
+            "update.error.asset_missing",
+            "update.error.download",
+            "update.error.digest",
+            "update.error.archive",
+            "update.error.contents",
+            "update.error.version",
+            "update.error.scan",
+            "update.error.backup",
+            "update.error.delete",
+            "update.error.playing",
         };
 
         /// <summary>
