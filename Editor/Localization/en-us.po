@@ -209,3 +209,34 @@ msgstr "No conflict"
 
 msgid "inspector.inspect.verdict.managed"
 msgstr "Managed by another tool"
+
+# Update check
+msgid "update.consent.description"
+msgstr "Check GitHub Releases for a newer version?\nThe check runs at most once a day and only requests release information. You can change this later in Preferences > Kx VRC FE-JsT Bridge."
+
+msgid "update.consent.enable"
+msgstr "Check for updates"
+
+msgid "update.consent.disable"
+msgstr "Do not check"
+
+msgid "update.available.vpm"
+msgstr "Version {0} is available.\nUpdate through VCC/ALCOM."
+
+msgid "update.available.booth"
+msgstr "Version {0} is available.\nDownload it from Releases, then delete the existing folder under Assets and import it again."
+
+msgid "update.available.unknown"
+msgstr "Version {0} is available."
+
+msgid "update.open_releases"
+msgstr "Open Releases"
+
+msgid "update.dismiss"
+msgstr "Skip this version"
+
+msgid "update.settings.enabled"
+msgstr "Check for updates"
+
+msgid "update.settings.description"
+msgstr "Queries GitHub Releases at most once a day and shows a notice in the inspector when a newer version is available."

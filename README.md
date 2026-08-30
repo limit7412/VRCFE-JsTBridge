@@ -33,11 +33,40 @@ Jerry's TemplatesとFaceEmoは依存に含めていません。
 
 ### 手動インストール
 
-1. [Releases](https://github.com/limit7412/VRCFE-JsTBridge/releases)からzipファイルをダウンロードする
+1. [Releases](https://github.com/limit7412/VRCFE-JsTBridge/releases)から `com.qazx7412.kx-vrc-fe-jst-bridge-<バージョン>.zip` をダウンロードする
 2. VCCのプロジェクト管理画面で「Add Package」から「Add from Archive」を選ぶ
 3. ダウンロードしたzipファイルを選ぶ
 
 この方法ではVCC/ALCOMが更新を検知しないため、新しいバージョンは手で入れ替えます。
+
+### booth版（unitypackage）
+
+Releasesの `VRCFE-JsTBridge_<バージョン>.zip` に、unitypackageが1つ入っています。
+展開してUnityへドラッグすると `Assets/AtelierKairox/VRCFE-JsTBridge/` へ取り込まれます。
+
+**VPM版と同時に入れないでください。**
+どちらもアセンブリ名が同じため、1つのプロジェクトへ両方を入れるとコンパイルが通りません。
+
+更新するときは `Assets/AtelierKairox/VRCFE-JsTBridge/` をフォルダごと削除してから、新しいunitypackageを取り込んでください。
+unitypackageの取り込みはファイルの追加と上書きだけを行うため、上書きするだけでは、そのバージョンで削除されたファイルが残ります。
+
+アバターに追加済みのコンポーネントは、削除して入れ直しても失われません。
+配布物のGUIDをリポジトリで固定しており、バージョンが変わっても参照が切れないようにしています。
+
+### 更新の確認
+
+新しいバージョンが出ているかを[Releases](https://github.com/limit7412/VRCFE-JsTBridge/releases/latest)へ問い合わせ、インスペクタの先頭で知らせます。
+
+エディタから外部へ通信するため、確認するかどうかは初回にインスペクタで尋ねます。
+確認しないことを選べば通信は行いません。
+確認する場合も1日1回までで、送るのはリリース情報の取得要求だけです。
+
+選択は Preferences > Kx VRC FE-JsT Bridge からいつでも変更できます。
+
+知らせるのは新しいバージョンの有無までで、ファイルの置き換えは行いません。
+VPM版の版数はVCC/ALCOMがvpm-manifest.jsonで管理しており、こちらで置き換えると管理側の記録と実態がずれます。
+更新の手段はインストール方法で違うため、案内もそれに合わせて変わります。
+`Packages/` 配下（VCC/ALCOM経由）ならVCC/ALCOMから、`Assets/` 配下（unitypackageから導入）なら上の「booth版」の手順で更新してください。
 
 ## 使い方
 
