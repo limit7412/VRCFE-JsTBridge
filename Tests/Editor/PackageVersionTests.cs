@@ -8,6 +8,9 @@ namespace FEJsTBridge.Tests
     ///
     /// 誤って新しいと判断すると、更新の必要が無い利用者を動かしてしまう。
     /// 解釈できないものを通さないことと、プレリリースを新しい版として扱わないことを固定化する。
+    ///
+    /// 手元の版とタグでは受け付ける形が違う。
+    /// プレリリースを配布しているため、手元の版だけは`X.Y.Z-testN`を解釈できなければならない。
     /// </summary>
     public class PackageVersionTests
     {
@@ -67,6 +70,58 @@ namespace FEJsTBridge.Tests
         [TestCase("0.2.0", "0.1.9")]
         [TestCase("1.0.0", "0.9.9")]
         public void IsUpdateAvailable_IsFalse_WhenTheReleaseIsNotNewer(string current, string latest)
+        {
+            Assert.That(PackageVersion.IsUpdateAvailable(current, latest), Is.False);
+        }
+
+        [TestCase("0.1.1-test1", 0, 1, 1)]
+        [TestCase("v0.1.1-test12", 0, 1, 1)]
+        [TestCase(" 0.2.0-rc.1 ", 0, 2, 0)]
+        public void TryParseInstalled_AcceptsAPrerelease(string text, int major, int minor, int patch)
+        {
+            Assert.That(PackageVersion.TryParseInstalled(text, out var version), Is.True);
+            Assert.That(version.Major, Is.EqualTo(major));
+            Assert.That(version.Minor, Is.EqualTo(minor));
+            Assert.That(version.Patch, Is.EqualTo(patch));
+            Assert.That(version.IsPrerelease, Is.True);
+        }
+
+        [Test]
+        public void TryParseInstalled_AcceptsAStableVersion()
+        {
+            Assert.That(PackageVersion.TryParseInstalled("0.1.1", out var version), Is.True);
+            Assert.That(version.IsPrerelease, Is.False);
+        }
+
+        // 接尾辞が空のものと、ビルドメタデータは手元の版でも受け付けない
+        [TestCase("0.1.1-")]
+        [TestCase("0.1.1+build.5")]
+        [TestCase("-1.0.0")]
+        [TestCase("unknown")]
+        public void TryParseInstalled_RejectsWhatItCannotOrder(string text)
+        {
+            Assert.That(PackageVersion.TryParseInstalled(text, out _), Is.False);
+        }
+
+        // プレリリースを入れている利用者にも、安定版が出たら知らせる。
+        // prerelease.ymlが`X.Y.Z-testN`をpackage.jsonへ書き込んで配布しているため、
+        // ここを落とすとその利用者には通知が一度も出ない
+        [TestCase("0.1.1-test1", "0.1.1")]
+        [TestCase("0.1.1-test12", "0.1.1")]
+        [TestCase("0.1.1-test1", "0.1.2")]
+        [TestCase("0.1.1-test1", "v0.2.0")]
+        public void IsUpdateAvailable_IsTrue_WhenAStableReleaseSupersedesAnInstalledPrerelease(
+            string current, string latest)
+        {
+            Assert.That(PackageVersion.IsUpdateAvailable(current, latest), Is.True);
+        }
+
+        // プレリリースは次期バージョンの番号を持つ。
+        // その手前の安定版はプレリリースより古く、更新にはあたらない
+        [TestCase("0.1.1-test1", "0.1.0")]
+        [TestCase("0.2.0-test1", "0.1.9")]
+        public void IsUpdateAvailable_IsFalse_WhenTheReleaseIsOlderThanTheInstalledPrerelease(
+            string current, string latest)
         {
             Assert.That(PackageVersion.IsUpdateAvailable(current, latest), Is.False);
         }

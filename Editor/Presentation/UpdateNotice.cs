@@ -30,7 +30,10 @@ namespace FEJsTBridge.Presentation
             }
         }
 
-        private static void DrawConsent()
+        /// <summary>
+        /// まだ選んでいない利用者への二択。Preferencesからも同じものを出す
+        /// </summary>
+        internal static void DrawConsent()
         {
             EditorGUILayout.HelpBox(S("update.consent.description"), MessageType.Info);
 
@@ -101,20 +104,32 @@ namespace FEJsTBridge.Presentation
         {
             return new SettingsProvider("Preferences/Kx VRC FE-JsT Bridge", SettingsScope.User)
             {
-                guiHandler = _ =>
-                {
-                    var enabled = UpdateCheck.Preference == UpdateCheckPreference.Enabled;
-                    var changed = EditorGUILayout.Toggle(S("update.settings.enabled"), enabled);
-                    if (changed != enabled)
-                    {
-                        UpdateCheck.Preference = changed
-                            ? UpdateCheckPreference.Enabled
-                            : UpdateCheckPreference.Disabled;
-                    }
-
-                    EditorGUILayout.HelpBox(S("update.settings.description"), MessageType.None);
-                },
+                guiHandler = _ => Draw(),
             };
+        }
+
+        private static void Draw()
+        {
+            // まだ選んでいない状態をトグルで描くと、見た目が「確認しない」と同じになる。
+            // その状態でトグルを切っても値は変わらないため、
+            // インスペクタの問いかけより先にここで断りたい利用者が、断れないまま残る。
+            // 決めるまでは問いかけと同じ二択を出す
+            if (UpdateCheck.Preference == UpdateCheckPreference.Unset)
+            {
+                UpdateNotice.DrawConsent();
+                return;
+            }
+
+            var enabled = UpdateCheck.Preference == UpdateCheckPreference.Enabled;
+            var changed = EditorGUILayout.Toggle(S("update.settings.enabled"), enabled);
+            if (changed != enabled)
+            {
+                UpdateCheck.Preference = changed
+                    ? UpdateCheckPreference.Enabled
+                    : UpdateCheckPreference.Disabled;
+            }
+
+            EditorGUILayout.HelpBox(S("update.settings.description"), MessageType.None);
         }
     }
 }
