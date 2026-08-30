@@ -79,6 +79,14 @@ namespace FEJsTBridge.Tests
             "warning.duplicate_component:description",
             "guard.log.duplicate",
             "guard.dialog.duplicate_removed",
+            "update.consent.description",
+            "update.consent.enable",
+            "update.consent.disable",
+            "update.available",
+            "update.open_releases",
+            "update.dismiss",
+            "update.settings.enabled",
+            "update.settings.description",
         };
 
         /// <summary>

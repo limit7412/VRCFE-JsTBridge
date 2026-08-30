@@ -6,6 +6,7 @@ using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 using nadena.dev.ndmf.ui;
 using FEJsTBridge.Domain;
+using FEJsTBridge.Infra;
 using FEJsTBridge.UseCase;
 using static FEJsTBridge.Localization;
 
@@ -39,8 +40,16 @@ namespace FEJsTBridge.Presentation
         private Vector2 _inspectionScroll;
         private bool _showOtherLayers;
 
+        private void OnEnable()
+        {
+            // 更新の確認は応答が返った時点で結果が変わる。
+            // インスペクタが操作されるまで古い表示のままにしない
+            UpdateCheck.ResultChanged += Repaint;
+        }
+
         private void OnDisable()
         {
+            UpdateCheck.ResultChanged -= Repaint;
             _inspection = null;
         }
 
@@ -50,6 +59,10 @@ namespace FEJsTBridge.Presentation
 
             LanguageSwitcher.DrawImmediate();
             EditorGUILayout.LabelField("Kx VRC FE-JsT Bridge", EditorStyles.boldLabel);
+
+            // 更新の案内はヘッダーの直下へ置く。読み飛ばされない位置で、設定の並びは崩さない
+            UpdateNotice.Draw();
+
             EditorGUILayout.HelpBox(S("inspector.description"), MessageType.Info);
 
             EditorGUILayout.Space();

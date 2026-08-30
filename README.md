@@ -39,6 +39,20 @@ Jerry's TemplatesとFaceEmoは依存に含めていません。
 
 この方法ではVCC/ALCOMが更新を検知しないため、新しいバージョンは手で入れ替えます。
 
+### 更新の確認
+
+新しいバージョンが出ているかを[Releases](https://github.com/limit7412/VRCFE-JsTBridge/releases/latest)へ問い合わせ、インスペクタの先頭で知らせます。
+
+エディタから外部へ通信するため、確認するかどうかは初回にインスペクタで尋ねます。
+確認しないことを選べば通信は行いません。
+確認する場合も1日1回までで、送るのはリリース情報の取得要求だけです。
+
+選択は Preferences > Kx VRC FE-JsT Bridge からいつでも変更できます。
+
+知らせるのは新しいバージョンの有無までで、ファイルの置き換えは行いません。
+VPMパッケージの版はVCC/ALCOMがvpm-manifest.jsonで管理しており、こちらで置き換えると管理側の記録と実態がずれます。
+VCC/ALCOM経由で入れた場合はVCC/ALCOMから、zipから手で入れた場合はReleasesの新しいzipで入れ直してください。
+
 ## 使い方
 
 1. アバタールートに **Kx VRC FE-JsT Bridge** コンポーネントを追加する
