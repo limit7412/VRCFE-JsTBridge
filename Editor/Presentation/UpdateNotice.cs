@@ -7,7 +7,7 @@ using static FEJsTBridge.Localization;
 namespace FEJsTBridge.Presentation
 {
     /// <summary>
-    /// 更新の確認についての問いかけと、新しい版が出ているときの案内をインスペクタの先頭へ描く。
+    /// 新しい版が出ているときの案内をインスペクタの先頭へ描く。
     ///
     /// 案内の文面はインストール形態で変わる。
     /// VPM版の版数はVCC/ALCOMがvpm-manifest.jsonで管理しているため、
@@ -18,38 +18,10 @@ namespace FEJsTBridge.Presentation
     {
         public static void Draw()
         {
-            switch (UpdateCheck.Preference)
-            {
-                case UpdateCheckPreference.Unset:
-                    DrawConsent();
-                    break;
-                case UpdateCheckPreference.Enabled:
-                    UpdateCheck.PollIfDue();
-                    DrawAvailableUpdate();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// まだ選んでいない利用者への二択。Preferencesからも同じものを出す
-        /// </summary>
-        internal static void DrawConsent()
-        {
-            EditorGUILayout.HelpBox(S("update.consent.description"), MessageType.Info);
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(S("update.consent.enable")))
-            {
-                UpdateCheck.Preference = UpdateCheckPreference.Enabled;
-            }
-
-            if (GUILayout.Button(S("update.consent.disable")))
-            {
-                UpdateCheck.Preference = UpdateCheckPreference.Disabled;
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space();
+            // 確認を止めているかどうかはPollIfDueが見る。
+            // 止めていれば知らせる版も残らないため、ここは案内だけを組み立てる
+            UpdateCheck.PollIfDue();
+            DrawAvailableUpdate();
         }
 
         private static void DrawAvailableUpdate()
@@ -125,10 +97,9 @@ namespace FEJsTBridge.Presentation
     }
 
     /// <summary>
-    /// 更新確認の入切をPreferencesからも変えられるようにする。
+    /// 更新確認の入切をPreferencesから変えられるようにする。
     ///
-    /// インスペクタの問いかけで「確認しない」を選ぶと、以後その問いかけは出ない。
-    /// 選び直す場所がここになる
+    /// 確認は既定で行うため、外部への通信を望まない利用者にはここが止める場所になる
     /// </summary>
     internal static class UpdateCheckSettingsProvider
     {
@@ -143,17 +114,9 @@ namespace FEJsTBridge.Presentation
 
         private static void Draw()
         {
-            // まだ選んでいない状態をトグルで描くと、見た目が「確認しない」と同じになる。
-            // その状態でトグルを切っても値は変わらないため、
-            // インスペクタの問いかけより先にここで断りたい利用者が、断れないまま残る。
-            // 決めるまでは問いかけと同じ二択を出す
-            if (UpdateCheck.Preference == UpdateCheckPreference.Unset)
-            {
-                UpdateNotice.DrawConsent();
-                return;
-            }
-
-            var enabled = UpdateCheck.Preference == UpdateCheckPreference.Enabled;
+            // まだ選ばれていない状態も確認する側なので、トグルは入で描く。
+            // 切れば選択がDisabledとして残り、見た目と実態がずれない
+            var enabled = UpdateCheck.IsEnabled;
             var changed = EditorGUILayout.Toggle(S("update.settings.enabled"), enabled);
             if (changed != enabled)
             {
