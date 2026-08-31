@@ -104,6 +104,8 @@ namespace FEJsTBridge.Tests
             "update.error.contents",
             "update.error.version",
             "update.error.scan",
+            "update.error.import",
+            "update.error.import_cancelled",
             "update.error.backup",
             "update.error.delete",
             "update.error.playing",
