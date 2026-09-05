@@ -70,21 +70,28 @@ namespace FEJsTBridge.Tests
             Assert.That(report.Layers.Single().Verdict, Is.EqualTo(FxLayerVerdict.Candidate));
         }
 
+        /// <summary>
+        /// 素体のFXにFaceEmoの生成物が焼き込まれている場合、名前では除外しない
+        /// 焼き込まれたFaceEmoはバイパスで止まらないため、書く内容で判定する
+        /// </summary>
         [Test]
-        public void Analyze_ExcludesLayersManagedByOtherTools()
+        public void Analyze_JudgesBakedFaceEmoLayersByContent()
         {
             var report = FxLayerConflictAnalyzer.Analyze(
                 new[]
                 {
                     Layer("[ USER EDIT ] DEFAULT FACE", 0, false, FaceShape),
-                    Layer("FACE EMOTE CONTROL", 1, false, FaceShape),
-                    Layer("MA Responsive: BodyAll", 2, false, FaceShape),
-                    Layer(BridgePlanBuilder.TrackingReapplyLayerName, 3, true),
+                    Layer("[ USER EDIT ] FACE EMOTE PLAYER", 1, false, FaceShape),
+                    Layer("FACE EMOTE CONTROL", 2),
+                    Layer("MA Responsive: BodyAll", 3, false, ClothShape),
                 },
                 new[] { FaceShape });
 
-            Assert.That(report.Layers.All(layer => layer.Verdict == FxLayerVerdict.Managed));
-            Assert.That(report.Candidates, Is.Empty);
+            Assert.That(
+                report.Candidates.Select(layer => layer.LayerName),
+                Is.EquivalentTo(new[] { "[ USER EDIT ] DEFAULT FACE", "[ USER EDIT ] FACE EMOTE PLAYER" }));
+            Assert.That(report.Layers[2].Verdict, Is.EqualTo(FxLayerVerdict.NoConflict));
+            Assert.That(report.Layers[3].Verdict, Is.EqualTo(FxLayerVerdict.NoConflict));
         }
 
         [Test]
@@ -162,20 +169,6 @@ namespace FEJsTBridge.Tests
             var layer = report.Layers.Single();
             Assert.That(layer.SharedCount, Is.EqualTo(12));
             Assert.That(layer.SharedShapeNames.Count, Is.EqualTo(5));
-        }
-
-        [TestCase("MA Responsive: BodyAll", true)]
-        [TestCase("Modular Avatar: MMD Control", true)]
-        [TestCase("[ USER EDIT ] FACE EMOTE PLAYER", true)]
-        [TestCase("FACE EMOTE CONTROL", true)]
-        // 素体でも使われうる名前は、名前だけで除外しない
-        [TestCase("BLINK", false)]
-        [TestCase("BYPASS", false)]
-        [TestCase("Left Hand Face", false)]
-        [TestCase("", false)]
-        public void IsManagedLayerName_DetectsGeneratedLayers(string layerName, bool expected)
-        {
-            Assert.That(FxLayerConflictAnalyzer.IsManagedLayerName(layerName), Is.EqualTo(expected));
         }
     }
 }

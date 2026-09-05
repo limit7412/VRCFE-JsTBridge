@@ -71,7 +71,6 @@ namespace FEJsTBridge.Tests
             "inspector.inspect.reason.blend_shapes",
             "inspector.inspect.reason.tracking_control",
             "inspector.inspect.verdict.no_conflict",
-            "inspector.inspect.verdict.managed",
             "warning.jerry_not_found",
             "warning.jerry_not_found:description",
             "warning.face_emo_not_found",
