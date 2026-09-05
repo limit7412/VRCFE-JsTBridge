@@ -210,9 +210,6 @@ msgstr "Tracking ControlでEyesかMouthを切り替える"
 msgid "inspector.inspect.verdict.no_conflict"
 msgstr "競合なし"
 
-msgid "inspector.inspect.verdict.managed"
-msgstr "他のツールが管理"
-
 # 更新の確認
 msgid "update.available.vpm"
 msgstr "新しいバージョン {0} が公開されています。\nVCC/ALCOMから更新してください。"

@@ -44,9 +44,6 @@ namespace FEJsTBridge.Domain
 
         /// <summary>競合しない</summary>
         NoConflict,
-
-        /// <summary>他のツールが管理している。除去してはいけない</summary>
-        Managed,
     }
 
     /// <summary>レイヤー1つ分の判定結果</summary>
@@ -126,6 +123,12 @@ namespace FEJsTBridge.Domain
     /// 名前ではなく、レイヤーが実際に何を書くかで判定する。
     /// 服のトグルのようにブレンドシェイプを使うだけのレイヤーを、
     /// 表情レイヤーと取り違えないためである。
+    ///
+    /// 名前で候補から外すこともしない。
+    /// 解析するのは素体のFXであり、Merge Animatorでマージされるレイヤーはそこに現れない。
+    /// FaceEmoと同じ名前のレイヤーが素体のFXにあるなら、素体の配布物に焼き込まれたものである。
+    /// 焼き込まれたFaceEmoはバイパス用のパラメータを持たず、ブリッジでは止められない。
+    /// 表情のブレンドシェイプを書くのなら、他のレイヤーと同じく除去の候補に挙げる。
     /// </summary>
     internal static class FxLayerConflictAnalyzer
     {
@@ -133,38 +136,6 @@ namespace FEJsTBridge.Domain
         private const int SampleCount = 5;
 
         private const string BlendShapePrefix = "blendShape.";
-
-        /// <summary>他のツールが管理するレイヤー名の接頭辞</summary>
-        private static readonly string[] ManagedNamePrefixes =
-        {
-            "MA ",
-            "Modular Avatar",
-            "ModularAvatar",
-            "[ USER EDIT ]",
-        };
-
-        /// <summary>
-        /// FaceEmoとブリッジが生成するレイヤー名
-        /// </summary>
-        /// <remarks>
-        /// 生成されたレイヤーはMerge Animatorでマージされるため、本来は素体のFXに現れない。
-        /// 焼き込み済みのアバターを調べたときのための保険である。
-        /// そのためBLINKやBYPASSのように素体でも使われうる名前は入れない。
-        /// 素体自身のまばたきレイヤーは、FaceEmoと同じブレンドシェイプを書くのなら候補に挙げるべきである。
-        /// </remarks>
-        private static readonly string[] ManagedNames =
-        {
-            "MOUTH MORPH CANCELLER",
-            "LOCAL INDICATOR SOUND",
-            "DANCE GIMICK CONTROL",
-            "INPUT CONVERTER L",
-            "INPUT CONVERTER R",
-            "FACE EMOTE LOCK",
-            "FACE EMOTE CONTROL",
-            "FACE EMOTE SET CONTROL",
-            BridgePlanBuilder.BypassLayerName,
-            BridgePlanBuilder.TrackingReapplyLayerName,
-        };
 
         /// <summary>
         /// レイヤーごとに競合を判定する
@@ -202,18 +173,6 @@ namespace FEJsTBridge.Domain
             bool hasReference,
             bool guesses)
         {
-            if (IsManagedLayerName(layer.Name))
-            {
-                return new FxLayerConflict(
-                    layer.Name,
-                    layer.Index,
-                    FxLayerVerdict.Managed,
-                    new string[0],
-                    0,
-                    layer.ChangesTrackingControl,
-                    layer.HasWriteDefaults);
-            }
-
             string[] shared;
             if (hasReference)
             {
@@ -240,21 +199,6 @@ namespace FEJsTBridge.Domain
                 shared.Length,
                 layer.ChangesTrackingControl,
                 layer.HasWriteDefaults);
-        }
-
-        /// <summary>
-        /// FaceEmoやModular Avatarが生成したレイヤーか
-        /// 素体のFXに焼き込まれている場合に、候補として挙げてしまわないようにする
-        /// </summary>
-        public static bool IsManagedLayerName(string layerName)
-        {
-            if (string.IsNullOrEmpty(layerName))
-            {
-                return false;
-            }
-
-            return ManagedNames.Contains(layerName)
-                || ManagedNamePrefixes.Any(prefix => layerName.StartsWith(prefix));
         }
 
         /// <summary>

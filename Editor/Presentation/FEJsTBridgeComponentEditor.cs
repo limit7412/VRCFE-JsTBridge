@@ -338,11 +338,9 @@ namespace FEJsTBridge.Presentation
             EditorGUI.indentLevel++;
             foreach (var layer in others)
             {
-                var verdict = layer.Verdict == FxLayerVerdict.Managed
-                    ? S("inspector.inspect.verdict.managed")
-                    : S("inspector.inspect.verdict.no_conflict");
                 EditorGUILayout.LabelField(
-                    S("inspector.inspect.layer", layer.LayerName, layer.LayerIndex), verdict);
+                    S("inspector.inspect.layer", layer.LayerName, layer.LayerIndex),
+                    S("inspector.inspect.verdict.no_conflict"));
             }
 
             EditorGUI.indentLevel--;

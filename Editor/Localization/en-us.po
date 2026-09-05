@@ -210,9 +210,6 @@ msgstr "Switches Tracking Control for eyes or mouth"
 msgid "inspector.inspect.verdict.no_conflict"
 msgstr "No conflict"
 
-msgid "inspector.inspect.verdict.managed"
-msgstr "Managed by another tool"
-
 # Update check
 msgid "update.available.vpm"
 msgstr "Version {0} is available.\nUpdate through VCC/ALCOM."
