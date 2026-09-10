@@ -16,16 +16,23 @@ namespace FEJsTBridge.Presentation
     /// FEJsTBridgeComponentのインスペクタ
     ///
     /// 表示文言はNDMFのローカライズ機構から引く。
-    /// enumの選択肢はPropertyFieldではC#の識別子がそのまま出てしまうため、
-    /// ポップアップを自前で描いて訳語を当てる。
-    /// 自前で描いた分はBeginProperty/EndPropertyで囲み、プレハブの上書き表示を保つ。
     /// </summary>
     [CustomEditor(typeof(FEJsTBridgeComponent))]
     [CanEditMultipleObjects]
     public class FEJsTBridgeComponentEditor : Editor
     {
         /// <summary>
-        /// バイパス発動条件の選択肢の文言キー
+        /// 制御方式の選択肢の文言キー
+        /// 並びはControlMethodの宣言順に一致させる (enumValueIndexで引くため)
+        /// </summary>
+        internal static readonly IReadOnlyList<string> ControlMethodLabelKeys = new[]
+        {
+            "prop.control_method.bypass",
+            "prop.control_method.expression_control",
+        };
+
+        /// <summary>
+        /// 発動条件の選択肢の文言キー
         /// 並びはBypassTriggerの宣言順に一致させる (enumValueIndexで引くため)
         /// </summary>
         internal static readonly IReadOnlyList<string> BypassTriggerLabelKeys = new[]
@@ -67,6 +74,10 @@ namespace FEJsTBridge.Presentation
 
             EditorGUILayout.Space();
 
+            DrawControlMethod();
+
+            EditorGUILayout.Space();
+
             DrawBypassTrigger();
 
             EditorGUILayout.Space();
@@ -80,20 +91,63 @@ namespace FEJsTBridge.Presentation
             serializedObject.ApplyModifiedProperties();
         }
 
+        /// <summary>
+        /// 制御方式と、方式ごとの設定を描く
+        /// </summary>
+        private void DrawControlMethod()
+        {
+            var property = serializedObject.FindProperty("controlMethod");
+            DrawLocalizedEnumPopup(property, "prop.control_method", ControlMethodLabelKeys);
+
+            // 選択中の方式が定まらないと、どちらの説明も当てはまらない
+            if (property.hasMultipleDifferentValues)
+            {
+                return;
+            }
+
+            if (property.enumValueIndex == (int)ControlMethod.ExpressionControl)
+            {
+                EditorGUILayout.HelpBox(S("inspector.control_method.expression_control"), MessageType.Warning);
+                EditorGUILayout.PropertyField(
+                    serializedObject.FindProperty("faceEmoteIndex"), G("prop.face_emote_index"));
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(S("inspector.control_method.bypass"), MessageType.Info);
+            }
+        }
+
         private void DrawBypassTrigger()
         {
             var property = serializedObject.FindProperty("bypassTrigger");
+            DrawLocalizedEnumPopup(property, "prop.bypass_trigger", BypassTriggerLabelKeys);
 
-            var options = new GUIContent[BypassTriggerLabelKeys.Count];
+            if (!property.hasMultipleDifferentValues
+                && property.enumValueIndex == (int)BypassTrigger.LipTrackingOnly)
+            {
+                EditorGUILayout.HelpBox(S("inspector.bypass_trigger.lip_tracking_only"), MessageType.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 訳語を当てたenumのポップアップを描く
+        /// </summary>
+        /// <remarks>
+        /// PropertyFieldではC#の識別子がそのまま出るため、ポップアップを自前で描く。
+        /// BeginPropertyで囲むと、プレハブインスタンス上での上書き表示と
+        /// 右クリックのRevertが、通常のフィールドと同じように働く。
+        /// </remarks>
+        private static void DrawLocalizedEnumPopup(
+            SerializedProperty property, string labelKey, IReadOnlyList<string> optionKeys)
+        {
+            var options = new GUIContent[optionKeys.Count];
             for (var i = 0; i < options.Length; i++)
             {
-                options[i] = G(BypassTriggerLabelKeys[i]);
+                options[i] = G(optionKeys[i]);
             }
 
-            // BeginPropertyで囲むと、プレハブインスタンス上での上書き表示と
-            // 右クリックのRevertが、通常のフィールドと同じように働く
             var rect = EditorGUILayout.GetControlRect();
-            var label = EditorGUI.BeginProperty(rect, G("prop.bypass_trigger"), property);
+            var label = EditorGUI.BeginProperty(rect, G(labelKey), property);
 
             EditorGUI.BeginChangeCheck();
             EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
@@ -108,12 +162,6 @@ namespace FEJsTBridge.Presentation
             }
 
             EditorGUI.EndProperty();
-
-            if (!property.hasMultipleDifferentValues
-                && property.enumValueIndex == (int)BypassTrigger.LipTrackingOnly)
-            {
-                EditorGUILayout.HelpBox(S("inspector.bypass_trigger.lip_tracking_only"), MessageType.Warning);
-            }
         }
 
         private void DrawRemoveFxLayers()

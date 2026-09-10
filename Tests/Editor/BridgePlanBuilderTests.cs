@@ -14,9 +14,12 @@ namespace FEJsTBridge.Tests
         private static BridgeSettings Settings(
             BypassTrigger trigger = BypassTrigger.FacialExpressionsDisabled,
             bool enableTrackingReapply = true,
-            float reapplyDelaySeconds = 0.2f)
+            float reapplyDelaySeconds = 0.2f,
+            ControlMethod controlMethod = ControlMethod.Bypass,
+            int faceEmoteIndex = 0)
         {
-            return new BridgeSettings(trigger, enableTrackingReapply, reapplyDelaySeconds);
+            return new BridgeSettings(
+                controlMethod, trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
         }
 
         [Test]
@@ -66,6 +69,139 @@ namespace FEJsTBridge.Tests
             Assert.That(
                 withoutReapply.Parameters.Select(parameter => parameter.Name),
                 Is.EqualTo(withReapply.Parameters.Select(parameter => parameter.Name)));
+        }
+
+        [Test]
+        public void Build_GeneratesExpressionControlLayer_WhenMethodIsExpressionControl()
+        {
+            var plan = BridgePlanBuilder.Build(Settings(controlMethod: ControlMethod.ExpressionControl));
+
+            Assert.That(plan.Layers.Select(layer => layer.Name), Is.EqualTo(new[]
+            {
+                BridgePlanBuilder.ExpressionControlLayerName,
+                BridgePlanBuilder.TrackingReapplyLayerName,
+            }));
+        }
+
+        [Test]
+        public void Build_DeclaresResolvedFaceEmoParameters_WhenMethodIsExpressionControl()
+        {
+            var plan = BridgePlanBuilder.Build(
+                Settings(controlMethod: ControlMethod.ExpressionControl), ResolvedNames);
+
+            Assert.That(
+                plan.Parameters.Select(parameter => (parameter.Name, parameter.Type)),
+                Is.EqualTo(new[]
+                {
+                    (BridgeParameterNames.FacialExpressionsDisabled, BridgeParameterType.Bool),
+                    (BridgeParameterNames.LipTrackingActive, BridgeParameterType.Float),
+                    (BridgeParameterNames.EyeTrackingActive, BridgeParameterType.Float),
+                    (BridgeParameterNames.VisemesEnable, BridgeParameterType.Bool),
+                    ("FaceEmo_LOCK", BridgeParameterType.Bool),
+                    ("FaceEmo_BLINK", BridgeParameterType.Bool),
+                    ("FaceEmo_EMOTE", BridgeParameterType.Int),
+                }));
+
+            // 出力先は方式ごとに違う。使わないパラメータは宣言しない
+            Assert.That(
+                plan.Parameters.Select(parameter => parameter.Name),
+                Has.No.Member(BridgeParameterNames.ForceBypassEnable));
+        }
+
+        [Test]
+        public void Build_UsesRawFaceEmoNames_WhenNamesAreNotResolved()
+        {
+            var plan = BridgePlanBuilder.Build(Settings(controlMethod: ControlMethod.ExpressionControl));
+
+            Assert.That(plan.Parameters.Select(parameter => parameter.Name), Is.SupersetOf(new[]
+            {
+                BridgeParameterNames.EmoteLockEnable,
+                BridgeParameterNames.ForceBlinkDisable,
+                BridgeParameterNames.Emote,
+            }));
+        }
+
+        [Test]
+        public void ExpressionControlLayer_DrivesLockBlinkAndEmote_WhenEngaged()
+        {
+            var engaged = ExpressionControlLayer(faceEmoteIndex: 3)
+                .FindState(BridgePlanBuilder.EngagedStateName);
+
+            Assert.That(engaged.Driver, Is.Not.Null, "EngagedにDriverがない");
+
+            // 書き込む先はすべて同期パラメータなので、駆動するのは装着者のクライアントだけでよい
+            Assert.That(engaged.Driver.LocalOnly, Is.True);
+            Assert.That(
+                engaged.Driver.Entries.Select(entry => (entry.Parameter, entry.Value)),
+                Is.EqualTo(new[]
+                {
+                    ("FaceEmo_LOCK", 1f),
+                    ("FaceEmo_BLINK", 1f),
+                    ("FaceEmo_EMOTE", 3f),
+                }));
+        }
+
+        [Test]
+        public void ExpressionControlLayer_ReleasesLockAndBlink_WithoutRestoringEmote()
+        {
+            var idle = ExpressionControlLayer().FindState(BridgePlanBuilder.IdleStateName);
+
+            Assert.That(idle.Driver, Is.Not.Null, "IdleにDriverがない");
+            Assert.That(idle.Driver.LocalOnly, Is.True);
+
+            // 表情番号は戻す先を覚えられないため、ロックを外してFaceEmoに決め直させる
+            Assert.That(
+                idle.Driver.Entries.Select(entry => (entry.Parameter, entry.Value)),
+                Is.EqualTo(new[]
+                {
+                    ("FaceEmo_LOCK", 0f),
+                    ("FaceEmo_BLINK", 0f),
+                }));
+        }
+
+        [Test]
+        public void ExpressionControlLayer_SwitchesByTrigger()
+        {
+            var settings = Settings(controlMethod: ControlMethod.ExpressionControl);
+            var layer = BridgePlanBuilder.Build(settings, ResolvedNames)
+                .FindLayer(BridgePlanBuilder.ExpressionControlLayerName);
+
+            Assert.That(layer.DefaultStateName, Is.EqualTo(BridgePlanBuilder.IdleStateName));
+
+            var engage = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName).Single();
+            Assert.That(engage.To, Is.EqualTo(BridgePlanBuilder.EngagedStateName));
+            var on = BridgePlanBuilder.TriggerOn(settings);
+            AssertCondition(engage.Conditions.Single(), on.Parameter, on.Mode, on.Threshold);
+
+            var release = layer.TransitionsFrom(BridgePlanBuilder.EngagedStateName).Single();
+            Assert.That(release.To, Is.EqualTo(BridgePlanBuilder.IdleStateName));
+            var off = BridgePlanBuilder.TriggerOff(settings);
+            AssertCondition(release.Conditions.Single(), off.Parameter, off.Mode, off.Threshold);
+        }
+
+        [Test]
+        public void ExpressionControlLayer_DoesNotRewritePeriodically()
+        {
+            var layer = ExpressionControlLayer();
+
+            // 周期的に書き直すと、装着者がメニューで選び直した表情を毎周期奪ってしまう
+            Assert.That(layer.States.Select(state => state.Name), Is.EqualTo(new[]
+            {
+                BridgePlanBuilder.IdleStateName,
+                BridgePlanBuilder.EngagedStateName,
+            }));
+            Assert.That(layer.Transitions.All(transition => !transition.HasExitTime), Is.True);
+        }
+
+        [Test]
+        public void ExpressionControlLayer_ClampsNegativeEmoteIndex()
+        {
+            var engaged = ExpressionControlLayer(faceEmoteIndex: -1)
+                .FindState(BridgePlanBuilder.EngagedStateName);
+
+            Assert.That(
+                engaged.Driver.Entries.Single(entry => entry.Parameter == "FaceEmo_EMOTE").Value,
+                Is.EqualTo(0f));
         }
 
         [Test]
@@ -297,6 +433,19 @@ namespace FEJsTBridge.Tests
 
             // 条件付きの3本が優先されるよう、ループは記載順の最後に置く
             Assert.That(transitions[transitions.Count - 1], Is.SameAs(rearm));
+        }
+
+        /// <summary>リネーム後の名前が計画へ入ることを見るための、解決済みの名前</summary>
+        private static FaceEmoParameterNames ResolvedNames =>
+            new FaceEmoParameterNames("FaceEmo_LOCK", "FaceEmo_BLINK", "FaceEmo_EMOTE", resolved: true);
+
+        private static BridgeLayerPlan ExpressionControlLayer(int faceEmoteIndex = 0)
+        {
+            return BridgePlanBuilder
+                .Build(
+                    Settings(controlMethod: ControlMethod.ExpressionControl, faceEmoteIndex: faceEmoteIndex),
+                    ResolvedNames)
+                .FindLayer(BridgePlanBuilder.ExpressionControlLayerName);
         }
 
         private static void AssertCondition(

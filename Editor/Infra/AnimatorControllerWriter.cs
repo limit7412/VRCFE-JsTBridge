@@ -186,6 +186,8 @@ namespace FEJsTBridge.Infra
                     return AnimatorControllerParameterType.Bool;
                 case BridgeParameterType.Float:
                     return AnimatorControllerParameterType.Float;
+                case BridgeParameterType.Int:
+                    return AnimatorControllerParameterType.Int;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }

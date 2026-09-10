@@ -105,7 +105,18 @@ namespace FEJsTBridge.UseCase
 
                 ReportEnvironment(AvatarEnvironmentScanner.Scan(avatarRoot));
 
-                var plan = BridgePlanBuilder.Build(BridgeSettings.FromComponent(primary));
+                var settings = BridgeSettings.FromComponent(primary);
+                var faceEmo = FaceEmoParameterNames.Raw;
+
+                // FaceEmoの制御パラメータは設定次第で名前が変わる。
+                // 名前を必要とするのは表情制御方式だけなので、解決もそのときだけ行う
+                if (settings.ControlMethod == ControlMethod.ExpressionControl)
+                {
+                    faceEmo = FaceEmoParameterResolver.Resolve(avatarRoot);
+                    ReportExpressionControlPrerequisites(avatarRoot, faceEmo);
+                }
+
+                var plan = BridgePlanBuilder.Build(settings, faceEmo);
                 var controller = AnimatorControllerWriter.Write(plan, asset => SaveAsset(context, asset));
                 MergeAnimatorInstaller.Install(avatarRoot, controller);
 
@@ -224,6 +235,78 @@ namespace FEJsTBridge.UseCase
                 ErrorReport.ReportError(
                     Localization.Localizer, ErrorSeverity.NonFatal, "warning.layer_control_not_editable", skipped);
             }
+        }
+
+        /// <summary>
+        /// 表情制御方式の前提が揃っているかを調べて報告する
+        ///
+        /// 揃っていなくても生成は続行する。
+        /// パラメータ名の解決はプレフィックスを使っていないアバターなら失敗しても実害がなく、
+        /// ブレンドシェイプの重なりはFaceEmo側の設定でしか分けられないためである。
+        /// </summary>
+        private static void ReportExpressionControlPrerequisites(
+            GameObject avatarRoot, FaceEmoParameterNames faceEmo)
+        {
+            if (!faceEmo.Resolved)
+            {
+                ErrorReport.ReportError(
+                    Localization.Localizer,
+                    ErrorSeverity.NonFatal,
+                    "warning.face_emo_parameters_unresolved");
+            }
+
+            var overlap = DetectSharedShapes(avatarRoot);
+            if (overlap.IsEmpty)
+            {
+                return;
+            }
+
+            ErrorReport.ReportError(
+                Localization.Localizer,
+                ErrorSeverity.NonFatal,
+                "warning.shared_blend_shapes",
+                overlap.Count,
+                string.Join(", ", overlap.SampleShapeNames));
+        }
+
+        /// <summary>
+        /// FaceEmoとトラッキングが同じブレンドシェイプを書いていないか調べる
+        /// </summary>
+        private static FaceEmoShapeOverlap DetectSharedShapes(GameObject avatarRoot)
+        {
+            var entries = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(avatarRoot);
+            var faceEmo = AvatarEnvironmentScanner.FindByParameter(
+                entries, BridgeParameterNames.ForceBypassEnable);
+            var jerry = AvatarEnvironmentScanner.FindByParameter(
+                entries,
+                BridgeParameterNames.FacialExpressionsDisabled,
+                BridgeParameterNames.EyeTrackingActive);
+
+            // 片方でも載っていなければ比べる相手がいない。環境の警告で足りる
+            if (faceEmo.Count == 0 || jerry.Count == 0)
+            {
+                return FaceEmoShapeOverlap.None;
+            }
+
+            return FaceEmoShapeOverlap.Detect(
+                CollectBlendShapeBindings(faceEmo), CollectBlendShapeBindings(jerry));
+        }
+
+        private static IReadOnlyCollection<string> CollectBlendShapeBindings(
+            IEnumerable<MergeAnimatorEntry> entries)
+        {
+            var bindings = new HashSet<string>();
+
+            foreach (var entry in entries)
+            {
+                foreach (var binding in
+                    FxLayerSnapshotReader.CollectBlendShapeBindings(entry.RuntimeController, entry.BasePath))
+                {
+                    bindings.Add(binding);
+                }
+            }
+
+            return bindings;
         }
 
         private static void ReportEnvironment(EnvironmentReport report)

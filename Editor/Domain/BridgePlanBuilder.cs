@@ -9,10 +9,12 @@ namespace FEJsTBridge.Domain
     internal static class BridgePlanBuilder
     {
         public const string BypassLayerName = "BypassBridge";
+        public const string ExpressionControlLayerName = "ExpressionControl";
         public const string TrackingReapplyLayerName = "TrackingReapply";
 
         public const string IdleStateName = "Idle";
         public const string BypassStateName = "Bypass";
+        public const string EngagedStateName = "Engaged";
         public const string RedriveStateName = "Redrive";
         public const string WaitStateName = "Wait";
         public const string ArmedStateName = "Armed";
@@ -27,18 +29,44 @@ namespace FEJsTBridge.Domain
         /// </summary>
         private const float FloatTriggerThreshold = 0.5f;
 
+        /// <summary>
+        /// FaceEmoのパラメータ名を解決せずに組み立てる
+        /// バイパス方式は解決の対象にならないパラメータしか使わないため、これで足りる
+        /// </summary>
         public static BridgeControllerPlan Build(BridgeSettings settings)
         {
-            var parameters = new[]
+            return Build(settings, FaceEmoParameterNames.Raw);
+        }
+
+        public static BridgeControllerPlan Build(BridgeSettings settings, FaceEmoParameterNames faceEmo)
+        {
+            var parameters = new List<BridgeParameterPlan>
             {
                 new BridgeParameterPlan(BridgeParameterNames.FacialExpressionsDisabled, BridgeParameterType.Bool),
                 new BridgeParameterPlan(BridgeParameterNames.LipTrackingActive, BridgeParameterType.Float),
                 new BridgeParameterPlan(BridgeParameterNames.EyeTrackingActive, BridgeParameterType.Float),
                 new BridgeParameterPlan(BridgeParameterNames.VisemesEnable, BridgeParameterType.Bool),
-                new BridgeParameterPlan(BridgeParameterNames.ForceBypassEnable, BridgeParameterType.Bool),
             };
 
-            var layers = new List<BridgeLayerPlan> { BuildBypassLayer(settings) };
+            var layers = new List<BridgeLayerPlan>();
+
+            // 出力先のパラメータは方式ごとに違うため、使う分だけを宣言する。
+            // Merge Animatorはコントローラのパラメータリストごとマージするので、
+            // 使わないパラメータを宣言してもFX側の定義が増えるだけになる
+            if (settings.ControlMethod == ControlMethod.ExpressionControl)
+            {
+                parameters.Add(new BridgeParameterPlan(faceEmo.EmoteLockEnable, BridgeParameterType.Bool));
+                parameters.Add(new BridgeParameterPlan(faceEmo.ForceBlinkDisable, BridgeParameterType.Bool));
+                parameters.Add(new BridgeParameterPlan(faceEmo.Emote, BridgeParameterType.Int));
+                layers.Add(BuildExpressionControlLayer(settings, faceEmo));
+            }
+            else
+            {
+                parameters.Add(
+                    new BridgeParameterPlan(BridgeParameterNames.ForceBypassEnable, BridgeParameterType.Bool));
+                layers.Add(BuildBypassLayer(settings));
+            }
+
             if (settings.EnableTrackingReapply)
             {
                 layers.Add(BuildTrackingReapplyLayer(settings));
@@ -108,15 +136,56 @@ namespace FEJsTBridge.Domain
         }
 
         /// <summary>
-        /// バイパス確定後にTracking ControlをJerryの状態へ合わせ直すレイヤー
+        /// FaceEmoを動かしたまま、表情の書き込みを無害な状態へ寄せるレイヤー
+        ///
+        /// 表情ロックでジェスチャーによる表情の切り替えを止め、まばたきを強制的に停止し、
+        /// メニューの表情選択と同じパラメータで指定の表情へ切り替える。
+        /// FaceEmoは書き込みを続けるため、FaceEmoより前にいる素体の表情レイヤーは
+        /// 通常時と同じく押さえ込まれたままになる。
+        ///
+        /// バイパス方式と違い、周期的な書き直しは行わない。
+        /// 書き込む先がすべて同期パラメータであり、値そのものが後からjoinした人へ届くためである。
+        /// 書き直し続けると、装着者がメニューで選び直した表情を毎周期奪ってしまう。
+        ///
+        /// Driverはlocal onlyで生成する。同期パラメータをリモートでも書くと、
+        /// 書き込んだ値と届いた同期値が競合する。FaceEmo自身も同じ理由でローカル駆動している。
+        /// </summary>
+        private static BridgeLayerPlan BuildExpressionControlLayer(
+            BridgeSettings settings, FaceEmoParameterNames faceEmo)
+        {
+            var states = new[]
+            {
+                new BridgeStatePlan(
+                    IdleStateName,
+                    DefaultClipLengthSeconds,
+                    driver: ReleaseDriver(faceEmo)),
+                new BridgeStatePlan(
+                    EngagedStateName,
+                    DefaultClipLengthSeconds,
+                    driver: EngageDriver(faceEmo, settings.FaceEmoteIndex)),
+            };
+
+            var transitions = new[]
+            {
+                new BridgeTransitionPlan(IdleStateName, EngagedStateName, new[] { TriggerOn(settings) }),
+                new BridgeTransitionPlan(EngagedStateName, IdleStateName, new[] { TriggerOff(settings) }),
+            };
+
+            return new BridgeLayerPlan(ExpressionControlLayerName, IdleStateName, states, transitions);
+        }
+
+        /// <summary>
+        /// FaceEmoの適用のあとにTracking ControlをJerryの状態へ合わせ直すレイヤー
         ///
         /// JerryとFaceEmoはどちらもステート突入時にTracking Controlを一度だけ適用する。
-        /// バイパスはDriverの連鎖で成立するぶんFaceEmo側の適用が必ず後になり、
-        /// Jerryの適用を上書きしてしまうため、さらに後から適用し直す。
+        /// バイパス方式では、バイパスがDriverの連鎖で成立するぶんFaceEmo側の適用が必ず後になり、
+        /// Jerryの適用を上書きしてしまう。表情制御方式ではFaceEmoが動き続けるため、
+        /// 表情が切り替わるたびに同じ上書きが起きる。どちらもさらに後から適用し直して直す。
         ///
-        /// 適用し直しは一度きりにせず、バイパス継続中はApplyからArmedへ周期的に戻して繰り返す。
-        /// 後からjoinした人のクライアントではアバターのロード中にフレームが大きく落ち、
+        /// 適用し直しは一度きりにせず、トリガーが立っている間はApplyからArmedへ周期的に戻して繰り返す。
+        /// バイパス方式では、後からjoinした人のクライアントでアバターのロード中にフレームが大きく落ち、
         /// FaceEmo側の適用がReapplyDelaySecondsを超えて遅れることがある。
+        /// 表情制御方式では、装着者がメニューで表情を選び直すたびに追従がいる。
         /// 一度きりだと逆転した適用順のまま残るが、同じ値のTracking Controlの再適用は
         /// 見た目を変えないため、繰り返しても既にいる人には影響しない。
         /// </summary>
@@ -208,6 +277,36 @@ namespace FEJsTBridge.Domain
             return new BridgeDriverPlan(
                 localOnly: false,
                 entries: new[] { new BridgeDriverEntry(BridgeParameterNames.ForceBypassEnable, value) });
+        }
+
+        /// <summary>表情ロックとまばたき停止を起こし、指定の表情へ切り替えるDriver</summary>
+        private static BridgeDriverPlan EngageDriver(FaceEmoParameterNames faceEmo, int emoteIndex)
+        {
+            return new BridgeDriverPlan(
+                localOnly: true,
+                entries: new[]
+                {
+                    new BridgeDriverEntry(faceEmo.EmoteLockEnable, 1f),
+                    new BridgeDriverEntry(faceEmo.ForceBlinkDisable, 1f),
+                    new BridgeDriverEntry(faceEmo.Emote, emoteIndex),
+                });
+        }
+
+        /// <summary>
+        /// 表情ロックとまばたき停止を元へ戻すDriver
+        ///
+        /// 表情番号は戻さない。戻す先を覚える手立てがなく、ロックが外れれば
+        /// FaceEmoがジェスチャーから決め直すためである。
+        /// </summary>
+        private static BridgeDriverPlan ReleaseDriver(FaceEmoParameterNames faceEmo)
+        {
+            return new BridgeDriverPlan(
+                localOnly: true,
+                entries: new[]
+                {
+                    new BridgeDriverEntry(faceEmo.EmoteLockEnable, 0f),
+                    new BridgeDriverEntry(faceEmo.ForceBlinkDisable, 0f),
+                });
         }
 
         public static BridgeConditionPlan TriggerOn(BridgeSettings settings)

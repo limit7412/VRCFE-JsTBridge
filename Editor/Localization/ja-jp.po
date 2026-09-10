@@ -34,6 +34,24 @@ msgstr "バイパスさせる相手がいないため、生成したブリッジ
 msgid "warning.face_emo_not_found:hint"
 msgstr "FaceEmoの生成物をこのアバターへ追加すると動作します。あとから追加する予定であれば、この警告は無視して構いません。"
 
+msgid "warning.face_emo_parameters_unresolved"
+msgstr "FaceEmoのパラメータ名を解決できません"
+
+msgid "warning.face_emo_parameters_unresolved:description"
+msgstr "FaceEmoのMA Parametersが見つからないため、リネーム前の名前でブリッジを生成しました。"
+
+msgid "warning.face_emo_parameters_unresolved:hint"
+msgstr "FaceEmoの設定でパラメータにプレフィックスを付けている場合、表情制御方式は何もしません。FaceEmoの生成物をこのアバターへ追加してから、もう一度ビルドしてください。"
+
+msgid "warning.shared_blend_shapes"
+msgstr "FaceEmoとフェイストラッキングが同じブレンドシェイプを書きます"
+
+msgid "warning.shared_blend_shapes:description"
+msgstr "{0}個のブレンドシェイプが重なっています ({1} など)。表情制御方式ではFaceEmoが書き込みを続けるため、デフォルト表情がトラッキングの値を打ち消します。"
+
+msgid "warning.shared_blend_shapes:hint"
+msgstr "FaceEmoの「除外するブレンドシェイプ」へ、フェイストラッキングが使うシェイプを登録してください。"
+
 msgid "warning.duplicate_component"
 msgstr "Kx VRC FE-JsT Bridgeが複数あります"
 
@@ -48,11 +66,41 @@ msgid "guard.dialog.duplicate_removed"
 msgstr "1つのアバターにKx VRC FE-JsT Bridgeは1つだけ置けるため、重複していたコンポーネントを削除しました。"
 
 # インスペクタ
+msgid "prop.control_method"
+msgstr "制御方式"
+
+msgid "prop.control_method.tooltip"
+msgstr "フェイストラッキング中に、FaceEmoの書き込みを止める方法を選びます。"
+
+msgid "prop.control_method.bypass"
+msgstr "バイパス"
+
+msgid "prop.control_method.bypass.tooltip"
+msgstr "FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。"
+
+msgid "prop.control_method.expression_control"
+msgstr "表情制御 (実験的)"
+
+msgid "prop.control_method.expression_control.tooltip"
+msgstr "FaceEmoを動かしたまま、表情ロックとまばたき停止、表情の切り替えで無害な状態へ寄せます。"
+
+msgid "inspector.control_method.bypass"
+msgstr "FaceEmoが書き込みを止めるため、その分だけ素体の表情レイヤーが表に出てきます。下の「取り除くFXレイヤー」で対処してください。"
+
+msgid "inspector.control_method.expression_control"
+msgstr "実験的な設定です。FaceEmoが書き込みを続けるため、素体の表情レイヤーは通常時と同じく押さえ込まれ、トラッキング中もメニューから表情を選べます。\nFaceEmoのデフォルト表情はトラッキングと同じブレンドシェイプを書くので、あらかじめFaceEmoの「除外するブレンドシェイプ」へトラッキング用のシェイプを登録しておいてください。"
+
+msgid "prop.face_emote_index"
+msgstr "切り替え先の表情番号"
+
+msgid "prop.face_emote_index.tooltip"
+msgstr "フェイストラッキング中に切り替える表情の番号です。FaceEmoの「表情選択」メニューが書き込む番号と同じで、表情パターンの先頭から0、1、2…と数えます。"
+
 msgid "inspector.description"
-msgstr "フェイストラッキングが有効な間、FaceEmoを自動でバイパスさせます。\nアバタールートへの追加を推奨します。"
+msgstr "フェイストラッキングが有効な間、FaceEmoが表情を書き込まないようにします。\nアバタールートへの追加を推奨します。"
 
 msgid "prop.bypass_trigger"
-msgstr "バイパスの発動条件"
+msgstr "発動条件"
 
 msgid "prop.bypass_trigger.tooltip"
 msgstr "どのトラッキング状態でFaceEmoを止めるかを選びます。"
@@ -76,7 +124,7 @@ msgid "prop.enable_tracking_reapply"
 msgstr "Tracking Controlを再適用する"
 
 msgid "prop.enable_tracking_reapply.tooltip"
-msgstr "バイパスの成立後に、Tracking ControlをJerry's Templatesの状態へ合わせ直すレイヤーを生成します。"
+msgstr "FaceEmoが適用したあとに、Tracking ControlをJerry's Templatesの状態へ合わせ直すレイヤーを生成します。"
 
 msgid "inspector.tracking_reapply.disabled"
 msgstr "再適用を止めると、リップシンクが復活する、目だけトラッキング時に目が固まる、といった競合が起きます。トラブルシュートのときだけ無効にしてください。"
@@ -85,7 +133,7 @@ msgid "prop.reapply_delay_seconds"
 msgstr "再適用までの待ち時間 (秒)"
 
 msgid "prop.reapply_delay_seconds.tooltip"
-msgstr "バイパスの成立を待つ秒数です。Tracking Controlが追従しないときは値を増やしてください。"
+msgstr "FaceEmo側の適用を待つ秒数です。Tracking Controlが追従しないときは値を増やしてください。"
 
 # FXレイヤーの除去
 msgid "prop.remove_fx_layers"
@@ -95,7 +143,7 @@ msgid "prop.remove_fx_layers.tooltip"
 msgstr "ビルド時にFXから取り除くレイヤーの名前です。アバター素体のアセットは書き換わりません。"
 
 msgid "inspector.remove_fx_layers"
-msgstr "FaceEmoをバイパスすると、FaceEmoが書き込みを止めた分だけ、素体の表情レイヤーが表に出てきます。\n素体の表情レイヤー (ジェスチャー表情、まばたき、Tracking Controlの切り替えなど) の名前をここに並べると、ビルド時にFXから取り除きます。\nレイヤー名はビルド後のFXをAnimatorウィンドウで開くと確認できます。"
+msgstr "バイパス方式では、FaceEmoが書き込みを止めた分だけ、素体の表情レイヤーが表に出てきます。\n素体の表情レイヤー (ジェスチャー表情、まばたき、Tracking Controlの切り替えなど) の名前をここに並べると、ビルド時にFXから取り除きます。\nレイヤー名はビルド後のFXをAnimatorウィンドウで開くと確認できます。"
 
 msgid "warning.fx_not_found"
 msgstr "FXコントローラが見つかりません"

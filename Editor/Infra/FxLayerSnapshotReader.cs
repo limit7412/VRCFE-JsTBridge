@@ -13,8 +13,6 @@ namespace FEJsTBridge.Infra
     /// </summary>
     internal static class FxLayerSnapshotReader
     {
-        private const string BlendShapePrefix = "blendShape.";
-
         /// <summary>
         /// レイヤーごとの要約を作る
         /// Override Controllerが差し替えたクリップは、差し替え後を読む
@@ -177,7 +175,7 @@ namespace FEJsTBridge.Infra
             {
                 // 型も見る。同じ名前のプロパティを持つ別のコンポーネントと区別できない
                 if (binding.type != typeof(SkinnedMeshRenderer)
-                    || !binding.propertyName.StartsWith(BlendShapePrefix))
+                    || !binding.propertyName.StartsWith(BlendShapeBinding.PropertyPrefix))
                 {
                     continue;
                 }

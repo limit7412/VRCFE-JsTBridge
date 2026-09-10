@@ -34,6 +34,24 @@ msgstr "There is nothing to bypass, so the generated bridge does nothing."
 msgid "warning.face_emo_not_found:hint"
 msgstr "Add the FaceEmo output to this avatar to make the bridge work. Ignore this warning if you plan to add it later."
 
+msgid "warning.face_emo_parameters_unresolved"
+msgstr "Could not resolve FaceEmo's parameter names"
+
+msgid "warning.face_emo_parameters_unresolved:description"
+msgstr "FaceEmo's MA Parameters was not found, so the bridge was generated with the names as they are before renaming."
+
+msgid "warning.face_emo_parameters_unresolved:hint"
+msgstr "If FaceEmo is configured to prefix its parameters, the expression control method does nothing. Add FaceEmo's generated prefab to this avatar and build again."
+
+msgid "warning.shared_blend_shapes"
+msgstr "FaceEmo and face tracking write the same blend shapes"
+
+msgid "warning.shared_blend_shapes:description"
+msgstr "{0} blend shapes overlap ({1} and so on). With the expression control method FaceEmo keeps writing, so its default face cancels out the tracked values."
+
+msgid "warning.shared_blend_shapes:hint"
+msgstr "Register the blend shapes used by face tracking in FaceEmo's Excluded Blend Shapes."
+
 msgid "warning.duplicate_component"
 msgstr "Multiple Kx VRC FE-JsT Bridge components were found"
 
@@ -48,11 +66,41 @@ msgid "guard.dialog.duplicate_removed"
 msgstr "An avatar can only have one Kx VRC FE-JsT Bridge, so the duplicate component was removed."
 
 # Inspector
+msgid "prop.control_method"
+msgstr "Control Method"
+
+msgid "prop.control_method.tooltip"
+msgstr "Chooses how FaceEmo is kept from writing while face tracking is active."
+
+msgid "prop.control_method.bypass"
+msgstr "Bypass"
+
+msgid "prop.control_method.bypass.tooltip"
+msgstr "Stops FaceEmo entirely through its bypass parameter."
+
+msgid "prop.control_method.expression_control"
+msgstr "Expression control (experimental)"
+
+msgid "prop.control_method.expression_control.tooltip"
+msgstr "Keeps FaceEmo running, and locks the expression, stops blinking, and switches to the chosen emote."
+
+msgid "inspector.control_method.bypass"
+msgstr "FaceEmo stops writing, so the avatar's own expression layers surface again. Use FX Layers To Remove below to handle them."
+
+msgid "inspector.control_method.expression_control"
+msgstr "This setting is experimental. FaceEmo keeps writing, so the avatar's own expression layers stay covered as usual and the menu can still switch expressions while tracking.\nFaceEmo's default face writes the same blend shapes as face tracking, so register the tracking blend shapes in FaceEmo's Excluded Blend Shapes first."
+
+msgid "prop.face_emote_index"
+msgstr "Emote Number"
+
+msgid "prop.face_emote_index.tooltip"
+msgstr "Number of the emote to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes, counted from the top of the expression pattern as 0, 1, 2 and so on."
+
 msgid "inspector.description"
-msgstr "Bypasses FaceEmo automatically while face tracking is active.\nAdding this to the avatar root is recommended."
+msgstr "Keeps FaceEmo from writing facial expressions while face tracking is active.\nAdding this to the avatar root is recommended."
 
 msgid "prop.bypass_trigger"
-msgstr "Bypass Trigger"
+msgstr "Trigger"
 
 msgid "prop.bypass_trigger.tooltip"
 msgstr "Chooses which tracking state stops FaceEmo."
@@ -76,7 +124,7 @@ msgid "prop.enable_tracking_reapply"
 msgstr "Re-apply Tracking Control"
 
 msgid "prop.enable_tracking_reapply.tooltip"
-msgstr "Generates the layer that re-applies Tracking Control to match the state of Jerry's Templates after the bypass takes effect."
+msgstr "Generates the layer that re-applies Tracking Control to match the state of Jerry's Templates after FaceEmo applies its own."
 
 msgid "inspector.tracking_reapply.disabled"
 msgstr "Without the re-apply layer, lip sync comes back and the eyes freeze while only lip tracking is active. Turn this off only to work around trouble."
@@ -85,7 +133,7 @@ msgid "prop.reapply_delay_seconds"
 msgstr "Re-apply Delay (seconds)"
 
 msgid "prop.reapply_delay_seconds.tooltip"
-msgstr "Seconds to wait for the bypass to take effect. Increase it when Tracking Control does not follow."
+msgstr "Seconds to wait for FaceEmo to apply its own Tracking Control. Increase it when Tracking Control does not follow."
 
 # FX layer removal
 msgid "prop.remove_fx_layers"
@@ -95,7 +143,7 @@ msgid "prop.remove_fx_layers.tooltip"
 msgstr "Names of the FX layers removed at build time. The avatar's own assets are not modified."
 
 msgid "inspector.remove_fx_layers"
-msgstr "While FaceEmo is bypassed it stops writing, and the avatar's own expression layers surface again.\nList those layers here (gesture expressions, blink, Tracking Control switching, and so on) and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
+msgstr "With the bypass method FaceEmo stops writing, and the avatar's own expression layers surface again.\nList those layers here (gesture expressions, blink, Tracking Control switching, and so on) and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
 
 msgid "warning.fx_not_found"
 msgstr "The FX controller was not found"

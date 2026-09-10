@@ -8,8 +8,14 @@ namespace FEJsTBridge.Domain
     /// </summary>
     internal readonly struct BridgeSettings
     {
-        public BridgeSettings(BypassTrigger bypassTrigger, bool enableTrackingReapply, float reapplyDelaySeconds)
+        public BridgeSettings(
+            ControlMethod controlMethod,
+            BypassTrigger bypassTrigger,
+            bool enableTrackingReapply,
+            float reapplyDelaySeconds,
+            int faceEmoteIndex)
         {
+            ControlMethod = controlMethod;
             BypassTrigger = bypassTrigger;
             EnableTrackingReapply = enableTrackingReapply;
 
@@ -18,7 +24,12 @@ namespace FEJsTBridge.Domain
                 reapplyDelaySeconds,
                 FEJsTBridgeComponent.MinReapplyDelaySeconds,
                 FEJsTBridgeComponent.MaxReapplyDelaySeconds);
+
+            // FaceEmoの表情番号は0から振られるため、負の値はDriverへ渡さない
+            FaceEmoteIndex = Mathf.Max(0, faceEmoteIndex);
         }
+
+        public ControlMethod ControlMethod { get; }
 
         public BypassTrigger BypassTrigger { get; }
 
@@ -26,11 +37,16 @@ namespace FEJsTBridge.Domain
 
         public float ReapplyDelaySeconds { get; }
 
+        /// <summary>表情制御方式で切り替え先にする表情番号</summary>
+        public int FaceEmoteIndex { get; }
+
         public static BridgeSettings Default =>
             new BridgeSettings(
+                ControlMethod.Bypass,
                 BypassTrigger.FacialExpressionsDisabled,
                 true,
-                FEJsTBridgeComponent.DefaultReapplyDelaySeconds);
+                FEJsTBridgeComponent.DefaultReapplyDelaySeconds,
+                FEJsTBridgeComponent.DefaultFaceEmoteIndex);
 
         public static BridgeSettings FromComponent(FEJsTBridgeComponent component)
         {
@@ -40,9 +56,11 @@ namespace FEJsTBridge.Domain
             }
 
             return new BridgeSettings(
+                component.controlMethod,
                 component.bypassTrigger,
                 component.enableTrackingReapply,
-                component.reapplyDelaySeconds);
+                component.reapplyDelaySeconds,
+                component.faceEmoteIndex);
         }
     }
 }
