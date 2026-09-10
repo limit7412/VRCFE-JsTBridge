@@ -135,8 +135,6 @@ namespace FEJsTBridge.Domain
         /// <summary>表示に出すブレンドシェイプ名の数</summary>
         private const int SampleCount = 5;
 
-        private const string BlendShapePrefix = "blendShape.";
-
         /// <summary>
         /// レイヤーごとに競合を判定する
         /// </summary>
@@ -206,14 +204,7 @@ namespace FEJsTBridge.Domain
         /// </summary>
         private static IEnumerable<string> ToShapeNames(IEnumerable<string> bindings)
         {
-            return bindings
-                .Select(binding =>
-                {
-                    var index = binding.LastIndexOf(BlendShapePrefix, System.StringComparison.Ordinal);
-                    return index < 0 ? binding : binding.Substring(index + BlendShapePrefix.Length);
-                })
-                .Distinct()
-                .OrderBy(name => name);
+            return BlendShapeBinding.ToShapeNames(bindings).OrderBy(name => name);
         }
     }
 }

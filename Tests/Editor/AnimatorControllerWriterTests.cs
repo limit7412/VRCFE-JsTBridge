@@ -27,9 +27,12 @@ namespace FEJsTBridge.Tests
         private static BridgeSettings Settings(
             BypassTrigger trigger = BypassTrigger.FacialExpressionsDisabled,
             bool enableTrackingReapply = true,
-            float reapplyDelaySeconds = 0.2f)
+            float reapplyDelaySeconds = 0.2f,
+            ControlMethod controlMethod = ControlMethod.Bypass,
+            int faceEmoteIndex = 0)
         {
-            return new BridgeSettings(trigger, enableTrackingReapply, reapplyDelaySeconds);
+            return new BridgeSettings(
+                controlMethod, trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
         }
 
         [TearDown]
@@ -115,6 +118,36 @@ namespace FEJsTBridge.Tests
             Assert.That(driver.parameters[0].type, Is.EqualTo(VRC_AvatarParameterDriver.ChangeType.Set));
             Assert.That(driver.parameters[0].name, Is.EqualTo(BridgeParameterNames.ForceBypassEnable));
             Assert.That(driver.parameters[0].value, Is.EqualTo(expectedValue));
+        }
+
+        [Test]
+        public void Write_DeclaresEmoteAsInt_ForExpressionControl()
+        {
+            var controller = Write(Settings(controlMethod: ControlMethod.ExpressionControl));
+
+            var parameter = controller.parameters.Single(p => p.name == BridgeParameterNames.Emote);
+
+            Assert.That(parameter.type, Is.EqualTo(AnimatorControllerParameterType.Int));
+        }
+
+        [Test]
+        public void Write_WritesLocalOnlyDriver_ForExpressionControlStates()
+        {
+            var controller = Write(Settings(controlMethod: ControlMethod.ExpressionControl));
+            var layer = controller.layers[0].stateMachine;
+
+            var engaged = FindState(layer, BridgePlanBuilder.EngagedStateName)
+                .behaviours.OfType<VRCAvatarParameterDriver>().Single();
+
+            Assert.That(engaged.localOnly, Is.True);
+            Assert.That(
+                engaged.parameters.Select(parameter => (parameter.name, parameter.value)),
+                Is.EqualTo(new[]
+                {
+                    (BridgeParameterNames.EmoteLockEnable, 1f),
+                    (BridgeParameterNames.ForceBlinkDisable, 1f),
+                    (BridgeParameterNames.Emote, 0f),
+                }));
         }
 
         [Test]

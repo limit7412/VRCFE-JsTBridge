@@ -47,7 +47,8 @@ namespace FEJsTBridge.Domain
     internal enum BridgeParameterType
     {
         Bool,
-        Float
+        Float,
+        Int
     }
 
     /// <summary>レイヤー1つ分の定義</summary>
@@ -122,8 +123,9 @@ namespace FEJsTBridge.Domain
         }
 
         /// <summary>
-        /// falseで生成する。同期済みの入力から導出するため、リモートでもDriverを走らせて
-        /// 各クライアントが同じ結果へ到達させる
+        /// バイパス方式ではfalseで生成する。同期済みの入力から非同期パラメータを導出するため、
+        /// リモートでもDriverを走らせて各クライアントが同じ結果へ到達させる。
+        /// 表情制御方式では書き込む先が同期パラメータのため、trueで生成する
         /// </summary>
         public bool LocalOnly { get; }
 

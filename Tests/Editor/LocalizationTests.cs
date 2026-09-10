@@ -29,6 +29,10 @@ namespace FEJsTBridge.Tests
             "common.cancel",
             "dialog.title",
             "inspector.description",
+            "prop.control_method",
+            "inspector.control_method.bypass",
+            "inspector.control_method.expression_control",
+            "prop.face_emote_index",
             "inspector.bypass_trigger.lip_tracking_only",
             "inspector.tracking_reapply.disabled",
             "prop.bypass_trigger",
@@ -77,6 +81,10 @@ namespace FEJsTBridge.Tests
             "warning.face_emo_not_found:description",
             "warning.duplicate_component",
             "warning.duplicate_component:description",
+            "warning.face_emo_parameters_unresolved",
+            "warning.face_emo_parameters_unresolved:description",
+            "warning.shared_blend_shapes",
+            "warning.shared_blend_shapes:description",
             "guard.log.duplicate",
             "guard.dialog.duplicate_removed",
             "update.available.vpm",
@@ -153,6 +161,24 @@ namespace FEJsTBridge.Tests
                 foreach (var required in RequiredKeys)
                 {
                     Assert.That(keys, Contains.Item(required), $"{language}.poに{required}が無い");
+                }
+            }
+        }
+
+        [Test]
+        public void ControlMethodLabelKeys_CoverEveryEnumValue()
+        {
+            var labelKeys = FEJsTBridgeComponentEditor.ControlMethodLabelKeys;
+
+            // 並びは宣言順に一致させる必要がある (enumValueIndexで引くため)
+            Assert.That(labelKeys.Count, Is.EqualTo(Enum.GetValues(typeof(ControlMethod)).Length));
+
+            foreach (var language in Languages)
+            {
+                var keys = ReadKeys(language);
+                foreach (var labelKey in labelKeys)
+                {
+                    Assert.That(keys, Contains.Item(labelKey), $"{language}.poに{labelKey}が無い");
                 }
             }
         }

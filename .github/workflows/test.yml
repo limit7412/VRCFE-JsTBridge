@@ -370,10 +370,13 @@ jobs:
           restore-keys: |
             Library-${{ env.UNITY_VERSION }}-
 
-      # 他のアクションはNode 24を実行環境とする版へ上げているが、これはv4が最新であり
-      # Node 20のまま。上流が新しいメジャーを出すまでは追随できない。
+      # v4.4.0で実装が置き換わり、アクション自身がDockerを叩くのをやめて、
+      # game-ci/cliのバイナリを取得して`game-ci test --docker`を実行するようになった。
+      # このCLIはprojectPathの位置でgitを実行するが、TestProjectはこのジョブが
+      # mkdirで作るだけでgit管理下にないため、`v4`のままではUnityの起動前に落ちる。
+      # 置き換わる直前のv4.3.2へ固定する。追随の判断は #32 で行う。
       - name: Run EditMode tests
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@v4.3.2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}

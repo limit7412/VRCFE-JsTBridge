@@ -60,6 +60,33 @@ namespace FEJsTBridge.Infra
             return entries;
         }
 
+        /// <summary>
+        /// 指定したパラメータをすべて持つMerge Animatorを集める
+        /// </summary>
+        /// <remarks>
+        /// 一件だけを選ばないのは、同じツールが複数のMerge Animatorに分かれていることがあるためである。
+        /// マージ先が違えば束縛のパスも変わるので、取りこぼすと競合を見落とす。
+        /// </remarks>
+        public static IReadOnlyList<MergeAnimatorEntry> FindByParameter(
+            IEnumerable<MergeAnimatorEntry> entries, params string[] requiredParameters)
+        {
+            if (entries == null)
+            {
+                return new MergeAnimatorEntry[0];
+            }
+
+            return entries.Where(entry =>
+            {
+                if (entry.Controller == null)
+                {
+                    return false;
+                }
+
+                var names = entry.Controller.parameters.Select(parameter => parameter.name).ToArray();
+                return requiredParameters.All(names.Contains);
+            }).ToArray();
+        }
+
         private static IEnumerable<IReadOnlyCollection<string>> CollectParameterNames(GameObject avatarRoot)
         {
             foreach (var mergeAnimator in avatarRoot.GetComponentsInChildren<ModularAvatarMergeAnimator>(true))

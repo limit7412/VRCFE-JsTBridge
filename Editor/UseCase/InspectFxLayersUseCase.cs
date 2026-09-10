@@ -23,8 +23,9 @@ namespace FEJsTBridge.UseCase
             }
 
             var entries = AvatarEnvironmentScanner.CollectMergeAnimatorEntries(avatarRoot);
-            var faceEmo = FindByParameter(entries, BridgeParameterNames.ForceBypassEnable);
-            var jerry = FindByParameter(
+            var faceEmo = AvatarEnvironmentScanner.FindByParameter(
+                entries, BridgeParameterNames.ForceBypassEnable);
+            var jerry = AvatarEnvironmentScanner.FindByParameter(
                 entries,
                 BridgeParameterNames.FacialExpressionsDisabled,
                 BridgeParameterNames.EyeTrackingActive);
@@ -47,29 +48,6 @@ namespace FEJsTBridge.UseCase
                 faceEmo.Count == 0 && jerry.Count == 0);
 
             return new FxLayerInspection(report, faceEmo.Count > 0, jerry.Count > 0);
-        }
-
-        /// <summary>
-        /// 指定したパラメータを持つMerge Animatorを集める
-        /// </summary>
-        /// <remarks>
-        /// 一件だけを選ばないのは、同じツールが複数のMerge Animatorに分かれていることがあるためである。
-        /// マージ先が違えば束縛のパスも変わるので、取りこぼすと競合を見落とす。
-        /// </remarks>
-        private static IReadOnlyList<MergeAnimatorEntry> FindByParameter(
-            IEnumerable<MergeAnimatorEntry> entries,
-            params string[] requiredParameters)
-        {
-            return entries.Where(entry =>
-            {
-                if (entry.Controller == null)
-                {
-                    return false;
-                }
-
-                var names = entry.Controller.parameters.Select(parameter => parameter.name).ToArray();
-                return requiredParameters.All(names.Contains);
-            }).ToArray();
         }
     }
 
