@@ -292,13 +292,6 @@ jobs:
         run: |
           mkdir -p TestProject/Assets TestProject/ProjectSettings
           echo "m_EditorVersion: $UNITY_VERSION" > TestProject/ProjectSettings/ProjectVersion.txt
-
-          # テストランナーはprojectPathの位置で`git rev-parse`を走らせ、
-          # その失敗を握りつぶさずに例外として投げる。リポジトリはこの下の
-          # Packages配下へチェックアウトしてあり、TestProject自身は管理外のため、
-          # 空のリポジトリを置いてUnityの起動前に落ちるのを防ぐ (#32)。
-          # コミットは要らない。ブランチ名はGitHub Actionsの環境変数から解決される
-          git init -q TestProject
           # Unityが2022.3で生成するマニフェストに合わせた最小構成。
           #
           # com.unity.test-framework が無いとテストアセンブリが参照する
@@ -379,10 +372,18 @@ jobs:
 
       # v4.4.0で実装が置き換わり、アクション自身がDockerを叩くのをやめて、
       # game-ci/cliのバイナリを取得して`game-ci test --docker`を実行するようになった。
-      # CLIはprojectPathがgitの管理下にある前提で動くため、上で初期化してある。
-      # タグは固定したままにする。`v4`だと、上流がリリースしただけで実装が入れ替わる
+      # 置き換わる直前のv4.3.2へ固定する。`v4`だと、上流がリリースしただけで入れ替わる。
+      #
+      # v4.4.0へ上げると2か所で止まる (#32)。
+      # 1つはCLIが`projectPath`の位置で`git rev-parse`を走らせ、リポジトリでない場合の
+      # 失敗を握りつぶさずに例外として投げること。これは`git init TestProject`で避けられる。
+      # もう1つはライセンス認証で、CLIはファイル認証が失敗するとpersonal認証へ切り替え、
+      # `--activate-all --include-personal`をUnityのライセンスクライアントへ渡す。
+      # 2022.3.6f1に同梱のクライアントはこのオプションを知らず、終了コード33で落ちる。
+      # CLI側もこの非互換を認識しているが、対処は新しいUnityを前提にしている。
+      # 追随はUnityを上げるとき (#28) にあわせて試す
       - name: Run EditMode tests
-        uses: game-ci/unity-test-runner@v4.4.0
+        uses: game-ci/unity-test-runner@v4.3.2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
