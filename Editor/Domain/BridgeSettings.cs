@@ -40,9 +40,13 @@ namespace FEJsTBridge.Domain
         /// <summary>表情制御方式で切り替え先にする表情番号</summary>
         public int FaceEmoteIndex { get; }
 
+        /// <summary>
+        /// 追加したてのコンポーネントと同じ設定
+        /// 制御方式はフィールドの初期化子ではなくResetで入るため、ここにも同じ値を書く
+        /// </summary>
         public static BridgeSettings Default =>
             new BridgeSettings(
-                ControlMethod.Bypass,
+                ControlMethod.ExpressionControl,
                 BypassTrigger.FacialExpressionsDisabled,
                 true,
                 FEJsTBridgeComponent.DefaultReapplyDelaySeconds,

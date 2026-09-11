@@ -22,7 +22,7 @@ namespace FEJsTBridge
     {
         // インスペクタ表示用の文言はEditorアセンブリ側でローカライズされる
         // （以下の属性はカスタムエディタが無効な場合のフォールバック表示）
-        [Tooltip("How to stop FaceEmo from fighting face tracking. Bypass: stop FaceEmo entirely. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote")]
+        [Tooltip("How to keep FaceEmo from writing while face tracking is active. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote. Bypass: stop FaceEmo entirely, kept for backward compatibility")]
         public ControlMethod controlMethod = ControlMethod.Bypass;
 
         [Tooltip("Emote number to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes. Used only by ExpressionControl")]
@@ -71,18 +71,41 @@ namespace FEJsTBridge
             EditorOnValidateHook?.Invoke(this);
 #endif
         }
+
+        /// <summary>
+        /// 追加したてのコンポーネントへ既定の制御方式を入れる
+        /// </summary>
+        /// <remarks>
+        /// フィールドの初期化子に書かないのは、制御方式を持たない版で保存したアバターにまで
+        /// 既定が渡ってしまうためである。Unityはシリアライズデータに無いフィールドを
+        /// 初期化子の値のまま残すので、初期化子を表情制御にすると、更新しただけで
+        /// バイパスで組んであったアバターの方式が変わる。
+        /// 追加のときだけ呼ばれるResetで入れれば、古い保存データはバイパスのまま残る。
+        /// </remarks>
+        private void Reset()
+        {
+#if UNITY_EDITOR
+            controlMethod = ControlMethod.ExpressionControl;
+#endif
+        }
     }
 
     /// <summary>
     /// FaceEmoの書き込みを止める方式
+    ///
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない。
+    /// 入れ替えると、追加済みのコンポーネントが別の方式で動くようになる。
     /// </summary>
     public enum ControlMethod
     {
         /// <summary>
         /// FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止める
-        /// 接点が1本で済み、FaceEmo側の設定にも依存しない
+        ///
+        /// 接点が1本で済み、FaceEmo側の設定にも依存しないが、
+        /// FaceEmoが書き込みを止めた分だけ素体の表情レイヤーが表に出る。
+        /// 表情制御方式より前からある方式であり、下位互換のために残している。
         /// </summary>
-        [Tooltip("Stop FaceEmo entirely through its bypass parameter")]
+        [Tooltip("Stop FaceEmo entirely through its bypass parameter. Kept for backward compatibility")]
         Bypass,
 
         /// <summary>

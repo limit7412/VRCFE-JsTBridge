@@ -107,7 +107,7 @@ namespace FEJsTBridge.Presentation
 
             if (property.enumValueIndex == (int)ControlMethod.ExpressionControl)
             {
-                EditorGUILayout.HelpBox(S("inspector.control_method.expression_control"), MessageType.Warning);
+                EditorGUILayout.HelpBox(S("inspector.control_method.expression_control"), MessageType.Info);
                 EditorGUILayout.PropertyField(
                     serializedObject.FindProperty("faceEmoteIndex"), G("prop.face_emote_index"));
             }

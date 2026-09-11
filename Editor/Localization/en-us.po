@@ -73,22 +73,22 @@ msgid "prop.control_method.tooltip"
 msgstr "Chooses how FaceEmo is kept from writing while face tracking is active."
 
 msgid "prop.control_method.bypass"
-msgstr "Bypass"
+msgstr "Bypass (legacy)"
 
 msgid "prop.control_method.bypass.tooltip"
-msgstr "Stops FaceEmo entirely through its bypass parameter."
+msgstr "Stops FaceEmo entirely through its bypass parameter. This is the method that predates expression control."
 
 msgid "prop.control_method.expression_control"
-msgstr "Expression control (experimental)"
+msgstr "Expression control"
 
 msgid "prop.control_method.expression_control.tooltip"
 msgstr "Keeps FaceEmo running, and locks the expression, stops blinking, and switches to the chosen emote."
 
 msgid "inspector.control_method.bypass"
-msgstr "FaceEmo stops writing, so the avatar's own expression layers surface again. Use FX Layers To Remove below to handle them."
+msgstr "The method that predates expression control, kept for backward compatibility.\nFaceEmo stops writing, so the avatar's own expression layers surface again. Use FX Layers To Remove below to handle them."
 
 msgid "inspector.control_method.expression_control"
-msgstr "This setting is experimental. FaceEmo keeps writing, so the avatar's own expression layers stay covered as usual and the menu can still switch expressions while tracking.\nFaceEmo's default face writes the same blend shapes as face tracking, so register the tracking blend shapes in FaceEmo's Excluded Blend Shapes first."
+msgstr "FaceEmo keeps writing, so the avatar's own expression layers stay covered as usual and the menu can still switch expressions while tracking.\nFaceEmo's default face writes the same blend shapes as face tracking, so register the tracking blend shapes in FaceEmo's Excluded Blend Shapes first."
 
 msgid "prop.face_emote_index"
 msgstr "Emote Number"
