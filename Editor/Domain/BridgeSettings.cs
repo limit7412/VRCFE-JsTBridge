@@ -42,7 +42,7 @@ namespace FEJsTBridge.Domain
 
         public static BridgeSettings Default =>
             new BridgeSettings(
-                ControlMethod.Bypass,
+                ControlMethod.ExpressionControl,
                 BypassTrigger.FacialExpressionsDisabled,
                 true,
                 FEJsTBridgeComponent.DefaultReapplyDelaySeconds,

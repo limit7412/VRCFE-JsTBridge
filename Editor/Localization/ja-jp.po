@@ -73,22 +73,22 @@ msgid "prop.control_method.tooltip"
 msgstr "フェイストラッキング中に、FaceEmoの書き込みを止める方法を選びます。"
 
 msgid "prop.control_method.bypass"
-msgstr "バイパス"
+msgstr "バイパス (下位互換)"
 
 msgid "prop.control_method.bypass.tooltip"
-msgstr "FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。"
+msgstr "FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。表情制御方式より前からある方式です。"
 
 msgid "prop.control_method.expression_control"
-msgstr "表情制御 (実験的)"
+msgstr "表情制御"
 
 msgid "prop.control_method.expression_control.tooltip"
 msgstr "FaceEmoを動かしたまま、表情ロックとまばたき停止、表情の切り替えで無害な状態へ寄せます。"
 
 msgid "inspector.control_method.bypass"
-msgstr "FaceEmoが書き込みを止めるため、その分だけ素体の表情レイヤーが表に出てきます。下の「取り除くFXレイヤー」で対処してください。"
+msgstr "表情制御方式より前からある方式で、下位互換のために残しています。\nFaceEmoが書き込みを止めるため、その分だけ素体の表情レイヤーが表に出てきます。下の「取り除くFXレイヤー」で対処してください。"
 
 msgid "inspector.control_method.expression_control"
-msgstr "実験的な設定です。FaceEmoが書き込みを続けるため、素体の表情レイヤーは通常時と同じく押さえ込まれ、トラッキング中もメニューから表情を選べます。\nFaceEmoのデフォルト表情はトラッキングと同じブレンドシェイプを書くので、あらかじめFaceEmoの「除外するブレンドシェイプ」へトラッキング用のシェイプを登録しておいてください。"
+msgstr "FaceEmoが書き込みを続けるため、素体の表情レイヤーは通常時と同じく押さえ込まれ、トラッキング中もメニューから表情を選べます。\nFaceEmoのデフォルト表情はトラッキングと同じブレンドシェイプを書くので、あらかじめFaceEmoの「除外するブレンドシェイプ」へトラッキング用のシェイプを登録しておいてください。"
 
 msgid "prop.face_emote_index"
 msgstr "切り替え先の表情番号"

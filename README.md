@@ -87,6 +87,9 @@ unitypackageの取り込みはファイルの追加と上書きだけを行う�
 1. アバタールートに **Kx VRC FE-JsT Bridge** コンポーネントを追加する
 2. アップロード時にブリッジ用のアニメーターレイヤーが自動生成される
 
+既定では **Expression Control** で動きます。
+この方式はFaceEmoの「除外するブレンドシェイプ」の設定を前提にするため、下の「制御方式」を読んでから使ってください。
+
 コンポーネントはビルド中に取り除かれるため、アップロード後のアバターには残りません。
 インスペクタの表示は日本語と英語に対応しており、インスペクタ上部の言語切替 (NDMFの言語設定) で切り替わります。
 Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMFのエラーレポートに警告が出ます。
@@ -96,7 +99,7 @@ Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMF�
 
 | 項目 | 既定値 | 説明 |
 |---|---|---|
-| Control Method | Bypass | FaceEmoの書き込みを止める方式。下の「制御方式」を参照 |
+| Control Method | Expression Control | FaceEmoの書き込みを止める方式。下の「制御方式」を参照 |
 | Face Emote Index | 0 | 表情制御方式で切り替え先にする表情の番号。FaceEmoの「表情選択」メニューが書き込む番号と同じ |
 | Bypass Trigger | Facial Expressions Disabled | 発動条件。`Facial Expressions Disabled` は目か口のどちらかが有効なら発動し、`Lip Tracking Only` は口が有効なときだけ発動する |
 | Enable Tracking Reapply | 有効 | Tracking Controlを再適用するレイヤーを生成するか |
@@ -113,16 +116,7 @@ Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMF�
 
 フェイストラッキング中にFaceEmoを黙らせる方法を2つから選びます。
 
-### Bypass (既定)
-
-FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。
-接点はそのパラメータ1本だけで、FaceEmo側の設定にも依存しません。
-
-止まっている間はFaceEmoが何も書かないため、FaceEmoより前にいる素体の表情レイヤーが表に出てきます。
-下の「素体の表情レイヤーの扱い」で対処してください。
-またトラッキング中はFaceEmoの表情を使えません。
-
-### Expression Control (実験的)
+### Expression Control (既定)
 
 FaceEmoを動かしたまま、FaceEmo自身が持つ制御で無害な状態へ寄せます。
 フェイストラッキングが有効になると、次の3つを一度だけ書き込みます。
@@ -147,6 +141,16 @@ FaceEmoに外部から止める手段がなく、表情ステートが突入の�
 
 FaceEmoの設定でパラメータにプレフィックスを付けている場合は、アバターのMA Parametersから実際の名前を読んで接続します。
 FaceEmoの生成物がアバターに載っていないと名前を解決できないため、その場合はエラーレポートに警告が出ます。
+
+### Bypass (下位互換)
+
+FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。
+接点はそのパラメータ1本だけで、FaceEmo側の設定にも依存しません。
+Expression Controlより前からある方式で、下位互換のために残しています。
+
+止まっている間はFaceEmoが何も書かないため、FaceEmoより前にいる素体の表情レイヤーが表に出てきます。
+下の「素体の表情レイヤーの扱い」で対処してください。
+またトラッキング中はFaceEmoの表情を使えません。
 
 ## 素体の表情レイヤーの扱い
 

@@ -22,8 +22,8 @@ namespace FEJsTBridge
     {
         // インスペクタ表示用の文言はEditorアセンブリ側でローカライズされる
         // （以下の属性はカスタムエディタが無効な場合のフォールバック表示）
-        [Tooltip("How to stop FaceEmo from fighting face tracking. Bypass: stop FaceEmo entirely. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote")]
-        public ControlMethod controlMethod = ControlMethod.Bypass;
+        [Tooltip("How to keep FaceEmo from writing while face tracking is active. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote. Bypass: stop FaceEmo entirely, kept for backward compatibility")]
+        public ControlMethod controlMethod = ControlMethod.ExpressionControl;
 
         [Tooltip("Emote number to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes. Used only by ExpressionControl")]
         [Min(0)]
@@ -75,14 +75,20 @@ namespace FEJsTBridge
 
     /// <summary>
     /// FaceEmoの書き込みを止める方式
+    ///
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない。
+    /// 入れ替えると、追加済みのコンポーネントが別の方式で動くようになる。
     /// </summary>
     public enum ControlMethod
     {
         /// <summary>
         /// FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止める
-        /// 接点が1本で済み、FaceEmo側の設定にも依存しない
+        ///
+        /// 接点が1本で済み、FaceEmo側の設定にも依存しないが、
+        /// FaceEmoが書き込みを止めた分だけ素体の表情レイヤーが表に出る。
+        /// 表情制御方式より前からある方式であり、下位互換のために残している。
         /// </summary>
-        [Tooltip("Stop FaceEmo entirely through its bypass parameter")]
+        [Tooltip("Stop FaceEmo entirely through its bypass parameter. Kept for backward compatibility")]
         Bypass,
 
         /// <summary>
