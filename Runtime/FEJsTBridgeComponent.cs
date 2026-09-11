@@ -23,7 +23,7 @@ namespace FEJsTBridge
         // インスペクタ表示用の文言はEditorアセンブリ側でローカライズされる
         // （以下の属性はカスタムエディタが無効な場合のフォールバック表示）
         [Tooltip("How to keep FaceEmo from writing while face tracking is active. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote. Bypass: stop FaceEmo entirely, kept for backward compatibility")]
-        public ControlMethod controlMethod = ControlMethod.ExpressionControl;
+        public ControlMethod controlMethod = ControlMethod.Bypass;
 
         [Tooltip("Emote number to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes. Used only by ExpressionControl")]
         [Min(0)]
@@ -69,6 +69,23 @@ namespace FEJsTBridge
         {
 #if UNITY_EDITOR
             EditorOnValidateHook?.Invoke(this);
+#endif
+        }
+
+        /// <summary>
+        /// 追加したてのコンポーネントへ既定の制御方式を入れる
+        /// </summary>
+        /// <remarks>
+        /// フィールドの初期化子に書かないのは、制御方式を持たない版で保存したアバターにまで
+        /// 既定が渡ってしまうためである。Unityはシリアライズデータに無いフィールドを
+        /// 初期化子の値のまま残すので、初期化子を表情制御にすると、更新しただけで
+        /// バイパスで組んであったアバターの方式が変わる。
+        /// 追加のときだけ呼ばれるResetで入れれば、古い保存データはバイパスのまま残る。
+        /// </remarks>
+        private void Reset()
+        {
+#if UNITY_EDITOR
+            controlMethod = ControlMethod.ExpressionControl;
 #endif
         }
     }
