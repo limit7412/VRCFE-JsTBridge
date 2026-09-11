@@ -26,8 +26,14 @@ namespace FEJsTBridge.Tests
         }
 
         /// <summary>
-        /// エディタがコンポーネントを追加する経路ではResetが呼ばれ、既定が入る
+        /// コンポーネントを追加するとResetが呼ばれ、既定が入る
         /// </summary>
+        /// <remarks>
+        /// 保存データにこの値を持たないアバターを読み込んだ場合はResetが呼ばれず、
+        /// フィールドの初期化子の値 (バイパス) が残る。そちらはエディタ上で
+        /// コンポーネントを作る操作がどれもResetを通るため、ここでは再現できない。
+        /// 初期化子を変えてはいけない理由は FEJsTBridgeComponent.Reset に書いてある。
+        /// </remarks>
         [Test]
         public void AddedComponent_UsesExpressionControl()
         {
@@ -35,22 +41,6 @@ namespace FEJsTBridge.Tests
 
             Assert.That(component.controlMethod, Is.EqualTo(ControlMethod.ExpressionControl));
             Assert.That(component.faceEmoteIndex, Is.EqualTo(FEJsTBridgeComponent.DefaultFaceEmoteIndex));
-        }
-
-        /// <summary>
-        /// 制御方式を持たない版で保存したアバターは、シリアライズデータにこの値を持たない
-        /// </summary>
-        /// <remarks>
-        /// Unityはデータに無いフィールドを初期化子の値のまま残すため、
-        /// 初期化子がバイパスでなければ、更新しただけで方式が変わってしまう。
-        /// Resetを通らない追加は、そのときの読み込みと同じ状態になる。
-        /// </remarks>
-        [Test]
-        public void ComponentWithoutSavedMethod_StaysOnBypass()
-        {
-            var component = _holder.AddComponent<FEJsTBridgeComponent>();
-
-            Assert.That(component.controlMethod, Is.EqualTo(ControlMethod.Bypass));
         }
 
         [Test]
