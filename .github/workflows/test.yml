@@ -372,9 +372,16 @@ jobs:
 
       # v4.4.0で実装が置き換わり、アクション自身がDockerを叩くのをやめて、
       # game-ci/cliのバイナリを取得して`game-ci test --docker`を実行するようになった。
-      # このCLIはprojectPathの位置でgitを実行するが、TestProjectはこのジョブが
-      # mkdirで作るだけでgit管理下にないため、`v4`のままではUnityの起動前に落ちる。
-      # 置き換わる直前のv4.3.2へ固定する。追随の判断は #32 で行う。
+      # 置き換わる直前のv4.3.2へ固定する。`v4`だと、上流がリリースしただけで入れ替わる。
+      #
+      # v4.4.0へ上げると2か所で止まる (#32)。
+      # 1つはCLIが`projectPath`の位置で`git rev-parse`を走らせ、リポジトリでない場合の
+      # 失敗を握りつぶさずに例外として投げること。これは`git init TestProject`で避けられる。
+      # もう1つはライセンス認証で、CLIはファイル認証が失敗するとpersonal認証へ切り替え、
+      # `--activate-all --include-personal`をUnityのライセンスクライアントへ渡す。
+      # 2022.3.6f1に同梱のクライアントはこのオプションを知らず、終了コード33で落ちる。
+      # CLI側もこの非互換を認識しているが、対処は新しいUnityを前提にしている。
+      # 追随はUnityを上げるとき (#28) にあわせて試す
       - name: Run EditMode tests
         uses: game-ci/unity-test-runner@v4.3.2
         env:
