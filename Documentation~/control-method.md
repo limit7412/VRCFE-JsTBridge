@@ -1,28 +1,9 @@
-# 制御方式と設定項目
+# 制御方式
 
 フェイストラッキング中にFaceEmoを黙らせる方法は2つあり、インスペクタの **Control Method** で選びます。
-どちらを選ぶかで、他の設定項目の意味と、ビルド時に生成されるレイヤーが変わります。
+どちらを選ぶかで、ビルド時に生成されるレイヤーも変わります。
 
-## 設定項目
-
-| 項目 | 既定値 | 説明 |
-|---|---|---|
-| Control Method | Expression Control | FaceEmoの書き込みを止める方式。下の「制御方式」を参照 |
-| Face Emote Index | 0 | 表情制御方式で切り替え先にする表情の番号。FaceEmoの「表情選択」メニューが書き込む番号と同じ |
-| Bypass Trigger | Facial Expressions Disabled | 発動条件。`Facial Expressions Disabled` は目か口のどちらかが有効なら発動し、`Lip Tracking Only` は口が有効なときだけ発動する |
-| Enable Tracking Reapply | 有効 | Tracking Controlを再適用するレイヤーを生成するか |
-| Reapply Delay Seconds | 0.2 | バイパスの成立を待つ秒数。0.05 から 1.0 |
-| FX Layers To Remove | (空) | ビルド時に FX から取り除くレイヤーの名前。[素体の表情レイヤーの扱い](fx-layers.md)を参照 |
-
-`Lip Tracking Only` は実験的な設定です。
-目だけをトラッキングする構成ではFaceEmoのまばたきとデフォルト表情が目系シェイプと競合するため、この設定でも完全には解決しません。
-
-`Reapply Delay Seconds` は、フェイストラッキングを有効化してもMouthのTracking Controlが追従しないときに増やします。
-待ち時間はアニメーションの正規化時間で計るため、極端に低いフレームレートでは既定値では足りないことがあります。
-
-## 制御方式
-
-### Expression Control (新規追加時の既定)
+## Expression Control (新規追加時の既定)
 
 FaceEmoを動かしたまま、FaceEmo自身が持つ制御で無害な状態へ寄せます。
 フェイストラッキングが有効になると、次の3つを一度だけ書き込みます。
@@ -48,7 +29,7 @@ FaceEmoに外部から止める手段がなく、表情ステートが突入の�
 FaceEmoの設定でパラメータにプレフィックスを付けている場合は、アバターのMA Parametersから実際の名前を読んで接続します。
 FaceEmoの生成物がアバターに載っていないと名前を解決できないため、その場合はエラーレポートに警告が出ます。
 
-### Bypass (下位互換)
+## Bypass (下位互換)
 
 FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止めます。
 接点はそのパラメータ1本だけで、FaceEmo側の設定にも依存しません。
