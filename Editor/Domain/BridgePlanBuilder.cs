@@ -12,6 +12,7 @@ namespace FEJsTBridge.Domain
         public const string ExpressionControlLayerName = "ExpressionControl";
         public const string TrackingReapplyLayerName = "TrackingReapply";
         public const string ExtraParametersLayerName = "ExtraParameters";
+        public const string UnsyncedExtraParametersLayerName = "ExtraParametersUnsynced";
 
         public const string IdleStateName = "Idle";
         public const string BypassStateName = "Bypass";
@@ -21,6 +22,7 @@ namespace FEJsTBridge.Domain
         public const string ArmedStateName = "Armed";
         public const string InitialStateName = "Initial";
         public const string ReleasedStateName = "Released";
+        public const string ReassertStateName = "Reassert";
 
         /// <summary>Armed以外の全ステートで共有する空クリップの長さ</summary>
         public const float DefaultClipLengthSeconds = 1.0f;
@@ -81,7 +83,24 @@ namespace FEJsTBridge.Domain
             if (extraParameters != null && extraParameters.Count > 0)
             {
                 DeclareExtraParameters(parameters, extraParameters);
-                layers.Add(BuildExtraParametersLayer(settings, extraParameters));
+
+                // 同期の扱いでDriverのlocalOnlyと書き直しの要否が変わるため、レイヤーを分ける
+                var synced = new List<ExtraParameterTarget>();
+                var unsynced = new List<ExtraParameterTarget>();
+                foreach (var target in extraParameters)
+                {
+                    (target.Synced ? synced : unsynced).Add(target);
+                }
+
+                if (synced.Count > 0)
+                {
+                    layers.Add(BuildExtraParametersLayer(settings, synced));
+                }
+
+                if (unsynced.Count > 0)
+                {
+                    layers.Add(BuildUnsyncedExtraParametersLayer(settings, unsynced));
+                }
             }
 
             return new BridgeControllerPlan(parameters, layers);
@@ -271,11 +290,14 @@ namespace FEJsTBridge.Domain
         }
 
         /// <summary>
-        /// 追加パラメータを宣言に加える
+        /// 追加パラメータと、その退避先を宣言に加える
         ///
         /// ブリッジ自身が宣言済みの名前と、追加パラメータ同士で重なる名前は宣言し直さない。
         /// AnimatorControllerは同名のパラメータを追加すると別名へ付け替えるため、
         /// 重ねて宣言するとDriverが書く相手と別のパラメータができてしまう。
+        ///
+        /// 退避先はExpression Parametersに載らないため、アニメーターだけのパラメータになる。
+        /// 型を書き込み先と揃え、Copyで値が変換されないようにする。
         /// </summary>
         private static void DeclareExtraParameters(
             List<BridgeParameterPlan> parameters, IReadOnlyList<ExtraParameterTarget> extraParameters)
@@ -293,52 +315,45 @@ namespace FEJsTBridge.Domain
                     parameters.Add(new BridgeParameterPlan(target.Name, target.Type));
                 }
             }
+
+            foreach (var target in extraParameters)
+            {
+                if (target.Restore && declared.Add(target.StashName))
+                {
+                    parameters.Add(new BridgeParameterPlan(target.StashName, target.Type));
+                }
+            }
         }
 
         /// <summary>
-        /// トリガーに合わせて、利用者が指定したパラメータを書き込むレイヤー
+        /// トリガーに合わせて、同期パラメータを書き込むレイヤー
         ///
         /// 既定のステートはDriverを持たないInitialにする。
         /// 解除時の値を書くステートを既定にすると、アバターを読み込むたびに解除時の値が書かれ、
         /// 装着者が保存していたトグルの状態を上書きしてしまう。
         /// Initialから出る遷移はトリガーが立ったときだけなので、解除時の値が書かれるのは
         /// フェイストラッキングを一度有効にしたあとに限られる。
+        /// 復元では、退避値が未設定のまま書き戻されることも、同じ理由で起きない。
         ///
         /// 表情制御方式と同じく、周期的な書き直しは行わない。
         /// フェイストラッキング中でも、装着者がメニューから選び直した値を奪わないためである。
         ///
-        /// Driverはlocal onlyで生成する。書き込む先には同期パラメータを想定しており、
-        /// リモートでも書くと、書き込んだ値と届いた同期値が競合する。
+        /// Driverはlocal onlyで生成する。リモートでも書くと、書き込んだ値と届いた同期値が競合する。
         /// </summary>
         private static BridgeLayerPlan BuildExtraParametersLayer(
             BridgeSettings settings, IReadOnlyList<ExtraParameterTarget> extraParameters)
         {
-            var engagedEntries = new List<BridgeDriverEntry>();
-            var releasedEntries = new List<BridgeDriverEntry>();
-
-            foreach (var target in extraParameters)
-            {
-                engagedEntries.Add(new BridgeDriverEntry(target.Name, target.EngagedValue));
-
-                if (target.ReleasedValue.HasValue)
-                {
-                    releasedEntries.Add(new BridgeDriverEntry(target.Name, target.ReleasedValue.Value));
-                }
-            }
-
             var states = new[]
             {
                 new BridgeStatePlan(InitialStateName, DefaultClipLengthSeconds),
                 new BridgeStatePlan(
                     EngagedStateName,
                     DefaultClipLengthSeconds,
-                    driver: new BridgeDriverPlan(localOnly: true, entries: engagedEntries)),
+                    driver: ExtraDriver(localOnly: true, EngageEntries(extraParameters, stash: true))),
                 new BridgeStatePlan(
                     ReleasedStateName,
                     DefaultClipLengthSeconds,
-                    driver: releasedEntries.Count > 0
-                        ? new BridgeDriverPlan(localOnly: true, entries: releasedEntries)
-                        : null),
+                    driver: ExtraDriver(localOnly: true, ReleaseEntries(extraParameters))),
             };
 
             var transitions = new[]
@@ -349,6 +364,126 @@ namespace FEJsTBridge.Domain
             };
 
             return new BridgeLayerPlan(ExtraParametersLayerName, InitialStateName, states, transitions);
+        }
+
+        /// <summary>
+        /// トリガーに合わせて、同期しないパラメータを書き込むレイヤー
+        ///
+        /// 同期しないパラメータは値がほかの人へ届かないため、Driverを全クライアントで走らせ、
+        /// 各クライアントが同じ値へ到達するようにする。
+        ///
+        /// トリガーが立っている間は、空クリップを1周するたびにRedriveを経由してReassertへ入り、
+        /// 値を書き直す。後からjoinした人のクライアントでは、アバターのロード中に
+        /// Driverの書き込みが失われることがあり、同期しない値は同期で補われないためである。
+        /// 理由と構造はバイパス方式のレイヤーと同じである。
+        ///
+        /// 書き直すのは値だけで、退避はEngagedへ入ったときの一度に限る。
+        /// Reassertでも退避すると、フェイストラッキング中の値を退避してしまう。
+        /// 解除時の書き込みは書き直さない。解除後の値は、ほかのギミックやメニューの持ち物である。
+        /// </summary>
+        private static BridgeLayerPlan BuildUnsyncedExtraParametersLayer(
+            BridgeSettings settings, IReadOnlyList<ExtraParameterTarget> extraParameters)
+        {
+            var states = new[]
+            {
+                new BridgeStatePlan(InitialStateName, DefaultClipLengthSeconds),
+                new BridgeStatePlan(
+                    EngagedStateName,
+                    DefaultClipLengthSeconds,
+                    driver: ExtraDriver(localOnly: false, EngageEntries(extraParameters, stash: true))),
+                new BridgeStatePlan(
+                    ReassertStateName,
+                    DefaultClipLengthSeconds,
+                    driver: ExtraDriver(localOnly: false, EngageEntries(extraParameters, stash: false))),
+                new BridgeStatePlan(RedriveStateName, DefaultClipLengthSeconds),
+                new BridgeStatePlan(
+                    ReleasedStateName,
+                    DefaultClipLengthSeconds,
+                    driver: ExtraDriver(localOnly: false, ReleaseEntries(extraParameters))),
+            };
+
+            var transitions = new[]
+            {
+                new BridgeTransitionPlan(InitialStateName, EngagedStateName, new[] { TriggerOn(settings) }),
+
+                // 解除の遷移を記載順の先に置き、書き直しのループより優先させる
+                new BridgeTransitionPlan(EngagedStateName, ReleasedStateName, new[] { TriggerOff(settings) }),
+                new BridgeTransitionPlan(
+                    EngagedStateName,
+                    RedriveStateName,
+                    new BridgeConditionPlan[0],
+                    hasExitTime: true,
+                    exitTime: 1.0f),
+                new BridgeTransitionPlan(ReassertStateName, ReleasedStateName, new[] { TriggerOff(settings) }),
+                new BridgeTransitionPlan(
+                    ReassertStateName,
+                    RedriveStateName,
+                    new BridgeConditionPlan[0],
+                    hasExitTime: true,
+                    exitTime: 1.0f),
+
+                // Redriveはトリガーの現在値に合う側へ即座に抜ける中継である
+                new BridgeTransitionPlan(RedriveStateName, ReassertStateName, new[] { TriggerOn(settings) }),
+                new BridgeTransitionPlan(RedriveStateName, ReleasedStateName, new[] { TriggerOff(settings) }),
+
+                new BridgeTransitionPlan(ReleasedStateName, EngagedStateName, new[] { TriggerOn(settings) }),
+            };
+
+            return new BridgeLayerPlan(UnsyncedExtraParametersLayerName, InitialStateName, states, transitions);
+        }
+
+        /// <summary>
+        /// トリガーが立ったときに書くエントリ
+        /// 退避するときは、すべての退避を書き込みより前に並べる。Driverはエントリを記載順に処理する
+        /// </summary>
+        private static List<BridgeDriverEntry> EngageEntries(
+            IReadOnlyList<ExtraParameterTarget> extraParameters, bool stash)
+        {
+            var entries = new List<BridgeDriverEntry>();
+
+            if (stash)
+            {
+                foreach (var target in extraParameters)
+                {
+                    if (target.Restore)
+                    {
+                        entries.Add(BridgeDriverEntry.Copy(target.Name, target.StashName));
+                    }
+                }
+            }
+
+            foreach (var target in extraParameters)
+            {
+                entries.Add(new BridgeDriverEntry(target.Name, target.EngagedValue));
+            }
+
+            return entries;
+        }
+
+        /// <summary>トリガーが下りたときに書くエントリ。復元は退避先から写し戻す</summary>
+        private static List<BridgeDriverEntry> ReleaseEntries(IReadOnlyList<ExtraParameterTarget> extraParameters)
+        {
+            var entries = new List<BridgeDriverEntry>();
+
+            foreach (var target in extraParameters)
+            {
+                if (target.Restore)
+                {
+                    entries.Add(BridgeDriverEntry.Copy(target.StashName, target.Name));
+                }
+                else if (target.ReleasedValue.HasValue)
+                {
+                    entries.Add(new BridgeDriverEntry(target.Name, target.ReleasedValue.Value));
+                }
+            }
+
+            return entries;
+        }
+
+        /// <summary>書くものがなければDriverを付けない</summary>
+        private static BridgeDriverPlan ExtraDriver(bool localOnly, List<BridgeDriverEntry> entries)
+        {
+            return entries.Count > 0 ? new BridgeDriverPlan(localOnly, entries) : null;
         }
 
         public static string ApplyStateName(bool eyeTracking, bool visemesEnabled)

@@ -354,7 +354,7 @@ msgid "prop.extra_parameters.tooltip"
 msgstr "フェイストラッキングが有効な間だけ値を書き込むパラメータです。MAで作ったトグルなどを指定します。"
 
 msgid "inspector.extra_parameters"
-msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の値を書き込みます。\n書き込むのは切り替わった瞬間の一度だけなので、フェイストラッキング中でもメニューから選び直せます。\n書き込みは装着者のクライアントだけで行います。同期しないパラメータを指定すると、ほかの人からは切り替わって見えません。"
+msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の扱いに従って書き込みます。\n同期パラメータは切り替わった瞬間に一度だけ書くので、フェイストラッキング中でもメニューから選び直せます。\n同期しないパラメータは各クライアントで書き、フェイストラッキング中は約1秒ごとに書き直します。"
 
 msgid "prop.extra_parameter.source"
 msgstr "指定方法"
@@ -396,7 +396,7 @@ msgid "prop.extra_parameter.release_mode"
 msgstr "解除時"
 
 msgid "prop.extra_parameter.release_mode.revert"
-msgstr "値を戻す"
+msgstr "解除時の値を書く"
 
 msgid "prop.extra_parameter.release_mode.keep"
 msgstr "何もしない"
@@ -404,8 +404,26 @@ msgstr "何もしない"
 msgid "prop.extra_parameter.released_value"
 msgstr "解除時の値"
 
+msgid "prop.extra_parameter.release_mode.restore"
+msgstr "元の値に戻す"
+
+msgid "prop.extra_parameter.sync_mode"
+msgstr "同期"
+
+msgid "prop.extra_parameter.sync_mode.tooltip"
+msgstr "同期パラメータは装着者のクライアントだけで書き、同期しないパラメータは各クライアントで書きます。"
+
+msgid "prop.extra_parameter.sync_mode.auto"
+msgstr "自動"
+
+msgid "prop.extra_parameter.sync_mode.synced"
+msgstr "同期する"
+
+msgid "prop.extra_parameter.sync_mode.unsynced"
+msgstr "同期しない"
+
 msgid "inspector.extra_parameter.menu_item_revert"
-msgstr "解除時は、トラッキング中と反対の状態へ戻します。"
+msgstr "「解除時の値を書く」では、トラッキング中と反対の状態へ切り替えます。"
 
 msgid "warning.extra_parameter.empty_name"
 msgstr "追加パラメータの名前が空です"

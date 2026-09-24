@@ -354,7 +354,7 @@ msgid "prop.extra_parameters.tooltip"
 msgstr "Parameters to set only while face tracking is active, such as toggles made with Modular Avatar."
 
 msgid "inspector.extra_parameters"
-msgstr "Each value is written when face tracking is turned on, and the release value is written when it is turned off.\nThe value is written only once at each switch, so you can still change it from the menu while face tracking is active.\nOnly the wearer's client writes the value. Other players do not see the change for parameters that are not synced."
+msgstr "Each value is written when face tracking is turned on, and handled as set in On Release when it is turned off.\nSynced parameters are written only once at each switch, so you can still change them from the menu while face tracking is active.\nParameters that are not synced are written on every client, and rewritten about every second while face tracking is active."
 
 msgid "prop.extra_parameter.source"
 msgstr "Source"
@@ -404,8 +404,26 @@ msgstr "Do Nothing"
 msgid "prop.extra_parameter.released_value"
 msgstr "Release Value"
 
+msgid "prop.extra_parameter.release_mode.restore"
+msgstr "Restore Previous Value"
+
+msgid "prop.extra_parameter.sync_mode"
+msgstr "Sync"
+
+msgid "prop.extra_parameter.sync_mode.tooltip"
+msgstr "Synced parameters are written only on the wearer's client. Parameters that are not synced are written on every client."
+
+msgid "prop.extra_parameter.sync_mode.auto"
+msgstr "Auto"
+
+msgid "prop.extra_parameter.sync_mode.synced"
+msgstr "Synced"
+
+msgid "prop.extra_parameter.sync_mode.unsynced"
+msgstr "Not Synced"
+
 msgid "inspector.extra_parameter.menu_item_revert"
-msgstr "On release, the menu item is switched to the opposite of its state while tracking."
+msgstr "With Write Release Value, the menu item is switched to the opposite of its state while tracking."
 
 msgid "warning.extra_parameter.empty_name"
 msgstr "An extra parameter has no name"

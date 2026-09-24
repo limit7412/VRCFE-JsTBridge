@@ -10,13 +10,28 @@ namespace FEJsTBridge.Domain
     /// </summary>
     internal sealed class ExtraParameterTarget
     {
+        /// <param name="name">FXで使われる名前</param>
+        /// <param name="type">パラメータの型</param>
+        /// <param name="engagedValue">トリガーが立ったときに書く値</param>
+        /// <param name="releasedValue">トリガーが下りたときに書く値。restoreがtrueのときは無視する</param>
+        /// <param name="restore">トリガーが下りたときに、立つ直前の値へ戻すか</param>
+        /// <param name="synced">同期パラメータか</param>
         public ExtraParameterTarget(
-            string name, BridgeParameterType type, float engagedValue, float? releasedValue)
+            string name,
+            BridgeParameterType type,
+            float engagedValue,
+            float? releasedValue,
+            bool restore = false,
+            bool synced = true)
         {
             Name = name;
             Type = type;
             EngagedValue = NormalizeValue(type, engagedValue);
-            ReleasedValue = releasedValue.HasValue ? NormalizeValue(type, releasedValue.Value) : (float?)null;
+            Restore = restore;
+            ReleasedValue = !restore && releasedValue.HasValue
+                ? NormalizeValue(type, releasedValue.Value)
+                : (float?)null;
+            Synced = synced;
         }
 
         public string Name { get; }
@@ -26,8 +41,28 @@ namespace FEJsTBridge.Domain
         /// <summary>トリガーが立ったときに書く値</summary>
         public float EngagedValue { get; }
 
-        /// <summary>トリガーが下りたときに書く値。nullなら何も書かない</summary>
+        /// <summary>
+        /// トリガーが下りたときに書く値
+        /// nullなら値は書かない。Restoreがtrueのときは、値の代わりに退避しておいた値を書き戻す
+        /// </summary>
         public float? ReleasedValue { get; }
+
+        /// <summary>トリガーが立つ直前の値を退避し、下りたときに書き戻すか</summary>
+        public bool Restore { get; }
+
+        /// <summary>
+        /// 同期パラメータか
+        /// 同期パラメータは装着者のクライアントだけで書き、同期しないパラメータは各クライアントで書く
+        /// </summary>
+        public bool Synced { get; }
+
+        /// <summary>
+        /// 退避先のパラメータ名
+        /// ブリッジのコントローラにだけ宣言し、Expression Parametersには載せない
+        /// </summary>
+        public string StashName => StashPrefix + Name;
+
+        public const string StashPrefix = "FEJsTBridge/Stash/";
 
         /// <summary>
         /// 直接指定の設定から組み立てる
@@ -37,13 +72,16 @@ namespace FEJsTBridge.Domain
             ExtraParameterType type,
             float engagedValue,
             ExtraReleaseMode releaseMode,
-            float releasedValue)
+            float releasedValue,
+            bool synced = true)
         {
             return new ExtraParameterTarget(
                 name,
                 ToBridgeType(type),
                 engagedValue,
-                releaseMode == ExtraReleaseMode.Revert ? releasedValue : (float?)null);
+                releaseMode == ExtraReleaseMode.Revert ? releasedValue : (float?)null,
+                releaseMode == ExtraReleaseMode.Restore,
+                synced);
         }
 
         /// <summary>
@@ -51,14 +89,15 @@ namespace FEJsTBridge.Domain
         ///
         /// ONはトグルの値を、OFFは0を書く。VRChatのトグルは、選ばれたときに自分の値を書き、
         /// 選択が外れたときに0を書くので、それと同じ値になる。
-        /// 解除時は、フェイストラッキング中と反対の状態へ戻す。
+        /// 解除時の値を書く設定 (Revert) では、フェイストラッキング中と反対の状態へ戻す。
         /// </summary>
         public static ExtraParameterTarget FromMenuItem(
             string name,
             BridgeParameterType type,
             float toggleValue,
             ExtraToggleState engagedState,
-            ExtraReleaseMode releaseMode)
+            ExtraReleaseMode releaseMode,
+            bool synced = true)
         {
             var onValue = toggleValue;
             const float offValue = 0f;
@@ -70,7 +109,9 @@ namespace FEJsTBridge.Domain
                 name,
                 type,
                 engagedValue,
-                releaseMode == ExtraReleaseMode.Revert ? releasedValue : (float?)null);
+                releaseMode == ExtraReleaseMode.Revert ? releasedValue : (float?)null,
+                releaseMode == ExtraReleaseMode.Restore,
+                synced);
         }
 
         /// <summary>

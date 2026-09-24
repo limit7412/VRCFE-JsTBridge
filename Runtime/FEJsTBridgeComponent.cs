@@ -167,10 +167,13 @@ namespace FEJsTBridge
         public float engagedValue;
 
         [Tooltip("What to do when face tracking is turned off")]
-        public ExtraReleaseMode releaseMode = ExtraReleaseMode.Revert;
+        public ExtraReleaseMode releaseMode = ExtraReleaseMode.Restore;
 
         [Tooltip("Value written when face tracking is turned off. Used only when Release is Revert")]
         public float releasedValue = 1f;
+
+        [Tooltip("Whether the parameter is synced over the network. Auto reads it from Expression Parameters, MA Parameters and MA Menu Item")]
+        public ExtraSyncMode syncMode = ExtraSyncMode.Auto;
     }
 
     /// <summary>
@@ -222,6 +225,30 @@ namespace FEJsTBridge
 
         /// <summary>何も書き込まず、フェイストラッキング中の値を残す</summary>
         [Tooltip("Leave the value as it was while face tracking was active")]
-        Keep
+        Keep,
+
+        /// <summary>フェイストラッキングを有効にする直前の値へ戻す</summary>
+        [Tooltip("Write back the value the parameter had before face tracking was turned on")]
+        Restore
+    }
+
+    /// <summary>
+    /// 追加パラメータの同期の扱い
+    ///
+    /// 同期パラメータは装着者のクライアントだけで書き、値は同期でほかの人へ届ける。
+    /// 同期しないパラメータは、各クライアントがそれぞれ書く。
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない
+    /// </summary>
+    public enum ExtraSyncMode
+    {
+        /// <summary>Expression Parameters、MA Parameters、MA Menu Itemの設定から判定する</summary>
+        [Tooltip("Read it from Expression Parameters, MA Parameters and MA Menu Item")]
+        Auto,
+
+        [Tooltip("The parameter is synced. Only the wearer's client writes it")]
+        Synced,
+
+        [Tooltip("The parameter is not synced. Every client writes it")]
+        Unsynced
     }
 }

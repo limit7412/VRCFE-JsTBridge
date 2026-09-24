@@ -132,7 +132,10 @@ namespace FEJsTBridge.Domain
         public IReadOnlyList<BridgeDriverEntry> Entries { get; }
     }
 
-    /// <summary>Driverが書き込むパラメータと値の組</summary>
+    /// <summary>
+    /// Driverが書き込むパラメータと値の組
+    /// Sourceを持つものは、値の代わりにSourceの現在値を写す (Copy)
+    /// </summary>
     internal sealed class BridgeDriverEntry
     {
         public BridgeDriverEntry(string parameter, float value)
@@ -141,9 +144,28 @@ namespace FEJsTBridge.Domain
             Value = value;
         }
 
+        private BridgeDriverEntry(string parameter, string source)
+        {
+            Parameter = parameter;
+            Source = source;
+        }
+
+        /// <summary>sourceの現在値をparameterへ写すエントリ</summary>
+        public static BridgeDriverEntry Copy(string source, string parameter)
+        {
+            return new BridgeDriverEntry(parameter, source);
+        }
+
+        /// <summary>書き込み先のパラメータ</summary>
         public string Parameter { get; }
 
+        /// <summary>書き込む値。Copyでは参照しない</summary>
         public float Value { get; }
+
+        /// <summary>写し元のパラメータ。nullなら値を書く (Set)</summary>
+        public string Source { get; }
+
+        public bool IsCopy => Source != null;
     }
 
     /// <summary>VRCAnimatorTrackingControlの定義</summary>

@@ -132,8 +132,20 @@ namespace FEJsTBridge.Infra
             driver.localOnly = driverPlan.LocalOnly;
             driver.parameters = new List<VRC_AvatarParameterDriver.Parameter>();
 
+            // エントリは記載順に処理される。退避のCopyを書き込みより前に置く計画は、この順序に依存する
             foreach (var entry in driverPlan.Entries)
             {
+                if (entry.IsCopy)
+                {
+                    driver.parameters.Add(new VRC_AvatarParameterDriver.Parameter
+                    {
+                        type = VRC_AvatarParameterDriver.ChangeType.Copy,
+                        name = entry.Parameter,
+                        source = entry.Source,
+                    });
+                    continue;
+                }
+
                 driver.parameters.Add(new VRC_AvatarParameterDriver.Parameter
                 {
                     type = VRC_AvatarParameterDriver.ChangeType.Set,

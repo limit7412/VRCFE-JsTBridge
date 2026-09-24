@@ -95,6 +95,7 @@ namespace FEJsTBridge.Tests
             "prop.extra_parameter.engaged_value",
             "prop.extra_parameter.release_mode",
             "prop.extra_parameter.released_value",
+            "prop.extra_parameter.sync_mode",
             "inspector.extra_parameter.menu_item_revert",
             "warning.extra_parameter.empty_name",
             "warning.extra_parameter.empty_name:description",
@@ -230,6 +231,7 @@ namespace FEJsTBridge.Tests
             AssertLabelKeys(ExtraParameterEntryDrawer.SourceLabelKeys, typeof(ExtraParameterSource));
             AssertLabelKeys(ExtraParameterEntryDrawer.ToggleStateLabelKeys, typeof(ExtraToggleState));
             AssertLabelKeys(ExtraParameterEntryDrawer.ReleaseModeLabelKeys, typeof(ExtraReleaseMode));
+            AssertLabelKeys(ExtraParameterEntryDrawer.SyncModeLabelKeys, typeof(ExtraSyncMode));
         }
 
         private static void AssertLabelKeys(IReadOnlyList<string> labelKeys, Type enumType)
