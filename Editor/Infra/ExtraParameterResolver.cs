@@ -68,6 +68,12 @@ namespace FEJsTBridge.Infra
             Dictionary<string, bool> declaredSync = null;
             List<(ModularAvatarMenuItem item, string name)> menuItems = null;
 
+            // 同じ書き込み先を持つ項目は、先に並んだものだけを使う。
+            // 後の項目を残すと、同期の区分が違えば別々のレイヤーが同じパラメータへ書き、
+            // 「元の値に戻す」では一方が書いた値を他方が退避してしまう。
+            // 区分が同じでも書き込む値が食い違うだけで、どちらを採るかは決められない
+            var usedNames = new HashSet<string>();
+
             bool IsSynced(ExtraParameterEntry entry, string effectiveName)
             {
                 // 手動で決めてあれば、アバターを走査する必要はない
@@ -107,6 +113,12 @@ namespace FEJsTBridge.Infra
                     if (ExtraParameterTarget.IsReservedName(name))
                     {
                         issues.Add(new Issue("warning.extra_parameter.reserved_name", number));
+                        continue;
+                    }
+
+                    if (!usedNames.Add(name))
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.duplicate_name", number));
                         continue;
                     }
 
@@ -158,6 +170,12 @@ namespace FEJsTBridge.Infra
                     continue;
                 }
 
+                if (usedNames.Contains(effectiveName))
+                {
+                    issues.Add(new Issue("warning.extra_parameter.duplicate_name", number, menuItem));
+                    continue;
+                }
+
                 float value;
                 if (menuItem.automaticValue)
                 {
@@ -199,6 +217,7 @@ namespace FEJsTBridge.Infra
                     ? declaredParameter.Type
                     : MenuItemToggleValue.TypeOf(value);
 
+                usedNames.Add(effectiveName);
                 targets.Add(ExtraParameterTarget.FromMenuItem(
                     effectiveName,
                     type,

@@ -44,6 +44,34 @@ namespace FEJsTBridge.Presentation
             "prop.extra_parameter.sync_mode.unsynced",
         };
 
+        /// <summary>
+        /// 項目をExtraParameterEntryの既定値へ揃える
+        /// 既定値はフィールドの初期化子から取り、ここに値を重ねて書かない
+        /// </summary>
+        internal static void ApplyDefaults(SerializedProperty element)
+        {
+            var defaults = new ExtraParameterEntry();
+
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.source)).enumValueIndex =
+                (int)defaults.source;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.menuItem)).objectReferenceValue =
+                defaults.menuItem;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.menuItemState)).enumValueIndex =
+                (int)defaults.menuItemState;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.parameterName)).stringValue =
+                defaults.parameterName;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.parameterType)).enumValueIndex =
+                (int)defaults.parameterType;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.engagedValue)).floatValue =
+                defaults.engagedValue;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.releaseMode)).enumValueIndex =
+                (int)defaults.releaseMode;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.releasedValue)).floatValue =
+                defaults.releasedValue;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.syncMode)).enumValueIndex =
+                (int)defaults.syncMode;
+        }
+
         private static float LineHeight => EditorGUIUtility.singleLineHeight;
 
         private static float Spacing => EditorGUIUtility.standardVerticalSpacing;

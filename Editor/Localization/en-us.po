@@ -479,6 +479,15 @@ msgstr "Entry {0} was skipped because its parameter name starts with FEJsTBridge
 msgid "warning.extra_parameter.reserved_name:hint"
 msgstr "Specify a parameter whose name does not start with FEJsTBridge/Stash/."
 
+msgid "warning.extra_parameter.duplicate_name"
+msgstr "Extra parameters write to the same parameter"
+
+msgid "warning.extra_parameter.duplicate_name:description"
+msgstr "Entry {0} was skipped because an earlier entry writes to the same parameter."
+
+msgid "warning.extra_parameter.duplicate_name:hint"
+msgstr "Keep only one entry for each parameter."
+
 msgid "warning.extra_parameter.automatic_value"
 msgstr "The value of an extra parameter's menu item cannot be determined"
 

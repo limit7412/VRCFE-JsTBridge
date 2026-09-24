@@ -479,6 +479,15 @@ msgstr "{0}番目の項目のパラメータ名は FEJsTBridge/Stash/ で始ま�
 msgid "warning.extra_parameter.reserved_name:hint"
 msgstr "FEJsTBridge/Stash/ で始まらない名前のパラメータを指定してください。"
 
+msgid "warning.extra_parameter.duplicate_name"
+msgstr "追加パラメータの書き込み先が重複しています"
+
+msgid "warning.extra_parameter.duplicate_name:description"
+msgstr "{0}番目の項目は、先に並んだ項目と同じパラメータへ書き込むため、生成から外しました。"
+
+msgid "warning.extra_parameter.duplicate_name:hint"
+msgstr "同じパラメータを指す項目は1つにまとめてください。"
+
 msgid "warning.extra_parameter.automatic_value"
 msgstr "追加パラメータのメニューアイテムの値を決められません"
 
