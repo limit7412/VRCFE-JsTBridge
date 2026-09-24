@@ -177,10 +177,13 @@ namespace FEJsTBridge.Presentation
         {
             var property = serializedObject.FindProperty("extraParameters");
 
-            // ReorderableListは複数選択中の配列を扱えない。そのときだけ標準の表示へ戻す
+            // ReorderableListは複数選択中の配列を扱えない。標準の配列表示へ戻すと、
+            // 「+」が末尾の項目を複製して既定値の項目を作れないため、複数選択中は編集させない。
+            // 一覧の中身はアバターごとに違うので、まとめて編集できても得るものは少ない
             if (serializedObject.isEditingMultipleObjects)
             {
-                EditorGUILayout.PropertyField(property, G("prop.extra_parameters"), true);
+                EditorGUILayout.LabelField(G("prop.extra_parameters"));
+                EditorGUILayout.HelpBox(S("inspector.extra_parameters.multi_edit"), MessageType.Info);
             }
             else
             {

@@ -87,6 +87,7 @@ namespace FEJsTBridge.Tests
             "warning.shared_blend_shapes:description",
             "prop.extra_parameters",
             "inspector.extra_parameters",
+            "inspector.extra_parameters.multi_edit",
             "prop.extra_parameter.source",
             "prop.extra_parameter.menu_item",
             "prop.extra_parameter.menu_item_state",

@@ -356,6 +356,9 @@ msgstr "フェイストラッキングが有効な間だけ値を書き込むパ
 msgid "inspector.extra_parameters"
 msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の扱いに従って書き込みます。\n同期パラメータは切り替わった瞬間に一度だけ書くので、フェイストラッキング中でもメニューから選び直せます。\n同期しないパラメータは各クライアントで書き、フェイストラッキング中は約1秒ごとに書き直します。"
 
+msgid "inspector.extra_parameters.multi_edit"
+msgstr "複数のコンポーネントを選択している間は編集できません。1つだけ選択してください。"
+
 msgid "prop.extra_parameter.source"
 msgstr "指定方法"
 

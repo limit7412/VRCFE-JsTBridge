@@ -356,6 +356,9 @@ msgstr "Parameters to set only while face tracking is active, such as toggles ma
 msgid "inspector.extra_parameters"
 msgstr "Each value is written when face tracking is turned on, and handled as set in On Release when it is turned off.\nSynced parameters are written only once at each switch, so you can still change them from the menu while face tracking is active.\nParameters that are not synced are written on every client, and rewritten about every second while face tracking is active."
 
+msgid "inspector.extra_parameters.multi_edit"
+msgstr "Extra parameters cannot be edited while multiple components are selected. Select only one."
+
 msgid "prop.extra_parameter.source"
 msgstr "Source"
 
