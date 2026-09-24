@@ -104,6 +104,12 @@ namespace FEJsTBridge.Infra
                         continue;
                     }
 
+                    if (ExtraParameterTarget.IsReservedName(name))
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.reserved_name", number));
+                        continue;
+                    }
+
                     targets.Add(ExtraParameterTarget.FromDirect(
                         name,
                         entry.parameterType,
@@ -146,6 +152,11 @@ namespace FEJsTBridge.Infra
                 }
 
                 var effectiveName = ResolveName(parameterInfo, menuItem.gameObject, rawName);
+                if (ExtraParameterTarget.IsReservedName(effectiveName))
+                {
+                    issues.Add(new Issue("warning.extra_parameter.reserved_name", number, menuItem));
+                    continue;
+                }
 
                 float value;
                 if (menuItem.automaticValue)

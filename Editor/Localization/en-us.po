@@ -470,6 +470,15 @@ msgstr "Entry {0} was skipped because {1} has no parameter name. Modular Avatar 
 msgid "warning.extra_parameter.unnamed_parameter:hint"
 msgstr "Enter a parameter name on the menu item."
 
+msgid "warning.extra_parameter.reserved_name"
+msgstr "An extra parameter uses a name reserved by the bridge"
+
+msgid "warning.extra_parameter.reserved_name:description"
+msgstr "Entry {0} was skipped because its parameter name starts with FEJsTBridge/Stash/. The bridge uses these names to store previous values."
+
+msgid "warning.extra_parameter.reserved_name:hint"
+msgstr "Specify a parameter whose name does not start with FEJsTBridge/Stash/."
+
 msgid "warning.extra_parameter.automatic_value"
 msgstr "The value of an extra parameter's menu item cannot be determined"
 

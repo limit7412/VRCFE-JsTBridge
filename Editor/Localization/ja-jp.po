@@ -470,6 +470,15 @@ msgstr "{0}番目の項目が指す{1}はパラメータ名が空です。Modula
 msgid "warning.extra_parameter.unnamed_parameter:hint"
 msgstr "メニューアイテムにパラメータ名を入力してください。"
 
+msgid "warning.extra_parameter.reserved_name"
+msgstr "追加パラメータの名前がブリッジの予約名です"
+
+msgid "warning.extra_parameter.reserved_name:description"
+msgstr "{0}番目の項目のパラメータ名は FEJsTBridge/Stash/ で始まります。この名前はブリッジが元の値の退避に使うため、生成から外しました。"
+
+msgid "warning.extra_parameter.reserved_name:hint"
+msgstr "FEJsTBridge/Stash/ で始まらない名前のパラメータを指定してください。"
+
 msgid "warning.extra_parameter.automatic_value"
 msgstr "追加パラメータのメニューアイテムの値を決められません"
 

@@ -62,7 +62,17 @@ namespace FEJsTBridge.Domain
         /// </summary>
         public string StashName => StashPrefix + Name;
 
+        /// <summary>
+        /// 退避先の名前の接頭辞
+        /// この接頭辞で始まる名前はブリッジの予約名であり、追加パラメータの書き込み先には使えない。
+        /// 使えると、ある項目の退避先と別の項目の書き込み先が同じ名前になり、退避した値が上書きされる
+        /// </summary>
         public const string StashPrefix = "FEJsTBridge/Stash/";
+
+        public static bool IsReservedName(string name)
+        {
+            return name != null && name.StartsWith(StashPrefix, System.StringComparison.Ordinal);
+        }
 
         /// <summary>
         /// 直接指定の設定から組み立てる

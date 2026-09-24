@@ -107,6 +107,8 @@ namespace FEJsTBridge.Tests
             "warning.extra_parameter.unsupported_control:description",
             "warning.extra_parameter.unnamed_parameter",
             "warning.extra_parameter.unnamed_parameter:description",
+            "warning.extra_parameter.reserved_name",
+            "warning.extra_parameter.reserved_name:description",
             "warning.extra_parameter.automatic_value",
             "warning.extra_parameter.automatic_value:description",
             "guard.log.duplicate",

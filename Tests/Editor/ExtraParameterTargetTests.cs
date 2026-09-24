@@ -101,6 +101,16 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void IsReservedName_DetectsStashPrefix()
+        {
+            // 退避先と同じ名前を書き込み先にすると、退避した値が上書きされる
+            Assert.That(ExtraParameterTarget.IsReservedName(ExtraParameterTarget.StashPrefix + "Foo"), Is.True);
+            Assert.That(ExtraParameterTarget.IsReservedName("Foo"), Is.False);
+            Assert.That(ExtraParameterTarget.IsReservedName("fejstbridge/stash/Foo"), Is.False);
+            Assert.That(ExtraParameterTarget.IsReservedName(null), Is.False);
+        }
+
+        [Test]
         public void SyncResolve_FollowsManualSetting()
         {
             Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Synced, false, false), Is.True);
