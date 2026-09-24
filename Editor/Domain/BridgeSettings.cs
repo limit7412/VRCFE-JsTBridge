@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FEJsTBridge.Domain
@@ -13,7 +14,8 @@ namespace FEJsTBridge.Domain
             BypassTrigger bypassTrigger,
             bool enableTrackingReapply,
             float reapplyDelaySeconds,
-            int faceEmoteIndex)
+            int faceEmoteIndex,
+            IReadOnlyList<ExtraParameterTarget> extraParameters = null)
         {
             ControlMethod = controlMethod;
             BypassTrigger = bypassTrigger;
@@ -27,6 +29,8 @@ namespace FEJsTBridge.Domain
 
             // FaceEmoの表情番号は0から振られるため、負の値はDriverへ渡さない
             FaceEmoteIndex = Mathf.Max(0, faceEmoteIndex);
+
+            ExtraParameters = extraParameters ?? new ExtraParameterTarget[0];
         }
 
         public ControlMethod ControlMethod { get; }
@@ -39,6 +43,23 @@ namespace FEJsTBridge.Domain
 
         /// <summary>表情制御方式で切り替え先にする表情番号</summary>
         public int FaceEmoteIndex { get; }
+
+        /// <summary>
+        /// フェイストラッキング有効中に追加で書き込むパラメータ
+        /// 名前の解決にはビルド中のアバターが要るため、FromComponentでは埋めずWithExtraParametersで渡す
+        /// </summary>
+        public IReadOnlyList<ExtraParameterTarget> ExtraParameters { get; }
+
+        public BridgeSettings WithExtraParameters(IReadOnlyList<ExtraParameterTarget> extraParameters)
+        {
+            return new BridgeSettings(
+                ControlMethod,
+                BypassTrigger,
+                EnableTrackingReapply,
+                ReapplyDelaySeconds,
+                FaceEmoteIndex,
+                extraParameters);
+        }
 
         /// <summary>
         /// 追加したてのコンポーネントと同じ設定

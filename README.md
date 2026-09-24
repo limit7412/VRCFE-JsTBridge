@@ -56,6 +56,7 @@ Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMF�
 | Bypass Trigger | Facial Expressions Disabled | 発動条件。`Facial Expressions Disabled` は目か口のどちらかが有効なら発動し、`Lip Tracking Only` は口が有効なときだけ発動する |
 | Enable Tracking Reapply | 有効 | Tracking Controlを再適用するレイヤーを生成するか |
 | Reapply Delay Seconds | 0.2 | バイパスの成立を待つ秒数。0.05 から 1.0 |
+| Extra Parameters | (空) | フェイストラッキング中だけ値を書き込むパラメータ。MA Menu Itemかパラメータ名で指定する。[追加で書き込むパラメータ](Documentation~/extra-parameters.md)を参照 |
 | FX Layers To Remove | (空) | ビルド時に FX から取り除くレイヤーの名前。[素体の表情レイヤーの扱い](Documentation~/fx-layers.md)を参照 |
 
 `Lip Tracking Only` は実験的な設定です。
@@ -68,6 +69,7 @@ Jerry's TemplatesかFaceEmoがアバターに載っていない場合は、NDMF�
 
 - [インストールと更新](Documentation~/install.md): 手動インストール、booth版の取り込み、更新の通知と自己更新
 - [制御方式](Documentation~/control-method.md): Expression ControlとBypassの違い、ビルド時に生成されるレイヤー
+- [追加で書き込むパラメータ](Documentation~/extra-parameters.md): フェイストラッキング中だけMAのトグルなどを切り替える方法
 - [素体の表情レイヤーの扱い](Documentation~/fx-layers.md): バイパス方式で表に出る素体の表情レイヤーを、FX Layers To Removeで取り除く方法
 
 ## 既知の制限

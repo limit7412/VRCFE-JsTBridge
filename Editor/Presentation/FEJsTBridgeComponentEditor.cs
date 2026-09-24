@@ -86,6 +86,10 @@ namespace FEJsTBridge.Presentation
 
             EditorGUILayout.Space();
 
+            DrawExtraParameters();
+
+            EditorGUILayout.Space();
+
             DrawRemoveFxLayers();
 
             serializedObject.ApplyModifiedProperties();
@@ -162,6 +166,13 @@ namespace FEJsTBridge.Presentation
             }
 
             EditorGUI.EndProperty();
+        }
+
+        private void DrawExtraParameters()
+        {
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("extraParameters"), G("prop.extra_parameters"), true);
+            EditorGUILayout.HelpBox(S("inspector.extra_parameters"), MessageType.Info);
         }
 
         private void DrawRemoveFxLayers()

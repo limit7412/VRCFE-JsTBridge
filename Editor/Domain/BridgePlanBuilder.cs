@@ -11,6 +11,7 @@ namespace FEJsTBridge.Domain
         public const string BypassLayerName = "BypassBridge";
         public const string ExpressionControlLayerName = "ExpressionControl";
         public const string TrackingReapplyLayerName = "TrackingReapply";
+        public const string ExtraParametersLayerName = "ExtraParameters";
 
         public const string IdleStateName = "Idle";
         public const string BypassStateName = "Bypass";
@@ -18,6 +19,8 @@ namespace FEJsTBridge.Domain
         public const string RedriveStateName = "Redrive";
         public const string WaitStateName = "Wait";
         public const string ArmedStateName = "Armed";
+        public const string InitialStateName = "Initial";
+        public const string ReleasedStateName = "Released";
 
         /// <summary>Armed以外の全ステートで共有する空クリップの長さ</summary>
         public const float DefaultClipLengthSeconds = 1.0f;
@@ -70,6 +73,15 @@ namespace FEJsTBridge.Domain
             if (settings.EnableTrackingReapply)
             {
                 layers.Add(BuildTrackingReapplyLayer(settings));
+            }
+
+            // 追加パラメータが無ければレイヤーを作らない。
+            // この設定を持たない版で組んだアバターの生成物を変えないためである
+            var extraParameters = settings.ExtraParameters;
+            if (extraParameters != null && extraParameters.Count > 0)
+            {
+                DeclareExtraParameters(parameters, extraParameters);
+                layers.Add(BuildExtraParametersLayer(settings, extraParameters));
             }
 
             return new BridgeControllerPlan(parameters, layers);
@@ -256,6 +268,87 @@ namespace FEJsTBridge.Domain
             }
 
             return new BridgeLayerPlan(TrackingReapplyLayerName, WaitStateName, states, transitions);
+        }
+
+        /// <summary>
+        /// 追加パラメータを宣言に加える
+        ///
+        /// ブリッジ自身が宣言済みの名前と、追加パラメータ同士で重なる名前は宣言し直さない。
+        /// AnimatorControllerは同名のパラメータを追加すると別名へ付け替えるため、
+        /// 重ねて宣言するとDriverが書く相手と別のパラメータができてしまう。
+        /// </summary>
+        private static void DeclareExtraParameters(
+            List<BridgeParameterPlan> parameters, IReadOnlyList<ExtraParameterTarget> extraParameters)
+        {
+            var declared = new HashSet<string>();
+            foreach (var parameter in parameters)
+            {
+                declared.Add(parameter.Name);
+            }
+
+            foreach (var target in extraParameters)
+            {
+                if (declared.Add(target.Name))
+                {
+                    parameters.Add(new BridgeParameterPlan(target.Name, target.Type));
+                }
+            }
+        }
+
+        /// <summary>
+        /// トリガーに合わせて、利用者が指定したパラメータを書き込むレイヤー
+        ///
+        /// 既定のステートはDriverを持たないInitialにする。
+        /// 解除時の値を書くステートを既定にすると、アバターを読み込むたびに解除時の値が書かれ、
+        /// 装着者が保存していたトグルの状態を上書きしてしまう。
+        /// Initialから出る遷移はトリガーが立ったときだけなので、解除時の値が書かれるのは
+        /// フェイストラッキングを一度有効にしたあとに限られる。
+        ///
+        /// 表情制御方式と同じく、周期的な書き直しは行わない。
+        /// フェイストラッキング中でも、装着者がメニューから選び直した値を奪わないためである。
+        ///
+        /// Driverはlocal onlyで生成する。書き込む先には同期パラメータを想定しており、
+        /// リモートでも書くと、書き込んだ値と届いた同期値が競合する。
+        /// </summary>
+        private static BridgeLayerPlan BuildExtraParametersLayer(
+            BridgeSettings settings, IReadOnlyList<ExtraParameterTarget> extraParameters)
+        {
+            var engagedEntries = new List<BridgeDriverEntry>();
+            var releasedEntries = new List<BridgeDriverEntry>();
+
+            foreach (var target in extraParameters)
+            {
+                engagedEntries.Add(new BridgeDriverEntry(target.Name, target.EngagedValue));
+
+                if (target.ReleasedValue.HasValue)
+                {
+                    releasedEntries.Add(new BridgeDriverEntry(target.Name, target.ReleasedValue.Value));
+                }
+            }
+
+            var states = new[]
+            {
+                new BridgeStatePlan(InitialStateName, DefaultClipLengthSeconds),
+                new BridgeStatePlan(
+                    EngagedStateName,
+                    DefaultClipLengthSeconds,
+                    driver: new BridgeDriverPlan(localOnly: true, entries: engagedEntries)),
+                new BridgeStatePlan(
+                    ReleasedStateName,
+                    DefaultClipLengthSeconds,
+                    driver: releasedEntries.Count > 0
+                        ? new BridgeDriverPlan(localOnly: true, entries: releasedEntries)
+                        : null),
+            };
+
+            var transitions = new[]
+            {
+                new BridgeTransitionPlan(InitialStateName, EngagedStateName, new[] { TriggerOn(settings) }),
+                new BridgeTransitionPlan(EngagedStateName, ReleasedStateName, new[] { TriggerOff(settings) }),
+                new BridgeTransitionPlan(ReleasedStateName, EngagedStateName, new[] { TriggerOn(settings) }),
+            };
+
+            return new BridgeLayerPlan(ExtraParametersLayerName, InitialStateName, states, transitions);
         }
 
         public static string ApplyStateName(bool eyeTracking, bool visemesEnabled)

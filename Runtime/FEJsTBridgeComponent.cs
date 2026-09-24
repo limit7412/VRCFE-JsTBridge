@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VRC.SDKBase;
+using nadena.dev.modular_avatar.core;
 
 namespace FEJsTBridge
 {
@@ -41,6 +42,9 @@ namespace FEJsTBridge
 
         [Tooltip("Names of FX layers to remove at build time. Use it for the avatar's own expression layers, which surface again while FaceEmo is bypassed. The avatar's own assets are not modified")]
         public List<string> removeFxLayers = new List<string>();
+
+        [Tooltip("Parameters to set while face tracking is active, such as toggles made with MA Menu Item. Each entry is written when the trigger turns on, and written back when it turns off")]
+        public List<ExtraParameterEntry> extraParameters = new List<ExtraParameterEntry>();
 
         /// <summary>
         /// 再適用の待ち時間の既定値
@@ -133,5 +137,91 @@ namespace FEJsTBridge
         /// </summary>
         [Tooltip("Follow LipTrackingActive (fires only while lip tracking is active). Experimental")]
         LipTrackingOnly
+    }
+
+    /// <summary>
+    /// フェイストラッキング有効中に追加で書き込むパラメータ1件分の設定
+    ///
+    /// 書き込む先は、MA Menu Itemの参照か、パラメータ名の直接指定で決める。
+    /// どちらの指定を使うかはsourceで選び、使わない側のフィールドは無視する。
+    /// </summary>
+    [Serializable]
+    public class ExtraParameterEntry
+    {
+        [Tooltip("How to specify the parameter to write")]
+        public ExtraParameterSource source = ExtraParameterSource.MenuItem;
+
+        [Tooltip("MA Menu Item whose parameter is written. Its parameter name and toggle value are read at build time")]
+        public ModularAvatarMenuItem menuItem;
+
+        [Tooltip("State the menu item is switched to while face tracking is active")]
+        public ExtraToggleState menuItemState = ExtraToggleState.Off;
+
+        [Tooltip("Name of the parameter to write, as it appears in the FX layer after Modular Avatar renames it")]
+        public string parameterName = "";
+
+        [Tooltip("Type of the parameter")]
+        public ExtraParameterType parameterType = ExtraParameterType.Bool;
+
+        [Tooltip("Value written while face tracking is active")]
+        public float engagedValue;
+
+        [Tooltip("What to do when face tracking is turned off")]
+        public ExtraReleaseMode releaseMode = ExtraReleaseMode.Revert;
+
+        [Tooltip("Value written when face tracking is turned off. Used only when Release is Revert")]
+        public float releasedValue = 1f;
+    }
+
+    /// <summary>
+    /// 追加パラメータの指定方法
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない
+    /// </summary>
+    public enum ExtraParameterSource
+    {
+        [Tooltip("Read the parameter from an MA Menu Item")]
+        MenuItem,
+
+        [Tooltip("Write the parameter name directly")]
+        ParameterName
+    }
+
+    /// <summary>
+    /// メニューアイテムを切り替える先の状態
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない
+    /// </summary>
+    public enum ExtraToggleState
+    {
+        [Tooltip("Turn the menu item on")]
+        On,
+
+        [Tooltip("Turn the menu item off")]
+        Off
+    }
+
+    /// <summary>
+    /// 直接指定したパラメータの型
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない
+    /// </summary>
+    public enum ExtraParameterType
+    {
+        Bool,
+        Int,
+        Float
+    }
+
+    /// <summary>
+    /// フェイストラッキングを無効化したときの扱い
+    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない
+    /// </summary>
+    public enum ExtraReleaseMode
+    {
+        /// <summary>解除時の値を書き込む</summary>
+        [Tooltip("Write the release value")]
+        Revert,
+
+        /// <summary>何も書き込まず、フェイストラッキング中の値を残す</summary>
+        [Tooltip("Leave the value as it was while face tracking was active")]
+        Keep
     }
 }
