@@ -345,3 +345,118 @@ msgstr "古いファイルを削除できなかったため、取り込みを中
 
 msgid "update.error.playing"
 msgstr "再生中は更新できません。再生を止めてからやり直してください。"
+
+# 追加パラメータ
+msgid "prop.extra_parameters"
+msgstr "追加で書き込むパラメータ"
+
+msgid "prop.extra_parameters.tooltip"
+msgstr "フェイストラッキングが有効な間だけ値を書き込むパラメータです。MAで作ったトグルなどを指定します。"
+
+msgid "inspector.extra_parameters"
+msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の値を書き込みます。\n書き込むのは切り替わった瞬間の一度だけなので、フェイストラッキング中でもメニューから選び直せます。\n書き込みは装着者のクライアントだけで行います。同期しないパラメータを指定すると、ほかの人からは切り替わって見えません。"
+
+msgid "prop.extra_parameter.source"
+msgstr "指定方法"
+
+msgid "prop.extra_parameter.source.menu_item"
+msgstr "MA Menu Item"
+
+msgid "prop.extra_parameter.source.parameter_name"
+msgstr "パラメータ名"
+
+msgid "prop.extra_parameter.menu_item"
+msgstr "メニューアイテム"
+
+msgid "prop.extra_parameter.menu_item.tooltip"
+msgstr "トグルかボタンのMA Menu Itemを指定します。パラメータ名とトグルの値はビルド時に読み取ります。"
+
+msgid "prop.extra_parameter.menu_item_state"
+msgstr "トラッキング中の状態"
+
+msgid "prop.extra_parameter.state.on"
+msgstr "ON"
+
+msgid "prop.extra_parameter.state.off"
+msgstr "OFF"
+
+msgid "prop.extra_parameter.parameter_name"
+msgstr "パラメータ名"
+
+msgid "prop.extra_parameter.parameter_name.tooltip"
+msgstr "Modular Avatarがリネームしたあとの、FXで使われる名前を書きます。"
+
+msgid "prop.extra_parameter.parameter_type"
+msgstr "型"
+
+msgid "prop.extra_parameter.engaged_value"
+msgstr "トラッキング中の値"
+
+msgid "prop.extra_parameter.release_mode"
+msgstr "解除時"
+
+msgid "prop.extra_parameter.release_mode.revert"
+msgstr "値を戻す"
+
+msgid "prop.extra_parameter.release_mode.keep"
+msgstr "何もしない"
+
+msgid "prop.extra_parameter.released_value"
+msgstr "解除時の値"
+
+msgid "inspector.extra_parameter.menu_item_revert"
+msgstr "解除時は、トラッキング中と反対の状態へ戻します。"
+
+msgid "warning.extra_parameter.empty_name"
+msgstr "追加パラメータの名前が空です"
+
+msgid "warning.extra_parameter.empty_name:description"
+msgstr "{0}番目の項目はパラメータ名が空のため、生成から外しました。"
+
+msgid "warning.extra_parameter.empty_name:hint"
+msgstr "パラメータ名を入力するか、使わない項目を削除してください。"
+
+msgid "warning.extra_parameter.missing_menu_item"
+msgstr "追加パラメータのメニューアイテムが指定されていません"
+
+msgid "warning.extra_parameter.missing_menu_item:description"
+msgstr "{0}番目の項目はメニューアイテムが空のため、生成から外しました。"
+
+msgid "warning.extra_parameter.missing_menu_item:hint"
+msgstr "メニューアイテムを指定するか、使わない項目を削除してください。"
+
+msgid "warning.extra_parameter.outside_avatar"
+msgstr "追加パラメータのメニューアイテムがアバターの外にあります"
+
+msgid "warning.extra_parameter.outside_avatar:description"
+msgstr "{0}番目の項目が指す{1}はビルド中のアバターに含まれないため、生成から外しました。"
+
+msgid "warning.extra_parameter.outside_avatar:hint"
+msgstr "このアバターの中にあるメニューアイテムを指定してください。"
+
+msgid "warning.extra_parameter.unsupported_control"
+msgstr "追加パラメータのメニューアイテムがトグルでもボタンでもありません"
+
+msgid "warning.extra_parameter.unsupported_control:description"
+msgstr "{0}番目の項目が指す{1}は、ON/OFFで書き込む値が決まらない種類のため、生成から外しました。"
+
+msgid "warning.extra_parameter.unsupported_control:hint"
+msgstr "トグルかボタンのメニューアイテムを指定するか、パラメータ名で直接指定してください。"
+
+msgid "warning.extra_parameter.unnamed_parameter"
+msgstr "追加パラメータのメニューアイテムにパラメータ名がありません"
+
+msgid "warning.extra_parameter.unnamed_parameter:description"
+msgstr "{0}番目の項目が指す{1}はパラメータ名が空です。Modular Avatarがビルド中に名前を振るため、書き込む先を決められず、生成から外しました。"
+
+msgid "warning.extra_parameter.unnamed_parameter:hint"
+msgstr "メニューアイテムにパラメータ名を入力してください。"
+
+msgid "warning.extra_parameter.automatic_value"
+msgstr "追加パラメータのメニューアイテムの値を決められません"
+
+msgid "warning.extra_parameter.automatic_value:description"
+msgstr "{0}番目の項目が指す{1}は値の自動設定が有効で、同じパラメータを使うメニューアイテムが複数あります。Modular Avatarがビルド中に振る値を求められないため、生成から外しました。"
+
+msgid "warning.extra_parameter.automatic_value:hint"
+msgstr "メニューアイテムの値の自動設定を切り、値を入力してください。"

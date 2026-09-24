@@ -116,6 +116,9 @@ namespace FEJsTBridge.UseCase
                     ReportExpressionControlPrerequisites(avatarRoot, faceEmo);
                 }
 
+                settings = settings.WithExtraParameters(
+                    ResolveExtraParameters(context, primary.extraParameters));
+
                 var plan = BridgePlanBuilder.Build(settings, faceEmo);
                 var controller = AnimatorControllerWriter.Write(plan, asset => SaveAsset(context, asset));
                 MergeAnimatorInstaller.Install(avatarRoot, controller);
@@ -147,6 +150,39 @@ namespace FEJsTBridge.UseCase
 
                 Object.DestroyImmediate(component);
             }
+        }
+
+        /// <summary>
+        /// 追加パラメータの名前と値を解決し、解決できなかった項目を報告する
+        ///
+        /// 解決できなかった項目は生成から外すだけで、ほかの項目の生成は続ける。
+        /// 名前を決められないパラメータへ書いても何も起きないが、黙って外すと
+        /// 利用者は設定が効いていない理由を知る手段がない。
+        /// </summary>
+        private static IReadOnlyList<ExtraParameterTarget> ResolveExtraParameters(
+            BuildContext context, IReadOnlyList<ExtraParameterEntry> entries)
+        {
+            var result = ExtraParameterResolver.Resolve(context, context.AvatarRootObject, entries);
+
+            foreach (var issue in result.Issues)
+            {
+                if (issue.Reference != null)
+                {
+                    ErrorReport.ReportError(
+                        Localization.Localizer,
+                        ErrorSeverity.NonFatal,
+                        issue.MessageKey,
+                        issue.EntryNumber,
+                        issue.Reference);
+                }
+                else
+                {
+                    ErrorReport.ReportError(
+                        Localization.Localizer, ErrorSeverity.NonFatal, issue.MessageKey, issue.EntryNumber);
+                }
+            }
+
+            return result.Targets;
         }
 
         /// <summary>

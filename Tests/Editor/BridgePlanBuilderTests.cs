@@ -435,6 +435,156 @@ namespace FEJsTBridge.Tests
             Assert.That(transitions[transitions.Count - 1], Is.SameAs(rearm));
         }
 
+        [Test]
+        public void Build_OmitsExtraParametersLayer_WhenNoExtraParameters()
+        {
+            var plan = BridgePlanBuilder.Build(Settings());
+
+            Assert.That(plan.FindLayer(BridgePlanBuilder.ExtraParametersLayerName), Is.Null);
+        }
+
+        [Test]
+        public void Build_AppendsExtraParametersLayer_AfterExistingLayers()
+        {
+            var plan = BridgePlanBuilder.Build(SettingsWithExtras(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f)));
+
+            Assert.That(plan.Layers.Select(layer => layer.Name), Is.EqualTo(new[]
+            {
+                BridgePlanBuilder.BypassLayerName,
+                BridgePlanBuilder.TrackingReapplyLayerName,
+                BridgePlanBuilder.ExtraParametersLayerName,
+            }));
+        }
+
+        [Test]
+        public void Build_DeclaresExtraParameters_WithoutDuplicates()
+        {
+            var plan = BridgePlanBuilder.Build(SettingsWithExtras(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f),
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 1f, 0f),
+                new ExtraParameterTarget("Mask", BridgeParameterType.Int, 2f, 0f),
+                new ExtraParameterTarget(BridgeParameterNames.VisemesEnable, BridgeParameterType.Bool, 1f, null)));
+
+            var names = plan.Parameters.Select(parameter => parameter.Name).ToArray();
+
+            // 同名を重ねて宣言すると、Unityが別名のパラメータを作ってしまう
+            Assert.That(names, Is.Unique);
+            Assert.That(
+                plan.Parameters.Where(parameter => parameter.Name == "Mask").Select(parameter => parameter.Type),
+                Is.EqualTo(new[] { BridgeParameterType.Int }));
+            Assert.That(names, Has.Member("Blush"));
+        }
+
+        [Test]
+        public void ExtraParametersLayer_StartsFromInitialWithoutDriver()
+        {
+            var layer = ExtraParametersLayer(new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f));
+
+            // 読み込みのたびに解除時の値を書くと、保存されたトグルの状態を上書きしてしまう
+            Assert.That(layer.DefaultStateName, Is.EqualTo(BridgePlanBuilder.InitialStateName));
+            Assert.That(layer.FindState(BridgePlanBuilder.InitialStateName).Driver, Is.Null);
+
+            var fromInitial = layer.TransitionsFrom(BridgePlanBuilder.InitialStateName);
+            Assert.That(fromInitial.Count, Is.EqualTo(1));
+            Assert.That(fromInitial[0].To, Is.EqualTo(BridgePlanBuilder.EngagedStateName));
+            AssertCondition(
+                fromInitial[0].Conditions.Single(),
+                BridgeParameterNames.FacialExpressionsDisabled,
+                BridgeConditionMode.If,
+                0f);
+        }
+
+        [Test]
+        public void ExtraParametersLayer_WritesEngagedAndReleasedValues()
+        {
+            var layer = ExtraParametersLayer(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f),
+                new ExtraParameterTarget("Mask", BridgeParameterType.Int, 2f, 0f));
+
+            var engaged = layer.FindState(BridgePlanBuilder.EngagedStateName).Driver;
+            Assert.That(engaged.LocalOnly, Is.True);
+            Assert.That(
+                engaged.Entries.Select(entry => (entry.Parameter, entry.Value)),
+                Is.EqualTo(new[] { ("Blush", 0f), ("Mask", 2f) }));
+
+            var released = layer.FindState(BridgePlanBuilder.ReleasedStateName).Driver;
+            Assert.That(released.LocalOnly, Is.True);
+            Assert.That(
+                released.Entries.Select(entry => (entry.Parameter, entry.Value)),
+                Is.EqualTo(new[] { ("Blush", 1f), ("Mask", 0f) }));
+        }
+
+        [Test]
+        public void ExtraParametersLayer_SkipsKeptParameters_OnRelease()
+        {
+            var layer = ExtraParametersLayer(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, null),
+                new ExtraParameterTarget("Mask", BridgeParameterType.Int, 2f, 0f));
+
+            var released = layer.FindState(BridgePlanBuilder.ReleasedStateName).Driver;
+            Assert.That(released.Entries.Select(entry => entry.Parameter), Is.EqualTo(new[] { "Mask" }));
+        }
+
+        [Test]
+        public void ExtraParametersLayer_HasNoReleaseDriver_WhenEveryParameterIsKept()
+        {
+            var layer = ExtraParametersLayer(new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, null));
+
+            Assert.That(layer.FindState(BridgePlanBuilder.ReleasedStateName).Driver, Is.Null);
+        }
+
+        [Test]
+        public void ExtraParametersLayer_TogglesBetweenEngagedAndReleased()
+        {
+            var layer = ExtraParametersLayer(new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f));
+
+            var fromEngaged = layer.TransitionsFrom(BridgePlanBuilder.EngagedStateName).Single();
+            Assert.That(fromEngaged.To, Is.EqualTo(BridgePlanBuilder.ReleasedStateName));
+            AssertCondition(
+                fromEngaged.Conditions.Single(),
+                BridgeParameterNames.FacialExpressionsDisabled,
+                BridgeConditionMode.IfNot,
+                0f);
+
+            var fromReleased = layer.TransitionsFrom(BridgePlanBuilder.ReleasedStateName).Single();
+            Assert.That(fromReleased.To, Is.EqualTo(BridgePlanBuilder.EngagedStateName));
+            AssertCondition(
+                fromReleased.Conditions.Single(),
+                BridgeParameterNames.FacialExpressionsDisabled,
+                BridgeConditionMode.If,
+                0f);
+        }
+
+        [Test]
+        public void ExtraParametersLayer_FollowsLipTrackingTrigger()
+        {
+            var layer = BridgePlanBuilder
+                .Build(Settings(trigger: BypassTrigger.LipTrackingOnly).WithExtraParameters(new[]
+                {
+                    new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f),
+                }))
+                .FindLayer(BridgePlanBuilder.ExtraParametersLayerName);
+
+            AssertCondition(
+                layer.TransitionsFrom(BridgePlanBuilder.InitialStateName).Single().Conditions.Single(),
+                BridgeParameterNames.LipTrackingActive,
+                BridgeConditionMode.Greater,
+                0.5f);
+        }
+
+        private static BridgeSettings SettingsWithExtras(params ExtraParameterTarget[] targets)
+        {
+            return Settings().WithExtraParameters(targets);
+        }
+
+        private static BridgeLayerPlan ExtraParametersLayer(params ExtraParameterTarget[] targets)
+        {
+            return BridgePlanBuilder
+                .Build(SettingsWithExtras(targets))
+                .FindLayer(BridgePlanBuilder.ExtraParametersLayerName);
+        }
+
         /// <summary>リネーム後の名前が計画へ入ることを見るための、解決済みの名前</summary>
         private static FaceEmoParameterNames ResolvedNames =>
             new FaceEmoParameterNames("FaceEmo_LOCK", "FaceEmo_BLINK", "FaceEmo_EMOTE", resolved: true);

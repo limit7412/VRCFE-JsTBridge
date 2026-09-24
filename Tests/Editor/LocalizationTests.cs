@@ -85,6 +85,29 @@ namespace FEJsTBridge.Tests
             "warning.face_emo_parameters_unresolved:description",
             "warning.shared_blend_shapes",
             "warning.shared_blend_shapes:description",
+            "prop.extra_parameters",
+            "inspector.extra_parameters",
+            "prop.extra_parameter.source",
+            "prop.extra_parameter.menu_item",
+            "prop.extra_parameter.menu_item_state",
+            "prop.extra_parameter.parameter_name",
+            "prop.extra_parameter.parameter_type",
+            "prop.extra_parameter.engaged_value",
+            "prop.extra_parameter.release_mode",
+            "prop.extra_parameter.released_value",
+            "inspector.extra_parameter.menu_item_revert",
+            "warning.extra_parameter.empty_name",
+            "warning.extra_parameter.empty_name:description",
+            "warning.extra_parameter.missing_menu_item",
+            "warning.extra_parameter.missing_menu_item:description",
+            "warning.extra_parameter.outside_avatar",
+            "warning.extra_parameter.outside_avatar:description",
+            "warning.extra_parameter.unsupported_control",
+            "warning.extra_parameter.unsupported_control:description",
+            "warning.extra_parameter.unnamed_parameter",
+            "warning.extra_parameter.unnamed_parameter:description",
+            "warning.extra_parameter.automatic_value",
+            "warning.extra_parameter.automatic_value:description",
             "guard.log.duplicate",
             "guard.dialog.duplicate_removed",
             "update.available.vpm",
@@ -190,6 +213,29 @@ namespace FEJsTBridge.Tests
 
             // 並びは宣言順に一致させる必要がある (enumValueIndexで引くため)
             Assert.That(labelKeys.Count, Is.EqualTo(Enum.GetValues(typeof(BypassTrigger)).Length));
+
+            foreach (var language in Languages)
+            {
+                var keys = ReadKeys(language);
+                foreach (var labelKey in labelKeys)
+                {
+                    Assert.That(keys, Contains.Item(labelKey), $"{language}.poに{labelKey}が無い");
+                }
+            }
+        }
+
+        [Test]
+        public void ExtraParameterLabelKeys_CoverEveryEnumValue()
+        {
+            AssertLabelKeys(ExtraParameterEntryDrawer.SourceLabelKeys, typeof(ExtraParameterSource));
+            AssertLabelKeys(ExtraParameterEntryDrawer.ToggleStateLabelKeys, typeof(ExtraToggleState));
+            AssertLabelKeys(ExtraParameterEntryDrawer.ReleaseModeLabelKeys, typeof(ExtraReleaseMode));
+        }
+
+        private static void AssertLabelKeys(IReadOnlyList<string> labelKeys, Type enumType)
+        {
+            // 並びは宣言順に一致させる必要がある (enumValueIndexで引くため)
+            Assert.That(labelKeys.Count, Is.EqualTo(Enum.GetValues(enumType).Length), enumType.Name);
 
             foreach (var language in Languages)
             {

@@ -2,7 +2,8 @@
     "name": "FEJsTBridge.Runtime",
     "rootNamespace": "FEJsTBridge",
     "references": [
-        "VRC.SDKBase"
+        "VRC.SDKBase",
+        "nadena.dev.modular-avatar.core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

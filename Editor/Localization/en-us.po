@@ -345,3 +345,118 @@ msgstr "Stopped before importing because old files could not be deleted.\nCould 
 
 msgid "update.error.playing"
 msgstr "Cannot update while in play mode. Exit play mode and try again."
+
+# Extra parameters
+msgid "prop.extra_parameters"
+msgstr "Extra Parameters"
+
+msgid "prop.extra_parameters.tooltip"
+msgstr "Parameters to set only while face tracking is active, such as toggles made with Modular Avatar."
+
+msgid "inspector.extra_parameters"
+msgstr "Each value is written when face tracking is turned on, and the release value is written when it is turned off.\nThe value is written only once at each switch, so you can still change it from the menu while face tracking is active.\nOnly the wearer's client writes the value. Other players do not see the change for parameters that are not synced."
+
+msgid "prop.extra_parameter.source"
+msgstr "Source"
+
+msgid "prop.extra_parameter.source.menu_item"
+msgstr "MA Menu Item"
+
+msgid "prop.extra_parameter.source.parameter_name"
+msgstr "Parameter Name"
+
+msgid "prop.extra_parameter.menu_item"
+msgstr "Menu Item"
+
+msgid "prop.extra_parameter.menu_item.tooltip"
+msgstr "An MA Menu Item of the toggle or button type. Its parameter name and toggle value are read at build time."
+
+msgid "prop.extra_parameter.menu_item_state"
+msgstr "State While Tracking"
+
+msgid "prop.extra_parameter.state.on"
+msgstr "On"
+
+msgid "prop.extra_parameter.state.off"
+msgstr "Off"
+
+msgid "prop.extra_parameter.parameter_name"
+msgstr "Parameter Name"
+
+msgid "prop.extra_parameter.parameter_name.tooltip"
+msgstr "The name used in the FX layer, after Modular Avatar renames it."
+
+msgid "prop.extra_parameter.parameter_type"
+msgstr "Type"
+
+msgid "prop.extra_parameter.engaged_value"
+msgstr "Value While Tracking"
+
+msgid "prop.extra_parameter.release_mode"
+msgstr "On Release"
+
+msgid "prop.extra_parameter.release_mode.revert"
+msgstr "Write Release Value"
+
+msgid "prop.extra_parameter.release_mode.keep"
+msgstr "Do Nothing"
+
+msgid "prop.extra_parameter.released_value"
+msgstr "Release Value"
+
+msgid "inspector.extra_parameter.menu_item_revert"
+msgstr "On release, the menu item is switched to the opposite of its state while tracking."
+
+msgid "warning.extra_parameter.empty_name"
+msgstr "An extra parameter has no name"
+
+msgid "warning.extra_parameter.empty_name:description"
+msgstr "Entry {0} was skipped because its parameter name is empty."
+
+msgid "warning.extra_parameter.empty_name:hint"
+msgstr "Enter a parameter name, or remove the entry if you do not need it."
+
+msgid "warning.extra_parameter.missing_menu_item"
+msgstr "An extra parameter has no menu item"
+
+msgid "warning.extra_parameter.missing_menu_item:description"
+msgstr "Entry {0} was skipped because no menu item is set."
+
+msgid "warning.extra_parameter.missing_menu_item:hint"
+msgstr "Set a menu item, or remove the entry if you do not need it."
+
+msgid "warning.extra_parameter.outside_avatar"
+msgstr "An extra parameter refers to a menu item outside the avatar"
+
+msgid "warning.extra_parameter.outside_avatar:description"
+msgstr "Entry {0} was skipped because {1} is not part of the avatar being built."
+
+msgid "warning.extra_parameter.outside_avatar:hint"
+msgstr "Set a menu item inside this avatar."
+
+msgid "warning.extra_parameter.unsupported_control"
+msgstr "An extra parameter refers to a menu item that is neither a toggle nor a button"
+
+msgid "warning.extra_parameter.unsupported_control:description"
+msgstr "Entry {0} was skipped because {1} has no single value for on and off."
+
+msgid "warning.extra_parameter.unsupported_control:hint"
+msgstr "Set a toggle or button menu item, or specify the parameter by name."
+
+msgid "warning.extra_parameter.unnamed_parameter"
+msgstr "An extra parameter refers to a menu item without a parameter name"
+
+msgid "warning.extra_parameter.unnamed_parameter:description"
+msgstr "Entry {0} was skipped because {1} has no parameter name. Modular Avatar assigns a name during the build, so the target cannot be determined."
+
+msgid "warning.extra_parameter.unnamed_parameter:hint"
+msgstr "Enter a parameter name on the menu item."
+
+msgid "warning.extra_parameter.automatic_value"
+msgstr "The value of an extra parameter's menu item cannot be determined"
+
+msgid "warning.extra_parameter.automatic_value:description"
+msgstr "Entry {0} was skipped because {1} uses an automatic value and other menu items share its parameter. The value Modular Avatar assigns during the build cannot be determined."
+
+msgid "warning.extra_parameter.automatic_value:hint"
+msgstr "Turn off the automatic value on the menu item and enter a value."
