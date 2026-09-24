@@ -63,9 +63,33 @@ namespace FEJsTBridge.Infra
 
             var parameterInfo = ParameterInfo.ForContext(context);
 
-            // 宣言とメニューアイテムの一覧は、自動の値を求める項目があるときに初めて使う
+            // 宣言とメニューアイテムの一覧は、使う項目があるときに初めて集める
             Dictionary<string, DeclaredParameter> declared = null;
+            Dictionary<string, bool> declaredSync = null;
             List<(ModularAvatarMenuItem item, string name)> menuItems = null;
+
+            // 同じ書き込み先を持つ項目は、先に並んだものだけを使う。
+            // 後の項目を残すと、同期の区分が違えば別々のレイヤーが同じパラメータへ書き、
+            // 「元の値に戻す」では一方が書いた値を他方が退避してしまう。
+            // 区分が同じでも書き込む値が食い違うだけで、どちらを採るかは決められない
+            var usedNames = new HashSet<string>();
+
+            bool IsSynced(ExtraParameterEntry entry, string effectiveName)
+            {
+                // 手動で決めてあれば、アバターを走査する必要はない
+                if (entry.syncMode != ExtraSyncMode.Auto)
+                {
+                    return ExtraParameterSync.Resolve(entry.syncMode, null, null);
+                }
+
+                declaredSync = declaredSync ?? CollectDeclaredSync(parameterInfo, avatarRoot);
+                menuItems = menuItems ?? CollectMenuItems(parameterInfo, avatarRoot);
+
+                return ExtraParameterSync.Resolve(
+                    entry.syncMode,
+                    declaredSync.TryGetValue(effectiveName, out var synced) ? synced : (bool?)null,
+                    MenuItemSynced(menuItems, effectiveName));
+            }
 
             for (var i = 0; i < entries.Count; i++)
             {
@@ -86,8 +110,25 @@ namespace FEJsTBridge.Infra
                         continue;
                     }
 
+                    if (ExtraParameterTarget.IsReservedName(name))
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.reserved_name", number));
+                        continue;
+                    }
+
+                    if (!usedNames.Add(name))
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.duplicate_name", number));
+                        continue;
+                    }
+
                     targets.Add(ExtraParameterTarget.FromDirect(
-                        name, entry.parameterType, entry.engagedValue, entry.releaseMode, entry.releasedValue));
+                        name,
+                        entry.parameterType,
+                        entry.engagedValue,
+                        entry.releaseMode,
+                        entry.releasedValue,
+                        IsSynced(entry, name)));
                     continue;
                 }
 
@@ -123,6 +164,17 @@ namespace FEJsTBridge.Infra
                 }
 
                 var effectiveName = ResolveName(parameterInfo, menuItem.gameObject, rawName);
+                if (ExtraParameterTarget.IsReservedName(effectiveName))
+                {
+                    issues.Add(new Issue("warning.extra_parameter.reserved_name", number, menuItem));
+                    continue;
+                }
+
+                if (usedNames.Contains(effectiveName))
+                {
+                    issues.Add(new Issue("warning.extra_parameter.duplicate_name", number, menuItem));
+                    continue;
+                }
 
                 float value;
                 if (menuItem.automaticValue)
@@ -165,8 +217,14 @@ namespace FEJsTBridge.Infra
                     ? declaredParameter.Type
                     : MenuItemToggleValue.TypeOf(value);
 
+                usedNames.Add(effectiveName);
                 targets.Add(ExtraParameterTarget.FromMenuItem(
-                    effectiveName, type, value, entry.menuItemState, entry.releaseMode));
+                    effectiveName,
+                    type,
+                    value,
+                    entry.menuItemState,
+                    entry.releaseMode,
+                    IsSynced(entry, effectiveName)));
             }
 
             return new Result(targets, issues);
@@ -204,6 +262,88 @@ namespace FEJsTBridge.Infra
             }
 
             return items;
+        }
+
+        /// <summary>
+        /// 宣言のないパラメータをメニューアイテムが作るときの同期の有無
+        /// 同じパラメータを使うメニューアイテムのうち、どれか1つでも同期するなら同期する。MAの規則と同じである
+        /// </summary>
+        private static bool? MenuItemSynced(
+            IEnumerable<(ModularAvatarMenuItem item, string name)> menuItems, string name)
+        {
+            bool? synced = null;
+
+            foreach (var (item, itemName) in menuItems)
+            {
+                if (itemName != name)
+                {
+                    continue;
+                }
+
+                synced = (synced ?? false) || item.isSynced;
+            }
+
+            return synced;
+        }
+
+        /// <summary>
+        /// Expression ParametersとMA Parametersの宣言から、パラメータごとの同期の有無を集める
+        ///
+        /// 値の自動設定に使う宣言と違い、同期しない登録も含める。
+        /// 同期しない登録は「宣言がない」ではなく「同期しないと宣言した」ものとして扱う。
+        /// 両方に宣言がある場合は、Expression Parametersを優先する。
+        /// </summary>
+        private static Dictionary<string, bool> CollectDeclaredSync(
+            ParameterInfo parameterInfo, GameObject avatarRoot)
+        {
+            var synced = new Dictionary<string, bool>();
+
+            var descriptor = avatarRoot.GetComponent<VRCAvatarDescriptor>();
+            var expressionParameters = descriptor != null ? descriptor.expressionParameters : null;
+            if (expressionParameters != null && expressionParameters.parameters != null)
+            {
+                foreach (var parameter in expressionParameters.parameters)
+                {
+                    if (parameter == null || string.IsNullOrEmpty(parameter.name)
+                        || synced.ContainsKey(parameter.name))
+                    {
+                        continue;
+                    }
+
+                    synced[parameter.name] = parameter.networkSynced;
+                }
+            }
+
+            foreach (var component in avatarRoot.GetComponentsInChildren<ModularAvatarParameters>(true))
+            {
+                if (component == null || component.parameters == null)
+                {
+                    continue;
+                }
+
+                var remaps = parameterInfo.GetParameterRemappingsAt(component, true);
+
+                foreach (var config in component.parameters)
+                {
+                    if (config.isPrefix || string.IsNullOrEmpty(config.nameOrPrefix))
+                    {
+                        continue;
+                    }
+
+                    var name = remaps.TryGetValue((ParameterNamespace.Animator, config.nameOrPrefix), out var mapping)
+                        ? mapping.ParameterName
+                        : config.nameOrPrefix;
+
+                    if (synced.ContainsKey(name))
+                    {
+                        continue;
+                    }
+
+                    synced[name] = config.syncType != ParameterSyncType.NotSynced && !config.localOnly;
+                }
+            }
+
+            return synced;
         }
 
         private readonly struct DeclaredParameter

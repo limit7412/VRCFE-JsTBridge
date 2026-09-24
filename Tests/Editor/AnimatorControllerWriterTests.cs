@@ -151,6 +151,42 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void Write_WritesCopyEntries_ForRestoredExtraParameters()
+        {
+            var controller = Write(Settings().WithExtraParameters(new[]
+            {
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, null, restore: true),
+            }));
+            var layer = controller.layers
+                .Single(candidate => candidate.name == BridgePlanBuilder.ExtraParametersLayerName)
+                .stateMachine;
+
+            var engaged = FindState(layer, BridgePlanBuilder.EngagedStateName)
+                .behaviours.OfType<VRCAvatarParameterDriver>().Single();
+            Assert.That(
+                engaged.parameters.Select(parameter => (parameter.type, parameter.source, parameter.name)),
+                Is.EqualTo(new[]
+                {
+                    (VRC_AvatarParameterDriver.ChangeType.Copy, "Blush", ExtraParameterTarget.StashPrefix + "Blush"),
+                    (VRC_AvatarParameterDriver.ChangeType.Set, (string)null, "Blush"),
+                }));
+
+            var released = FindState(layer, BridgePlanBuilder.ReleasedStateName)
+                .behaviours.OfType<VRCAvatarParameterDriver>().Single();
+            Assert.That(
+                released.parameters.Select(parameter => (parameter.type, parameter.source, parameter.name)),
+                Is.EqualTo(new[]
+                {
+                    (VRC_AvatarParameterDriver.ChangeType.Copy, ExtraParameterTarget.StashPrefix + "Blush", "Blush"),
+                }));
+
+            // 退避先はブリッジのコントローラに宣言され、書き込み先と同じ型を持つ
+            Assert.That(
+                controller.parameters.Single(parameter => parameter.name == ExtraParameterTarget.StashPrefix + "Blush").type,
+                Is.EqualTo(AnimatorControllerParameterType.Bool));
+        }
+
+        [Test]
         public void Write_WritesTrackingControl_ForApplyStates()
         {
             var controller = Write(Settings());

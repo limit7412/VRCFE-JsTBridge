@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 using nadena.dev.ndmf.ui;
@@ -47,6 +48,9 @@ namespace FEJsTBridge.Presentation
         private Vector2 _inspectionScroll;
         private bool _showOtherLayers;
 
+        /// <summary>追加パラメータの一覧。追加の操作を差し替えるため、標準の配列表示の代わりに使う</summary>
+        private ReorderableList _extraParameterList;
+
         private void OnEnable()
         {
             // 更新の確認は応答が返った時点で結果が変わる。
@@ -57,6 +61,7 @@ namespace FEJsTBridge.Presentation
         private void OnDisable()
         {
             UpdateCheck.ResultChanged -= Repaint;
+            _extraParameterList = null;
             _inspection = null;
         }
 
@@ -170,9 +175,73 @@ namespace FEJsTBridge.Presentation
 
         private void DrawExtraParameters()
         {
-            EditorGUILayout.PropertyField(
-                serializedObject.FindProperty("extraParameters"), G("prop.extra_parameters"), true);
+            var property = serializedObject.FindProperty("extraParameters");
+
+            // ReorderableListは複数選択中の配列を扱えない。標準の配列表示へ戻すと、
+            // 「+」が末尾の項目を複製して既定値の項目を作れないため、複数選択中は編集させない。
+            // 一覧の中身はアバターごとに違うので、まとめて編集できても得るものは少ない
+            if (serializedObject.isEditingMultipleObjects)
+            {
+                EditorGUILayout.LabelField(G("prop.extra_parameters"));
+                EditorGUILayout.HelpBox(S("inspector.extra_parameters.multi_edit"), MessageType.Info);
+            }
+            else
+            {
+                GetExtraParameterList(property).DoLayoutList();
+            }
+
             EditorGUILayout.HelpBox(S("inspector.extra_parameters"), MessageType.Info);
+        }
+
+        /// <summary>
+        /// 追加パラメータの一覧を作る
+        ///
+        /// 標準の配列表示の「+」は末尾の項目を複製する。複製では、解除時の扱いなどの既定値が
+        /// 新しい項目へ入らず、同じメニューアイテムを指す項目もできてしまう。
+        /// 追加のときは既定値の項目を作るよう差し替える。
+        /// </summary>
+        private ReorderableList GetExtraParameterList(SerializedProperty property)
+        {
+            // serializedObjectはエディタの生存中変わらないため、一度作った一覧を使い回す
+            if (_extraParameterList != null)
+            {
+                return _extraParameterList;
+            }
+
+            var list = new ReorderableList(serializedObject, property, true, true, true, true);
+
+            list.drawHeaderCallback = rect => EditorGUI.LabelField(rect, G("prop.extra_parameters"));
+
+            list.elementHeightCallback = index =>
+                EditorGUI.GetPropertyHeight(property.GetArrayElementAtIndex(index), true)
+                + EditorGUIUtility.standardVerticalSpacing;
+
+            list.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                // 折りたたみの三角が一覧のつまみと重ならないよう、字下げ分だけずらす
+                const float foldoutIndent = 12f;
+                rect.x += foldoutIndent;
+                rect.width -= foldoutIndent;
+                rect.y += EditorGUIUtility.standardVerticalSpacing / 2f;
+                rect.height -= EditorGUIUtility.standardVerticalSpacing;
+
+                EditorGUI.PropertyField(rect, property.GetArrayElementAtIndex(index), true);
+            };
+
+            list.onAddCallback = reorderable =>
+            {
+                var index = property.arraySize;
+                property.arraySize++;
+
+                var element = property.GetArrayElementAtIndex(index);
+                ExtraParameterEntryDrawer.ApplyDefaults(element);
+                element.isExpanded = true;
+
+                reorderable.index = index;
+            };
+
+            _extraParameterList = list;
+            return list;
         }
 
         private void DrawRemoveFxLayers()

@@ -573,6 +573,156 @@ namespace FEJsTBridge.Tests
                 0.5f);
         }
 
+        [Test]
+        public void ExtraParametersLayer_StashesBeforeWriting_WhenRestoring()
+        {
+            var layer = ExtraParametersLayer(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, null, restore: true),
+                new ExtraParameterTarget("Mask", BridgeParameterType.Int, 2f, 0f));
+
+            // Driverは記載順に処理するため、書き込む前に元の値を退避する
+            var engaged = layer.FindState(BridgePlanBuilder.EngagedStateName).Driver.Entries;
+            Assert.That(
+                engaged.Select(entry => (entry.Source, entry.Parameter)),
+                Is.EqualTo(new[]
+                {
+                    ("Blush", ExtraParameterTarget.StashPrefix + "Blush"),
+                    ((string)null, "Blush"),
+                    ((string)null, "Mask"),
+                }));
+
+            var released = layer.FindState(BridgePlanBuilder.ReleasedStateName).Driver.Entries;
+            Assert.That(
+                released.Select(entry => (entry.Source, entry.Parameter)),
+                Is.EqualTo(new[]
+                {
+                    (ExtraParameterTarget.StashPrefix + "Blush", "Blush"),
+                    ((string)null, "Mask"),
+                }));
+        }
+
+        [Test]
+        public void Build_DeclaresStashParameters_OnlyForRestoredTargets()
+        {
+            var plan = BridgePlanBuilder.Build(SettingsWithExtras(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, null, restore: true),
+                new ExtraParameterTarget("Mask", BridgeParameterType.Int, 2f, 0f)));
+
+            // Copyで値が変換されないよう、退避先の型は書き込み先と揃える
+            Assert.That(
+                plan.Parameters
+                    .Where(parameter => parameter.Name.StartsWith(ExtraParameterTarget.StashPrefix))
+                    .Select(parameter => (parameter.Name, parameter.Type)),
+                Is.EqualTo(new[] { (ExtraParameterTarget.StashPrefix + "Blush", BridgeParameterType.Bool) }));
+        }
+
+        [Test]
+        public void Build_SplitsExtraParameters_BySync()
+        {
+            var plan = BridgePlanBuilder.Build(SettingsWithExtras(
+                new ExtraParameterTarget("Blush", BridgeParameterType.Bool, 0f, 1f, synced: true),
+                new ExtraParameterTarget("Local", BridgeParameterType.Bool, 1f, 0f, synced: false)));
+
+            var synced = plan.FindLayer(BridgePlanBuilder.ExtraParametersLayerName);
+            Assert.That(
+                synced.FindState(BridgePlanBuilder.EngagedStateName).Driver.Entries.Select(entry => entry.Parameter),
+                Is.EqualTo(new[] { "Blush" }));
+            Assert.That(synced.FindState(BridgePlanBuilder.EngagedStateName).Driver.LocalOnly, Is.True);
+
+            var unsynced = plan.FindLayer(BridgePlanBuilder.UnsyncedExtraParametersLayerName);
+            Assert.That(
+                unsynced.FindState(BridgePlanBuilder.EngagedStateName).Driver.Entries.Select(entry => entry.Parameter),
+                Is.EqualTo(new[] { "Local" }));
+        }
+
+        [Test]
+        public void Build_OmitsSyncedLayer_WhenEveryTargetIsUnsynced()
+        {
+            var plan = BridgePlanBuilder.Build(SettingsWithExtras(
+                new ExtraParameterTarget("Local", BridgeParameterType.Bool, 1f, 0f, synced: false)));
+
+            Assert.That(plan.FindLayer(BridgePlanBuilder.ExtraParametersLayerName), Is.Null);
+            Assert.That(plan.FindLayer(BridgePlanBuilder.UnsyncedExtraParametersLayerName), Is.Not.Null);
+        }
+
+        [Test]
+        public void UnsyncedLayer_WritesOnEveryClient()
+        {
+            var layer = UnsyncedLayer(new ExtraParameterTarget("Local", BridgeParameterType.Bool, 1f, 0f, synced: false));
+
+            Assert.That(layer.DefaultStateName, Is.EqualTo(BridgePlanBuilder.InitialStateName));
+            Assert.That(layer.FindState(BridgePlanBuilder.InitialStateName).Driver, Is.Null);
+
+            foreach (var name in new[]
+                     {
+                         BridgePlanBuilder.EngagedStateName,
+                         BridgePlanBuilder.ReassertStateName,
+                         BridgePlanBuilder.ReleasedStateName,
+                     })
+            {
+                Assert.That(layer.FindState(name).Driver.LocalOnly, Is.False, name);
+            }
+        }
+
+        [Test]
+        public void UnsyncedLayer_ReassertsWithoutStashing()
+        {
+            var layer = UnsyncedLayer(
+                new ExtraParameterTarget("Local", BridgeParameterType.Int, 3f, null, restore: true, synced: false));
+
+            // 書き直しのたびに退避すると、トラッキング中の値を退避してしまう
+            var reassert = layer.FindState(BridgePlanBuilder.ReassertStateName).Driver.Entries;
+            Assert.That(
+                reassert.Select(entry => (entry.Source, entry.Parameter, entry.Value)),
+                Is.EqualTo(new[] { ((string)null, "Local", 3f) }));
+
+            var engaged = layer.FindState(BridgePlanBuilder.EngagedStateName).Driver.Entries;
+            Assert.That(engaged.First().IsCopy, Is.True);
+        }
+
+        [Test]
+        public void UnsyncedLayer_LoopsThroughRedrive_WhileEngaged()
+        {
+            var layer = UnsyncedLayer(new ExtraParameterTarget("Local", BridgeParameterType.Bool, 1f, 0f, synced: false));
+
+            foreach (var from in new[] { BridgePlanBuilder.EngagedStateName, BridgePlanBuilder.ReassertStateName })
+            {
+                var transitions = layer.TransitionsFrom(from);
+                Assert.That(transitions.Count, Is.EqualTo(2), from);
+
+                // 解除を先に置き、書き直しのループより優先させる
+                Assert.That(transitions[0].To, Is.EqualTo(BridgePlanBuilder.ReleasedStateName), from);
+                AssertCondition(
+                    transitions[0].Conditions.Single(),
+                    BridgeParameterNames.FacialExpressionsDisabled,
+                    BridgeConditionMode.IfNot,
+                    0f);
+
+                Assert.That(transitions[1].To, Is.EqualTo(BridgePlanBuilder.RedriveStateName), from);
+                Assert.That(transitions[1].HasExitTime, Is.True, from);
+                Assert.That(transitions[1].ExitTime, Is.EqualTo(1.0f), from);
+                Assert.That(transitions[1].Conditions, Is.Empty, from);
+            }
+
+            var fromRedrive = layer.TransitionsFrom(BridgePlanBuilder.RedriveStateName);
+            Assert.That(
+                fromRedrive.Select(transition => transition.To),
+                Is.EqualTo(new[] { BridgePlanBuilder.ReassertStateName, BridgePlanBuilder.ReleasedStateName }));
+            Assert.That(layer.FindState(BridgePlanBuilder.RedriveStateName).Driver, Is.Null);
+
+            // 解除後は書き直さない。解除後の値はほかのギミックやメニューが決める
+            var fromReleased = layer.TransitionsFrom(BridgePlanBuilder.ReleasedStateName).Single();
+            Assert.That(fromReleased.To, Is.EqualTo(BridgePlanBuilder.EngagedStateName));
+            Assert.That(fromReleased.HasExitTime, Is.False);
+        }
+
+        private static BridgeLayerPlan UnsyncedLayer(params ExtraParameterTarget[] targets)
+        {
+            return BridgePlanBuilder
+                .Build(SettingsWithExtras(targets))
+                .FindLayer(BridgePlanBuilder.UnsyncedExtraParametersLayerName);
+        }
+
         private static BridgeSettings SettingsWithExtras(params ExtraParameterTarget[] targets)
         {
             return Settings().WithExtraParameters(targets);

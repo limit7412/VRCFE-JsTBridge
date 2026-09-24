@@ -87,6 +87,7 @@ namespace FEJsTBridge.Tests
             "warning.shared_blend_shapes:description",
             "prop.extra_parameters",
             "inspector.extra_parameters",
+            "inspector.extra_parameters.multi_edit",
             "prop.extra_parameter.source",
             "prop.extra_parameter.menu_item",
             "prop.extra_parameter.menu_item_state",
@@ -95,6 +96,7 @@ namespace FEJsTBridge.Tests
             "prop.extra_parameter.engaged_value",
             "prop.extra_parameter.release_mode",
             "prop.extra_parameter.released_value",
+            "prop.extra_parameter.sync_mode",
             "inspector.extra_parameter.menu_item_revert",
             "warning.extra_parameter.empty_name",
             "warning.extra_parameter.empty_name:description",
@@ -106,6 +108,10 @@ namespace FEJsTBridge.Tests
             "warning.extra_parameter.unsupported_control:description",
             "warning.extra_parameter.unnamed_parameter",
             "warning.extra_parameter.unnamed_parameter:description",
+            "warning.extra_parameter.duplicate_name",
+            "warning.extra_parameter.duplicate_name:description",
+            "warning.extra_parameter.reserved_name",
+            "warning.extra_parameter.reserved_name:description",
             "warning.extra_parameter.automatic_value",
             "warning.extra_parameter.automatic_value:description",
             "guard.log.duplicate",
@@ -230,6 +236,7 @@ namespace FEJsTBridge.Tests
             AssertLabelKeys(ExtraParameterEntryDrawer.SourceLabelKeys, typeof(ExtraParameterSource));
             AssertLabelKeys(ExtraParameterEntryDrawer.ToggleStateLabelKeys, typeof(ExtraToggleState));
             AssertLabelKeys(ExtraParameterEntryDrawer.ReleaseModeLabelKeys, typeof(ExtraReleaseMode));
+            AssertLabelKeys(ExtraParameterEntryDrawer.SyncModeLabelKeys, typeof(ExtraSyncMode));
         }
 
         private static void AssertLabelKeys(IReadOnlyList<string> labelKeys, Type enumType)

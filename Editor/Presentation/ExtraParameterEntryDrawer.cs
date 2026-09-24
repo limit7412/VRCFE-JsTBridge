@@ -33,7 +33,44 @@ namespace FEJsTBridge.Presentation
         {
             "prop.extra_parameter.release_mode.revert",
             "prop.extra_parameter.release_mode.keep",
+            "prop.extra_parameter.release_mode.restore",
         };
+
+        /// <summary>並びはExtraSyncModeの宣言順に一致させる (enumValueIndexで引くため)</summary>
+        internal static readonly IReadOnlyList<string> SyncModeLabelKeys = new[]
+        {
+            "prop.extra_parameter.sync_mode.auto",
+            "prop.extra_parameter.sync_mode.synced",
+            "prop.extra_parameter.sync_mode.unsynced",
+        };
+
+        /// <summary>
+        /// 項目をExtraParameterEntryの既定値へ揃える
+        /// 既定値はフィールドの初期化子から取り、ここに値を重ねて書かない
+        /// </summary>
+        internal static void ApplyDefaults(SerializedProperty element)
+        {
+            var defaults = new ExtraParameterEntry();
+
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.source)).enumValueIndex =
+                (int)defaults.source;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.menuItem)).objectReferenceValue =
+                defaults.menuItem;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.menuItemState)).enumValueIndex =
+                (int)defaults.menuItemState;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.parameterName)).stringValue =
+                defaults.parameterName;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.parameterType)).enumValueIndex =
+                (int)defaults.parameterType;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.engagedValue)).floatValue =
+                defaults.engagedValue;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.releaseMode)).enumValueIndex =
+                (int)defaults.releaseMode;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.releasedValue)).floatValue =
+                defaults.releasedValue;
+            element.FindPropertyRelative(nameof(ExtraParameterEntry.syncMode)).enumValueIndex =
+                (int)defaults.syncMode;
+        }
 
         private static float LineHeight => EditorGUIUtility.singleLineHeight;
 
@@ -95,8 +132,8 @@ namespace FEJsTBridge.Presentation
         {
             var source = property.FindPropertyRelative(nameof(ExtraParameterEntry.source));
 
-            // 指定方法、指定の本体、トラッキング中の値 (状態)、解除時
-            var lines = 4;
+            // 指定方法、指定の本体、トラッキング中の値 (状態)、解除時、同期
+            var lines = 5;
 
             if (source.enumValueIndex == (int)ExtraParameterSource.ParameterName)
             {
@@ -137,6 +174,9 @@ namespace FEJsTBridge.Presentation
 
                 NextLine(ref line);
                 DrawReleaseMode(line, property);
+
+                NextLine(ref line);
+                DrawSyncMode(line, property);
                 return;
             }
 
@@ -169,14 +209,26 @@ namespace FEJsTBridge.Presentation
                     property.FindPropertyRelative(nameof(ExtraParameterEntry.releasedValue)),
                     G("prop.extra_parameter.released_value"));
             }
+
+            NextLine(ref line);
+            DrawSyncMode(line, property);
+        }
+
+        private static void DrawSyncMode(Rect line, SerializedProperty property)
+        {
+            DrawLocalizedEnumPopup(
+                line,
+                property.FindPropertyRelative(nameof(ExtraParameterEntry.syncMode)),
+                "prop.extra_parameter.sync_mode",
+                SyncModeLabelKeys);
         }
 
         private static void DrawReleaseMode(Rect line, SerializedProperty property)
         {
             var content = G("prop.extra_parameter.release_mode");
 
-            // メニューアイテムの「値を戻す」は、書き込む値が入力欄に出ない。
-            // 何へ戻すのかをツールチップで補う
+            // メニューアイテムの「解除時の値を書く」は、書き込む値が入力欄に出ない。
+            // 何を書くのかをツールチップで補う
             var source = property.FindPropertyRelative(nameof(ExtraParameterEntry.source));
             if (source.enumValueIndex == (int)ExtraParameterSource.MenuItem)
             {

@@ -354,7 +354,10 @@ msgid "prop.extra_parameters.tooltip"
 msgstr "フェイストラッキングが有効な間だけ値を書き込むパラメータです。MAで作ったトグルなどを指定します。"
 
 msgid "inspector.extra_parameters"
-msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の値を書き込みます。\n書き込むのは切り替わった瞬間の一度だけなので、フェイストラッキング中でもメニューから選び直せます。\n書き込みは装着者のクライアントだけで行います。同期しないパラメータを指定すると、ほかの人からは切り替わって見えません。"
+msgstr "フェイストラッキングを有効にしたときに値を書き込み、無効にしたときに解除時の扱いに従って書き込みます。\n同期パラメータは切り替わった瞬間に一度だけ書くので、フェイストラッキング中でもメニューから選び直せます。\n同期しないパラメータは各クライアントで書き、フェイストラッキング中は約1秒ごとに書き直します。"
+
+msgid "inspector.extra_parameters.multi_edit"
+msgstr "複数のコンポーネントを選択している間は編集できません。1つだけ選択してください。"
 
 msgid "prop.extra_parameter.source"
 msgstr "指定方法"
@@ -396,7 +399,7 @@ msgid "prop.extra_parameter.release_mode"
 msgstr "解除時"
 
 msgid "prop.extra_parameter.release_mode.revert"
-msgstr "値を戻す"
+msgstr "解除時の値を書く"
 
 msgid "prop.extra_parameter.release_mode.keep"
 msgstr "何もしない"
@@ -404,8 +407,26 @@ msgstr "何もしない"
 msgid "prop.extra_parameter.released_value"
 msgstr "解除時の値"
 
+msgid "prop.extra_parameter.release_mode.restore"
+msgstr "元の値に戻す"
+
+msgid "prop.extra_parameter.sync_mode"
+msgstr "同期"
+
+msgid "prop.extra_parameter.sync_mode.tooltip"
+msgstr "同期パラメータは装着者のクライアントだけで書き、同期しないパラメータは各クライアントで書きます。"
+
+msgid "prop.extra_parameter.sync_mode.auto"
+msgstr "自動"
+
+msgid "prop.extra_parameter.sync_mode.synced"
+msgstr "同期する"
+
+msgid "prop.extra_parameter.sync_mode.unsynced"
+msgstr "同期しない"
+
 msgid "inspector.extra_parameter.menu_item_revert"
-msgstr "解除時は、トラッキング中と反対の状態へ戻します。"
+msgstr "「解除時の値を書く」では、トラッキング中と反対の状態へ切り替えます。"
 
 msgid "warning.extra_parameter.empty_name"
 msgstr "追加パラメータの名前が空です"
@@ -451,6 +472,24 @@ msgstr "{0}番目の項目が指す{1}はパラメータ名が空です。Modula
 
 msgid "warning.extra_parameter.unnamed_parameter:hint"
 msgstr "メニューアイテムにパラメータ名を入力してください。"
+
+msgid "warning.extra_parameter.reserved_name"
+msgstr "追加パラメータの名前がブリッジの予約名です"
+
+msgid "warning.extra_parameter.reserved_name:description"
+msgstr "{0}番目の項目のパラメータ名は FEJsTBridge/Stash/ で始まります。この名前はブリッジが元の値の退避に使うため、生成から外しました。"
+
+msgid "warning.extra_parameter.reserved_name:hint"
+msgstr "FEJsTBridge/Stash/ で始まらない名前のパラメータを指定してください。"
+
+msgid "warning.extra_parameter.duplicate_name"
+msgstr "追加パラメータの書き込み先が重複しています"
+
+msgid "warning.extra_parameter.duplicate_name:description"
+msgstr "{0}番目の項目は、先に並んだ項目と同じパラメータへ書き込むため、生成から外しました。"
+
+msgid "warning.extra_parameter.duplicate_name:hint"
+msgstr "同じパラメータを指す項目は1つにまとめてください。"
 
 msgid "warning.extra_parameter.automatic_value"
 msgstr "追加パラメータのメニューアイテムの値を決められません"

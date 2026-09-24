@@ -77,6 +77,67 @@ namespace FEJsTBridge.Tests
             Assert.That(target.ReleasedValue, Is.Null);
         }
 
+        [Test]
+        public void FromDirect_Restores_WhenRestore()
+        {
+            var target = ExtraParameterTarget.FromDirect(
+                "Mask", ExtraParameterType.Int, 3f, ExtraReleaseMode.Restore, 1f);
+
+            Assert.That(target.Restore, Is.True);
+            Assert.That(target.ReleasedValue, Is.Null);
+            Assert.That(target.StashName, Is.EqualTo(ExtraParameterTarget.StashPrefix + "Mask"));
+        }
+
+        [Test]
+        public void FromMenuItem_Restores_WhenRestore()
+        {
+            var target = ExtraParameterTarget.FromMenuItem(
+                "Blush", BridgeParameterType.Bool, 1f, ExtraToggleState.Off, ExtraReleaseMode.Restore, synced: false);
+
+            Assert.That(target.EngagedValue, Is.EqualTo(0f));
+            Assert.That(target.Restore, Is.True);
+            Assert.That(target.ReleasedValue, Is.Null);
+            Assert.That(target.Synced, Is.False);
+        }
+
+        [Test]
+        public void IsReservedName_DetectsStashPrefix()
+        {
+            // 退避先と同じ名前を書き込み先にすると、退避した値が上書きされる
+            Assert.That(ExtraParameterTarget.IsReservedName(ExtraParameterTarget.StashPrefix + "Foo"), Is.True);
+            Assert.That(ExtraParameterTarget.IsReservedName("Foo"), Is.False);
+            Assert.That(ExtraParameterTarget.IsReservedName("fejstbridge/stash/Foo"), Is.False);
+            Assert.That(ExtraParameterTarget.IsReservedName(null), Is.False);
+        }
+
+        [Test]
+        public void SyncResolve_FollowsManualSetting()
+        {
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Synced, false, false), Is.True);
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Unsynced, true, true), Is.False);
+        }
+
+        [Test]
+        public void SyncResolve_PrefersDeclaration_OverMenuItem()
+        {
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Auto, false, true), Is.False);
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Auto, true, false), Is.True);
+        }
+
+        [Test]
+        public void SyncResolve_UsesMenuItem_WhenUndeclared()
+        {
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Auto, null, true), Is.True);
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Auto, null, false), Is.False);
+        }
+
+        [Test]
+        public void SyncResolve_TreatsUnknownAsUnsynced()
+        {
+            // アニメーターだけのパラメータは同期しない。リモートでも書かないと切り替わらない
+            Assert.That(ExtraParameterSync.Resolve(ExtraSyncMode.Auto, null, null), Is.False);
+        }
+
         // 期待値を型名で渡すのは、BridgeParameterTypeがinternalで公開メソッドの引数に書けないため
         [TestCase(0f, "Bool")]
         [TestCase(1f, "Bool")]
