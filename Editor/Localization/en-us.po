@@ -428,6 +428,12 @@ msgstr "Not Synced"
 msgid "inspector.extra_parameter.menu_item_revert"
 msgstr "With Write Release Value, the menu item is switched to the opposite of its state while tracking."
 
+msgid "inspector.extra_parameter.auto_name"
+msgstr "The parameter name is empty, so the bridge writes to the name Modular Avatar assigns during the build."
+
+msgid "inspector.extra_parameter.no_parameter"
+msgstr "The parameter name is empty and Modular Avatar will not assign one, so there is no parameter to write to."
+
 msgid "warning.extra_parameter.empty_name"
 msgstr "An extra parameter has no name"
 
@@ -468,10 +474,19 @@ msgid "warning.extra_parameter.unnamed_parameter"
 msgstr "An extra parameter refers to a menu item without a parameter name"
 
 msgid "warning.extra_parameter.unnamed_parameter:description"
-msgstr "Entry {0} was skipped because {1} has no parameter name. Modular Avatar assigns a name during the build, so the target cannot be determined."
+msgstr "Entry {0} was skipped because {1} has no parameter name and no Reactive Component such as Object Toggle, so Modular Avatar will not assign a name. There is no parameter to write to."
 
 msgid "warning.extra_parameter.unnamed_parameter:hint"
 msgstr "Enter a parameter name on the menu item."
+
+msgid "warning.extra_parameter.shared_auto_name"
+msgstr "Extra parameter menu items share an automatic parameter name"
+
+msgid "warning.extra_parameter.shared_auto_name:description"
+msgstr "Entry {0} was skipped because another menu item gets the same automatic name from Modular Avatar as {1} (on the same object, on a sibling object with the same name, and so on). The numbered names Modular Avatar uses to tell them apart cannot be followed."
+
+msgid "warning.extra_parameter.shared_auto_name:hint"
+msgstr "Enter a parameter name on the menu item, or rename the objects so that they no longer collide."
 
 msgid "warning.extra_parameter.reserved_name"
 msgstr "An extra parameter uses a name reserved by the bridge"
