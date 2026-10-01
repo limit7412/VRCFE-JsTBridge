@@ -483,10 +483,10 @@ msgid "warning.extra_parameter.shared_auto_name"
 msgstr "追加パラメータのメニューアイテムが自動の名前を共有しています"
 
 msgid "warning.extra_parameter.shared_auto_name:description"
-msgstr "{0}番目の項目が指す{1}と同じオブジェクトに、パラメータ名が空のメニューアイテムが複数あります。Modular Avatarが振る名前を区別できないため、生成から外しました。"
+msgstr "{0}番目の項目が指す{1}と同じ名前をModular Avatarが振るメニューアイテムが、ほかにもあります (同じオブジェクトに載っている、同名の兄弟オブジェクトにあるなど)。枝番で区別された名前を追えないため、生成から外しました。"
 
 msgid "warning.extra_parameter.shared_auto_name:hint"
-msgstr "メニューアイテムにパラメータ名を入力するか、別のオブジェクトに分けてください。"
+msgstr "メニューアイテムにパラメータ名を入力するか、オブジェクトの名前を変えて重ならないようにしてください。"
 
 msgid "warning.extra_parameter.reserved_name"
 msgstr "追加パラメータの名前がブリッジの予約名です"

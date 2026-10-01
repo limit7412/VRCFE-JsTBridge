@@ -167,15 +167,17 @@ namespace FEJsTBridge.Infra
                         continue;
                     }
 
-                    // 同じオブジェクトに名前が空のメニューアイテムが複数あると、
-                    // MAは2つ目以降に枝番を付ける。どれが何番になるかは追わない
-                    if (CountAutoNamed(menuItem.gameObject) > 1)
+                    effectiveName = MenuItemAutoParameter.NameOf(menuItem, avatarRoot);
+
+                    // 同じ名前になるメニューアイテムが複数あると (同じオブジェクトに載っている、
+                    // 同名の兄弟オブジェクトにあるなど)、MAは2つ目以降に枝番を付ける。
+                    // どれが何番になるかは追わない
+                    menuItems = menuItems ?? CollectMenuItems(parameterInfo, avatarRoot);
+                    if (CountAutoNamed(menuItems, effectiveName) > 1)
                     {
                         issues.Add(new Issue("warning.extra_parameter.shared_auto_name", number, menuItem));
                         continue;
                     }
-
-                    effectiveName = MenuItemAutoParameter.NameOf(menuItem, avatarRoot);
                 }
                 else
                 {
@@ -260,15 +262,15 @@ namespace FEJsTBridge.Infra
         }
 
         /// <summary>
-        /// 同じオブジェクトに載った、MAが名前を振るメニューアイテムの数
+        /// 名前が空で、MAが振る名前が指定の名前になるメニューアイテムの数
         /// </summary>
-        private static int CountAutoNamed(GameObject gameObject)
+        private static int CountAutoNamed(
+            IEnumerable<(ModularAvatarMenuItem item, string name)> menuItems, string name)
         {
             var count = 0;
-            foreach (var item in gameObject.GetComponents<ModularAvatarMenuItem>())
+            foreach (var (item, itemName) in menuItems)
             {
-                if (string.IsNullOrWhiteSpace(item.Control?.parameter?.name)
-                    && MenuItemAutoParameter.IsAssigned(item))
+                if (itemName == name && string.IsNullOrWhiteSpace(item.Control?.parameter?.name))
                 {
                     count++;
                 }

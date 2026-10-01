@@ -131,5 +131,39 @@ namespace FEJsTBridge.Tests
                 result.Issues.Select(issue => issue.MessageKey),
                 Is.EqualTo(new[] { "warning.extra_parameter.shared_auto_name" }));
         }
+
+        [Test]
+        public void Resolve_SkipsWithWarning_WhenSiblingsWithSameNameShareAutomaticName()
+        {
+            var root = CreateAvatarRoot();
+            var item = AddToggle(root, "Twin", true);
+            AddToggle(root, "Twin", true);
+
+            var result = ExtraParameterResolver.Resolve(
+                new BuildContext(root, null), root, new[] { EntryFor(item) });
+
+            Assert.That(result.Targets, Is.Empty);
+            Assert.That(
+                result.Issues.Select(issue => issue.MessageKey),
+                Is.EqualTo(new[] { "warning.extra_parameter.shared_auto_name" }));
+        }
+
+        [Test]
+        public void Resolve_KeepsItems_WhenSameNameSitsAtDifferentPaths()
+        {
+            var root = CreateAvatarRoot();
+            var left = new GameObject("Left");
+            left.transform.SetParent(root.transform);
+            var right = new GameObject("Right");
+            right.transform.SetParent(root.transform);
+            var item = AddToggle(left, "Twin", true);
+            AddToggle(right, "Twin", true);
+
+            var result = ExtraParameterResolver.Resolve(
+                new BuildContext(root, null), root, new[] { EntryFor(item) });
+
+            Assert.That(result.Issues, Is.Empty);
+            Assert.That(result.Targets.Count, Is.EqualTo(1));
+        }
     }
 }

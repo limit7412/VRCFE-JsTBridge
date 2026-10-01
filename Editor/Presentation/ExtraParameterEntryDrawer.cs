@@ -81,12 +81,14 @@ namespace FEJsTBridge.Presentation
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var lines = 1;
+            var extra = 0f;
             if (property.isExpanded)
             {
                 lines += CountFieldLines(property);
+                extra = NoteExtraHeight(property);
             }
 
-            return lines * LineHeight + (lines - 1) * Spacing;
+            return lines * LineHeight + (lines - 1) * Spacing + extra;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -178,11 +180,14 @@ namespace FEJsTBridge.Presentation
                 var noteKey = MenuItemNoteKey(property);
                 if (noteKey != null)
                 {
+                    // 注記は折り返しで1行に収まらないので、文言から高さを求めて後続の行を押し下げる
                     NextLine(ref line);
+                    var height = NoteHeight(noteKey, line.width);
                     EditorGUI.HelpBox(
-                        line,
+                        new Rect(line.x, line.y, line.width, height),
                         S(noteKey),
                         noteKey == NoParameterNoteKey ? MessageType.Warning : MessageType.Info);
+                    line.y += height - LineHeight;
                 }
 
                 NextLine(ref line);
@@ -282,6 +287,32 @@ namespace FEJsTBridge.Presentation
             }
 
             return MenuItemAutoParameter.IsAssigned(menuItem) ? AutoNameNoteKey : NoParameterNoteKey;
+        }
+
+        /// <summary>
+        /// 注記のHelpBoxの高さ
+        /// アイコンの分で最低2行とし、折り返しが増えればその分だけ伸ばす
+        /// </summary>
+        private static float NoteHeight(string noteKey, float width)
+        {
+            var wrapped = EditorStyles.helpBox.CalcHeight(new GUIContent(S(noteKey)), width);
+            return Mathf.Max(wrapped, LineHeight * 2f);
+        }
+
+        /// <summary>
+        /// 注記が1行分を超える高さ。注記がなければ0
+        /// GetPropertyHeightでは描画幅が渡されないため、インスペクタの幅からインデントの分を引いて見積もる
+        /// </summary>
+        private static float NoteExtraHeight(SerializedProperty property)
+        {
+            var noteKey = MenuItemNoteKey(property);
+            if (noteKey == null)
+            {
+                return 0f;
+            }
+
+            var width = EditorGUIUtility.currentViewWidth - (EditorGUI.indentLevel + 2) * 15f - 20f;
+            return NoteHeight(noteKey, width) - LineHeight;
         }
 
         private static bool IsRevert(SerializedProperty property)
