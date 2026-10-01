@@ -428,6 +428,12 @@ msgstr "同期しない"
 msgid "inspector.extra_parameter.menu_item_revert"
 msgstr "「解除時の値を書く」では、トラッキング中と反対の状態へ切り替えます。"
 
+msgid "inspector.extra_parameter.auto_name"
+msgstr "パラメータ名が空なので、Modular Avatarがビルド中に振る名前へ書き込みます。"
+
+msgid "inspector.extra_parameter.no_parameter"
+msgstr "パラメータ名が空で、Modular Avatarも名前を振らないため、書き込む先がありません。"
+
 msgid "warning.extra_parameter.empty_name"
 msgstr "追加パラメータの名前が空です"
 
@@ -468,10 +474,19 @@ msgid "warning.extra_parameter.unnamed_parameter"
 msgstr "追加パラメータのメニューアイテムにパラメータ名がありません"
 
 msgid "warning.extra_parameter.unnamed_parameter:description"
-msgstr "{0}番目の項目が指す{1}はパラメータ名が空です。Modular Avatarがビルド中に名前を振るため、書き込む先を決められず、生成から外しました。"
+msgstr "{0}番目の項目が指す{1}はパラメータ名が空で、Object ToggleなどのReactive Componentも持たないため、Modular Avatarは名前を振りません。書き込む先がないので生成から外しました。"
 
 msgid "warning.extra_parameter.unnamed_parameter:hint"
 msgstr "メニューアイテムにパラメータ名を入力してください。"
+
+msgid "warning.extra_parameter.shared_auto_name"
+msgstr "追加パラメータのメニューアイテムが自動の名前を共有しています"
+
+msgid "warning.extra_parameter.shared_auto_name:description"
+msgstr "{0}番目の項目が指す{1}と同じオブジェクトに、パラメータ名が空のメニューアイテムが複数あります。Modular Avatarが振る名前を区別できないため、生成から外しました。"
+
+msgid "warning.extra_parameter.shared_auto_name:hint"
+msgstr "メニューアイテムにパラメータ名を入力するか、別のオブジェクトに分けてください。"
 
 msgid "warning.extra_parameter.reserved_name"
 msgstr "追加パラメータの名前がブリッジの予約名です"

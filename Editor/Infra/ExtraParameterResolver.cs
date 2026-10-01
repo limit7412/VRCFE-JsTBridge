@@ -155,15 +155,33 @@ namespace FEJsTBridge.Infra
                 }
 
                 // パラメータ名が空のメニューアイテムには、MAがビルド中に固有の名前を振る。
-                // 振られる名前は通し番号を含み、ここからは求められない
+                // 振られる名前はパスから決まるので、同じ規則で組み立てる。
+                // MAが名前を振らないメニューアイテムは、パラメータを持たないので書き込む先がない
                 var rawName = control.parameter?.name;
+                string effectiveName;
                 if (string.IsNullOrWhiteSpace(rawName))
                 {
-                    issues.Add(new Issue("warning.extra_parameter.unnamed_parameter", number, menuItem));
-                    continue;
+                    if (!MenuItemAutoParameter.IsAssigned(menuItem))
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.unnamed_parameter", number, menuItem));
+                        continue;
+                    }
+
+                    // 同じオブジェクトに名前が空のメニューアイテムが複数あると、
+                    // MAは2つ目以降に枝番を付ける。どれが何番になるかは追わない
+                    if (CountAutoNamed(menuItem.gameObject) > 1)
+                    {
+                        issues.Add(new Issue("warning.extra_parameter.shared_auto_name", number, menuItem));
+                        continue;
+                    }
+
+                    effectiveName = MenuItemAutoParameter.NameOf(menuItem, avatarRoot);
+                }
+                else
+                {
+                    effectiveName = ResolveName(parameterInfo, menuItem.gameObject, rawName);
                 }
 
-                var effectiveName = ResolveName(parameterInfo, menuItem.gameObject, rawName);
                 if (ExtraParameterTarget.IsReservedName(effectiveName))
                 {
                     issues.Add(new Issue("warning.extra_parameter.reserved_name", number, menuItem));
@@ -242,8 +260,27 @@ namespace FEJsTBridge.Infra
         }
 
         /// <summary>
+        /// 同じオブジェクトに載った、MAが名前を振るメニューアイテムの数
+        /// </summary>
+        private static int CountAutoNamed(GameObject gameObject)
+        {
+            var count = 0;
+            foreach (var item in gameObject.GetComponents<ModularAvatarMenuItem>())
+            {
+                if (string.IsNullOrWhiteSpace(item.Control?.parameter?.name)
+                    && MenuItemAutoParameter.IsAssigned(item))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
         /// アバター内のメニューアイテムを、リネーム後のパラメータ名とともに集める
-        /// 非アクティブなオブジェクトも含める。MAの値の割り当ても非アクティブなものを数えるためである
+        /// 非アクティブなオブジェクトも含める。MAの値の割り当ても非アクティブなものを数えるためである。
+        /// 名前が空でMAが名前を振るものは、振られる名前で数える
         /// </summary>
         private static List<(ModularAvatarMenuItem item, string name)> CollectMenuItems(
             ParameterInfo parameterInfo, GameObject avatarRoot)
@@ -255,6 +292,11 @@ namespace FEJsTBridge.Infra
                 var rawName = item.Control?.parameter?.name;
                 if (string.IsNullOrWhiteSpace(rawName))
                 {
+                    if (MenuItemAutoParameter.IsAssigned(item))
+                    {
+                        items.Add((item, MenuItemAutoParameter.NameOf(item, avatarRoot)));
+                    }
+
                     continue;
                 }
 

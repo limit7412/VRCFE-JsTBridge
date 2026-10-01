@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using nadena.dev.modular_avatar.core;
+using FEJsTBridge.Infra;
 using static FEJsTBridge.Localization;
 
 namespace FEJsTBridge.Presentation
@@ -135,16 +137,24 @@ namespace FEJsTBridge.Presentation
             // 指定方法、指定の本体、トラッキング中の値 (状態)、解除時、同期
             var lines = 5;
 
-            if (source.enumValueIndex == (int)ExtraParameterSource.ParameterName)
+            if (source.enumValueIndex == (int)ExtraParameterSource.MenuItem)
             {
-                // 型の行が加わる
-                lines++;
-
-                if (IsRevert(property))
+                if (MenuItemNoteKey(property) != null)
                 {
-                    // 解除時の値の行が加わる
+                    // パラメータ名が空のときの注記の行が加わる
                     lines++;
                 }
+
+                return lines;
+            }
+
+            // 型の行が加わる
+            lines++;
+
+            if (IsRevert(property))
+            {
+                // 解除時の値の行が加わる
+                lines++;
             }
 
             return lines;
@@ -164,6 +174,16 @@ namespace FEJsTBridge.Presentation
                     line,
                     property.FindPropertyRelative(nameof(ExtraParameterEntry.menuItem)),
                     G("prop.extra_parameter.menu_item"));
+
+                var noteKey = MenuItemNoteKey(property);
+                if (noteKey != null)
+                {
+                    NextLine(ref line);
+                    EditorGUI.HelpBox(
+                        line,
+                        S(noteKey),
+                        noteKey == NoParameterNoteKey ? MessageType.Warning : MessageType.Info);
+                }
 
                 NextLine(ref line);
                 DrawLocalizedEnumPopup(
@@ -240,6 +260,28 @@ namespace FEJsTBridge.Presentation
                 property.FindPropertyRelative(nameof(ExtraParameterEntry.releaseMode)),
                 content,
                 ReleaseModeLabelKeys);
+        }
+
+        /// <summary>MAが名前を振るメニューアイテムを指しているときの注記</summary>
+        internal const string AutoNameNoteKey = "inspector.extra_parameter.auto_name";
+
+        /// <summary>パラメータ名が空で、MAも名前を振らないメニューアイテムを指しているときの注記</summary>
+        internal const string NoParameterNoteKey = "inspector.extra_parameter.no_parameter";
+
+        /// <summary>
+        /// 指定したメニューアイテムのパラメータ名が空のときに出す注記のキー
+        /// 名前が入っていれば注記はない (null)
+        /// </summary>
+        internal static string MenuItemNoteKey(SerializedProperty property)
+        {
+            var menuItem = property.FindPropertyRelative(nameof(ExtraParameterEntry.menuItem))
+                .objectReferenceValue as ModularAvatarMenuItem;
+            if (menuItem == null || !string.IsNullOrWhiteSpace(menuItem.Control?.parameter?.name))
+            {
+                return null;
+            }
+
+            return MenuItemAutoParameter.IsAssigned(menuItem) ? AutoNameNoteKey : NoParameterNoteKey;
         }
 
         private static bool IsRevert(SerializedProperty property)

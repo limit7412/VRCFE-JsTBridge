@@ -17,7 +17,7 @@ FaceEmoには外部連携用のバイパス機構と、表情の固定やまば�
 - Unity 2022.3
 - VRChat SDK Avatars 3.7.0 以降
 - NDMF 1.6.0 以降
-- Modular Avatar 1.10.0 以降
+- Modular Avatar 1.12.0 以降
 
 Jerry's TemplatesとFaceEmoは依存に含めていません。
 どちらも配布経路が別で、未導入でもビルドは壊れません。
