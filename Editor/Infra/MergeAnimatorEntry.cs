@@ -15,11 +15,13 @@ namespace FEJsTBridge.Infra
         public MergeAnimatorEntry(
             RuntimeAnimatorController runtimeController,
             AnimatorController controller,
-            string basePath)
+            string basePath,
+            bool matchAvatarWriteDefaults = false)
         {
             RuntimeController = runtimeController;
             Controller = controller;
             BasePath = basePath ?? string.Empty;
+            MatchAvatarWriteDefaults = matchAvatarWriteDefaults;
         }
 
         /// <summary>Merge Animatorに指定されたコントローラそのもの</summary>
@@ -36,6 +38,12 @@ namespace FEJsTBridge.Infra
         /// Absoluteモードなら空
         /// </summary>
         public string BasePath { get; }
+
+        /// <summary>
+        /// Merge Animatorの「アバターのWrite Defaults設定に合わせる」
+        /// 有効だと、マージ時にステートのWrite Defaultsがアバター側へ書き換わることがある
+        /// </summary>
+        public bool MatchAvatarWriteDefaults { get; }
 
         /// <summary>
         /// Modular Avatarがマージ時に使う前置パスを、同じ規則で求める

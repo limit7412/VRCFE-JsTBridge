@@ -54,7 +54,8 @@ namespace FEJsTBridge.Infra
                 entries.Add(new MergeAnimatorEntry(
                     mergeAnimator.animator,
                     AnimatorControllerResolver.Resolve(mergeAnimator.animator),
-                    basePath));
+                    basePath,
+                    mergeAnimator.matchAvatarWriteDefaults));
             }
 
             return entries;

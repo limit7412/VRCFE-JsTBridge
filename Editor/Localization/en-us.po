@@ -52,6 +52,15 @@ msgstr "{0} blend shapes overlap ({1} and so on). With the expression control me
 msgid "warning.shared_blend_shapes:hint"
 msgstr "Register the blend shapes used by face tracking in FaceEmo's Excluded Blend Shapes."
 
+msgid "warning.bypass_face_left"
+msgstr "FaceEmo's expression stays on the face during the bypass"
+
+msgid "warning.bypass_face_left:description"
+msgstr "FaceEmo's layers run with Write Defaults off on this avatar. During the bypass FaceEmo writes nothing, and nothing resets the blend shapes either. The blink or gesture expression shown at the moment face tracking is turned on stays on the face until it is turned off."
+
+msgid "warning.bypass_face_left:hint"
+msgstr "Switch Control Method to Expression control. FaceEmo keeps writing, so no expression is left behind."
+
 msgid "warning.duplicate_component"
 msgstr "Multiple Kx VRC FE-JsT Bridge components were found"
 
@@ -86,6 +95,10 @@ msgstr "Keeps FaceEmo running, and locks the expression, stops blinking, and swi
 
 msgid "inspector.control_method.bypass"
 msgstr "The method that predates expression control, kept for backward compatibility.\nFaceEmo stops writing, so the avatar's own expression layers surface again. Use FX Layers To Remove below to handle them."
+
+msgid "inspector.control_method.bypass.face_left"
+msgstr "FaceEmo's layers run with Write Defaults off on this avatar. Nothing resets the blend shapes during the bypass, so the blink or gesture expression shown at the moment face tracking is turned on stays on the face until it is turned off.
+Switch Control Method to Expression control."
 
 msgid "inspector.control_method.expression_control"
 msgstr "FaceEmo keeps writing, so the avatar's own expression layers stay covered as usual and the menu can still switch expressions while tracking.\nFaceEmo's default face writes the same blend shapes as face tracking, so register the tracking blend shapes in FaceEmo's Excluded Blend Shapes first."

@@ -52,6 +52,15 @@ msgstr "{0}個のブレンドシェイプが重なっています ({1} など)�
 msgid "warning.shared_blend_shapes:hint"
 msgstr "FaceEmoの「除外するブレンドシェイプ」へ、フェイストラッキングが使うシェイプを登録してください。"
 
+msgid "warning.bypass_face_left"
+msgstr "バイパス中にFaceEmoの表情が顔へ残ります"
+
+msgid "warning.bypass_face_left:description"
+msgstr "このアバターではFaceEmoのレイヤーがWrite Defaults OFFで動きます。バイパスの間はFaceEmoが何も書かず、ブレンドシェイプを既定値へ戻すものもいません。フェイストラッキングを有効にした瞬間のまばたきやジェスチャー表情が、無効にするまで顔に残ります。"
+
+msgid "warning.bypass_face_left:hint"
+msgstr "制御方式を「表情制御」へ切り替えてください。FaceEmoが書き込みを続けるため、表情は残りません。"
+
 msgid "warning.duplicate_component"
 msgstr "Kx VRC FE-JsT Bridgeが複数あります"
 
@@ -86,6 +95,10 @@ msgstr "FaceEmoを動かしたまま、表情ロックとまばたき停止、�
 
 msgid "inspector.control_method.bypass"
 msgstr "表情制御方式より前からある方式で、下位互換のために残しています。\nFaceEmoが書き込みを止めるため、その分だけ素体の表情レイヤーが表に出てきます。下の「取り除くFXレイヤー」で対処してください。"
+
+msgid "inspector.control_method.bypass.face_left"
+msgstr "このアバターではFaceEmoのレイヤーがWrite Defaults OFFで動きます。バイパスの間はブレンドシェイプを既定値へ戻すものがいないため、フェイストラッキングを有効にした瞬間のまばたきやジェスチャー表情が、無効にするまで顔に残ります。
+制御方式を「表情制御」へ切り替えてください。"
 
 msgid "inspector.control_method.expression_control"
 msgstr "FaceEmoが書き込みを続けるため、素体の表情レイヤーは通常時と同じく押さえ込まれ、トラッキング中もメニューから表情を選べます。\nFaceEmoのデフォルト表情はトラッキングと同じブレンドシェイプを書くので、あらかじめFaceEmoの「除外するブレンドシェイプ」へトラッキング用のシェイプを登録しておいてください。"

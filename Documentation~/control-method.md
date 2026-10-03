@@ -39,6 +39,25 @@ Expression Controlより前からある方式で、下位互換のために残�
 [素体の表情レイヤーの扱い](fx-layers.md)で対処してください。
 またトラッキング中はFaceEmoの表情を使えません。
 
+### Write Defaults OFFのアバターでは表情が残る
+
+FaceEmoのレイヤーがWrite Defaults OFFで動くアバターに、この方式は向きません。
+フェイストラッキングを有効にした瞬間のまばたきやジェスチャー表情が、無効にするまで顔に残ります。
+
+FaceEmoはバイパスの間、ブレンドシェイプを書かない空のクリップを再生します。
+Write Defaults ONなら、このステートがブレンドシェイプを既定値へ戻します。
+OFFでは戻すものがいないため、FaceEmoが最後に書いた値がそのまま残ります。
+残るのはFaceEmoが書くブレンドシェイプなので、トラッキングが動かす顔の上に重なって見えます。
+
+FaceEmoがどちらで動くかは、アバター素体のFXで決まります。
+FaceEmoのMerge Animatorは「アバターのWrite Defaults設定に合わせる」が有効で、素体のFXがOFFに揃っていれば、Modular AvatarがFaceEmoのステートもOFFへ書き換えます。
+
+この構成を見つけると、インスペクタとNDMFのエラーレポートに警告を出します。
+警告が出たアバターでは、制御方式をExpression Controlへ切り替えてください。
+Expression ControlではFaceEmoが書き込みを続けるため、表情は残りません。
+切り替えたあとは **FX Layers To Remove** を空にして構いません。
+素体の表情レイヤーはFaceEmoが上書きし続けるため、残しても表に出てきません。
+
 ## 生成されるもの
 
 アバタールートの下に `FEJsTBridge` という空のオブジェクトを作り、MA Merge AnimatorでFXへ次の2レイヤーを追加します。

@@ -115,6 +115,12 @@ namespace FEJsTBridge.UseCase
                     faceEmo = FaceEmoParameterResolver.Resolve(avatarRoot);
                     ReportExpressionControlPrerequisites(avatarRoot, faceEmo);
                 }
+                else
+                {
+                    // ブリッジのコントローラもバイパス用のパラメータを宣言する。
+                    // 配置したあとで調べるとFaceEmoと見分けられないため、配置の前に調べる
+                    ReportBypassPrerequisites(avatarRoot, primary.removeFxLayers);
+                }
 
                 settings = settings.WithExtraParameters(
                     ResolveExtraParameters(context, primary.extraParameters));
@@ -303,6 +309,58 @@ namespace FEJsTBridge.UseCase
                 "warning.shared_blend_shapes",
                 overlap.Count,
                 string.Join(", ", overlap.SampleShapeNames));
+        }
+
+        /// <summary>
+        /// バイパス方式の前提が揃っているかを調べて報告する
+        ///
+        /// 揃っていなくても生成は続行する。
+        /// 残るのはバイパスが成立した瞬間の顔であり、既定の顔のまま
+        /// トラッキングを有効にした場合は見た目に出ないためである。
+        /// </summary>
+        private static void ReportBypassPrerequisites(
+            GameObject avatarRoot, IReadOnlyList<string> removedLayerNames)
+        {
+            if (!DetectFaceLeftOnBypass(avatarRoot, removedLayerNames))
+            {
+                return;
+            }
+
+            ErrorReport.ReportError(
+                Localization.Localizer, ErrorSeverity.NonFatal, "warning.bypass_face_left");
+        }
+
+        /// <summary>
+        /// バイパス中に、FaceEmoが最後に書いた表情が顔へ残る構成かを調べる
+        /// </summary>
+        /// <param name="removedLayerNames">
+        /// ビルド時に取り除くFXレイヤーの名前。
+        /// Modular AvatarがアバターのWrite Defaultsを読む時点では、すでにFXから消えている
+        /// </param>
+        /// <remarks>
+        /// ブリッジを配置する前のアバターで呼ぶ。インスペクタからも同じ判定を使う。
+        /// </remarks>
+        public static bool DetectFaceLeftOnBypass(
+            GameObject avatarRoot, IReadOnlyList<string> removedLayerNames)
+        {
+            var faceEmo = AvatarEnvironmentScanner.FindByParameter(
+                AvatarEnvironmentScanner.CollectMergeAnimatorEntries(avatarRoot),
+                BridgeParameterNames.ForceBypassEnable);
+
+            // 載っていなければバイパスさせる相手がいない。環境の警告で足りる
+            if (faceEmo.Count == 0)
+            {
+                return false;
+            }
+
+            var avatarWriteDefaults = WriteDefaultsReader.ReadUniform(
+                FxLayerRemover.FindFxController(avatarRoot), removedLayerNames);
+
+            return BypassFaceReset.LeavesFace(
+                avatarWriteDefaults,
+                faceEmo.Select(entry => new FaceEmoWriteDefaults(
+                    entry.MatchAvatarWriteDefaults,
+                    WriteDefaultsReader.HasWriteDefaultsOffState(entry.Controller))));
         }
 
         /// <summary>

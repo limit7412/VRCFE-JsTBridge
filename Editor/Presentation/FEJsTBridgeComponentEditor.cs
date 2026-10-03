@@ -51,18 +51,37 @@ namespace FEJsTBridge.Presentation
         /// <summary>追加パラメータの一覧。追加の操作を差し替えるため、標準の配列表示の代わりに使う</summary>
         private ReorderableList _extraParameterList;
 
+        /// <summary>
+        /// バイパス中に表情が残る構成かの判定結果。まだ調べていなければ null
+        /// FaceEmoのコントローラを全ステートたどるため、描画のたびには調べない
+        /// </summary>
+        private bool? _faceLeftOnBypass;
+
+        /// <summary>判定に使った「取り除くFXレイヤー」の内容。変わったら調べ直す</summary>
+        private string _faceLeftOnBypassKey;
+
         private void OnEnable()
         {
             // 更新の確認は応答が返った時点で結果が変わる。
             // インスペクタが操作されるまで古い表示のままにしない
             UpdateCheck.ResultChanged += Repaint;
+
+            // FaceEmoの追加や削除で判定が変わる
+            EditorApplication.hierarchyChanged += ForgetFaceLeftOnBypass;
         }
 
         private void OnDisable()
         {
             UpdateCheck.ResultChanged -= Repaint;
+            EditorApplication.hierarchyChanged -= ForgetFaceLeftOnBypass;
             _extraParameterList = null;
             _inspection = null;
+            _faceLeftOnBypass = null;
+        }
+
+        private void ForgetFaceLeftOnBypass()
+        {
+            _faceLeftOnBypass = null;
         }
 
         public override void OnInspectorGUI()
@@ -123,7 +142,37 @@ namespace FEJsTBridge.Presentation
             else
             {
                 EditorGUILayout.HelpBox(S("inspector.control_method.bypass"), MessageType.Info);
+
+                if (LeavesFaceOnBypass())
+                {
+                    EditorGUILayout.HelpBox(
+                        S("inspector.control_method.bypass.face_left"), MessageType.Warning);
+                }
             }
+        }
+
+        /// <summary>
+        /// バイパス中に、FaceEmoが最後に書いた表情が顔へ残る構成か
+        /// </summary>
+        private bool LeavesFaceOnBypass()
+        {
+            // アバターごとに構成が違うため、複数選択中は一つの答えを出せない
+            if (serializedObject.isEditingMultipleObjects)
+            {
+                return false;
+            }
+
+            var removedLayerNames = ((FEJsTBridgeComponent)target).removeFxLayers ?? new List<string>();
+            var key = string.Join("\n", removedLayerNames);
+
+            if (_faceLeftOnBypass == null || _faceLeftOnBypassKey != key)
+            {
+                _faceLeftOnBypass = GenerateBridgeUseCase.DetectFaceLeftOnBypass(
+                    FindAvatarRoot(), removedLayerNames);
+                _faceLeftOnBypassKey = key;
+            }
+
+            return _faceLeftOnBypass.Value;
         }
 
         private void DrawBypassTrigger()
