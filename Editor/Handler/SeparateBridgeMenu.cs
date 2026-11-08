@@ -88,11 +88,17 @@ namespace FEJsTBridge.Handler
         }
 
         /// <summary>
-        /// コンポーネントがアバタールートに付いているか判定する
+        /// コンポーネントがシーン上（Prefab Modeを含む）のアバタールートに付いているか判定する。
+        ///
+        /// Projectウィンドウで選んだPrefabアセットそのものは対象にしない。
+        /// 移す先のオブジェクトはシーン上に作るため、永続アセットのオブジェクトを親にできず、移動が完了しない。
+        /// Prefabを直したいときはPrefab Modeで開けば、そこでは対象になる
         /// </summary>
         internal static bool CanMove(FEJsTBridgeComponent component)
         {
-            return component != null && component.GetComponent<VRCAvatarDescriptor>() != null;
+            return component != null
+                && !EditorUtility.IsPersistent(component)
+                && component.GetComponent<VRCAvatarDescriptor>() != null;
         }
 
         /// <summary>
