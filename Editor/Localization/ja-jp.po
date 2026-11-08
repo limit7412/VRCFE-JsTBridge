@@ -97,7 +97,7 @@ msgid "prop.face_emote_index.tooltip"
 msgstr "フェイストラッキング中に切り替える表情の番号です。FaceEmoの「表情選択」メニューが書き込む番号と同じで、表情パターンの先頭から0、1、2…と数えます。"
 
 msgid "inspector.description"
-msgstr "フェイストラッキングが有効な間、FaceEmoが表情を書き込まないようにします。\nアバタールートへの追加を推奨します。"
+msgstr "フェイストラッキングが有効な間、FaceEmoが表情を書き込まないようにします。\nアバター内のどのオブジェクトに置いても動きます。"
 
 msgid "prop.bypass_trigger"
 msgstr "発動条件"
