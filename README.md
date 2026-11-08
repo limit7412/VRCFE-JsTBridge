@@ -40,6 +40,10 @@ zipからの手動インストールとbooth版（unitypackage）の手順、お
 既存のオブジェクト（アバタールートを含む）へ「Add Component」で付けてもかまいません。
 1つのアバターに置けるコンポーネントは1つだけで、2つ目を置くと自動で取り除かれます。
 
+アバタールートに直接付けたコンポーネントは、ヒエラルキーでアバターを右クリックし、「Kx VRC FE-JsT Bridge」の `Move Bridge out of Avatar Root` を選ぶと専用のオブジェクトへ移せます。
+コンポーネントのInspectorの右上のメニューにある `Move to Separate Object` でも同じことができます。
+移した後も設定値はそのまま残り、Undoを1回行えば移す前の状態に戻ります。
+
 ブリッジはFaceEmoを動かしたまま、表情固定とまばたきOFFで表情を止めます。
 この制御はFaceEmoの「除外するブレンドシェイプ」の設定を前提にするため、[表情の制御](Documentation~/control-method.md)を読んでから使ってください。
 
