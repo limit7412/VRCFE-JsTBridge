@@ -136,6 +136,25 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
+        public void ExecuteForBuild_InstallsBridgeUnderAvatarRoot_WhenComponentIsNested()
+        {
+            var root = CreateAvatarRoot();
+            var group = new GameObject("Group");
+            group.transform.SetParent(root.transform, false);
+            AddComponentTo(group, "Bridge");
+
+            GenerateBridgeUseCase.ExecuteForBuild(new BuildContext(root, null));
+
+            Assert.That(root.GetComponentsInChildren<FEJsTBridgeComponent>(true), Is.Empty);
+
+            var mergeAnimator = root.GetComponentInChildren<ModularAvatarMergeAnimator>(true);
+            Assert.That(mergeAnimator, Is.Not.Null);
+            Assert.That(mergeAnimator.transform.parent, Is.SameAs(root.transform));
+
+            _created.Add(mergeAnimator.animator);
+        }
+
+        [Test]
         public void ExecuteForBuild_RemovesDuplicates_AndInstallsOneBridge()
         {
             var root = CreateAvatarRoot();

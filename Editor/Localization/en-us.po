@@ -97,7 +97,7 @@ msgid "prop.face_emote_index.tooltip"
 msgstr "Number of the emote to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes, counted from the top of the expression pattern as 0, 1, 2 and so on."
 
 msgid "inspector.description"
-msgstr "Keeps FaceEmo from writing facial expressions while face tracking is active.\nAdding this to the avatar root is recommended."
+msgstr "Keeps FaceEmo from writing facial expressions while face tracking is active.\nIt works on any object inside the avatar."
 
 msgid "prop.bypass_trigger"
 msgstr "Trigger"
