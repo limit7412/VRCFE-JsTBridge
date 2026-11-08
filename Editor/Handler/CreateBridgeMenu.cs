@@ -12,7 +12,7 @@ namespace FEJsTBridge.Handler
     ///
     /// プレハブは配らない。中身はコンポーネント1つだけなので、プレハブにすると
     /// 版を上げるたびに既定値をプレハブへ書き直す手間が増えるうえ、利用者の設定がオーバーライドとして残る。
-    /// ここで作れば、既定値はコンポーネントのResetの1か所で決まる。
+    /// ここで作れば、既定値はコンポーネントのフィールドの初期化子の1か所で決まる。
     /// </summary>
     internal static class CreateBridgeMenu
     {
@@ -40,7 +40,7 @@ namespace FEJsTBridge.Handler
             GameObjectUtility.SetParentAndAlign(gameObject, parent);
             Undo.RegisterCreatedObjectUndo(gameObject, "Create " + ObjectName);
 
-            // AddComponentでResetが走り、既定値が入る。
+            // AddComponentでフィールドの初期化子の値が入る。
             // アバターにすでにコンポーネントがあれば、重複の排除がどちらを残すかを決める
             Undo.AddComponent<FEJsTBridgeComponent>(gameObject);
 

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 namespace FEJsTBridge.Domain
 {
     /// <summary>
-    /// 表情制御方式が書き込むFaceEmo側のパラメータ名
+    /// ブリッジが書き込むFaceEmo側のパラメータ名
     ///
     /// FaceEmoはこれらをMA Parametersへ登録しており、AddParameterPrefix設定が有効なアバターでは
     /// FaceEmo_ を前置した名前へリネームされる。リネームはMA Parametersに登録された名前にしか
     /// 働かないため、ブリッジのコントローラにはリネーム後の名前を宣言しなければ接続されない。
     ///
-    /// バイパス方式が使うCN_FORCE_BYPASS_ENABLEだけはMA Parametersに登録されないため、
+    /// FaceEmoの検出に使うCN_FORCE_BYPASS_ENABLEはMA Parametersに登録されないため、
     /// この解決の対象にならない。
     /// </summary>
     internal readonly struct FaceEmoParameterNames

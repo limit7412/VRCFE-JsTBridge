@@ -23,16 +23,6 @@ namespace FEJsTBridge.Presentation
     public class FEJsTBridgeComponentEditor : Editor
     {
         /// <summary>
-        /// 制御方式の選択肢の文言キー
-        /// 並びはControlMethodの宣言順に一致させる (enumValueIndexで引くため)
-        /// </summary>
-        internal static readonly IReadOnlyList<string> ControlMethodLabelKeys = new[]
-        {
-            "prop.control_method.bypass",
-            "prop.control_method.expression_control",
-        };
-
-        /// <summary>
         /// 発動条件の選択肢の文言キー
         /// 並びはBypassTriggerの宣言順に一致させる (enumValueIndexで引くため)
         /// </summary>
@@ -79,7 +69,7 @@ namespace FEJsTBridge.Presentation
 
             EditorGUILayout.Space();
 
-            DrawControlMethod();
+            DrawExpressionControl();
 
             EditorGUILayout.Space();
 
@@ -101,29 +91,13 @@ namespace FEJsTBridge.Presentation
         }
 
         /// <summary>
-        /// 制御方式と、方式ごとの設定を描く
+        /// 表情制御の前提と、切り替え先の表情番号を描く
         /// </summary>
-        private void DrawControlMethod()
+        private void DrawExpressionControl()
         {
-            var property = serializedObject.FindProperty("controlMethod");
-            DrawLocalizedEnumPopup(property, "prop.control_method", ControlMethodLabelKeys);
-
-            // 選択中の方式が定まらないと、どちらの説明も当てはまらない
-            if (property.hasMultipleDifferentValues)
-            {
-                return;
-            }
-
-            if (property.enumValueIndex == (int)ControlMethod.ExpressionControl)
-            {
-                EditorGUILayout.HelpBox(S("inspector.control_method.expression_control"), MessageType.Info);
-                EditorGUILayout.PropertyField(
-                    serializedObject.FindProperty("faceEmoteIndex"), G("prop.face_emote_index"));
-            }
-            else
-            {
-                EditorGUILayout.HelpBox(S("inspector.control_method.bypass"), MessageType.Info);
-            }
+            EditorGUILayout.HelpBox(S("inspector.expression_control"), MessageType.Info);
+            EditorGUILayout.PropertyField(
+                serializedObject.FindProperty("faceEmoteIndex"), G("prop.face_emote_index"));
         }
 
         private void DrawBypassTrigger()

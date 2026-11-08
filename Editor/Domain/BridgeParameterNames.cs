@@ -5,7 +5,7 @@ namespace FEJsTBridge.Domain
     ///
     /// いずれも相手パッケージの内部名であり、更新時の再検証が必要になる接点である。
     /// CN_FORCE_BYPASS_ENABLEはFaceEmoが外部連携用として維持を明示しているが、
-    /// Jerry側の4つと、表情制御方式が使うFaceEmo側の3つには明示的な約束がない。
+    /// Jerry側の4つと、表情制御が使うFaceEmo側の3つには明示的な約束がない。
     /// </summary>
     internal static class BridgeParameterNames
     {
@@ -27,7 +27,12 @@ namespace FEJsTBridge.Domain
         /// </summary>
         public const string VisemesEnable = "VisemesEnable";
 
-        /// <summary>FaceEmoのバイパスを起動する外部連携用パラメータ</summary>
+        /// <summary>
+        /// FaceEmoのバイパスを起動する外部連携用パラメータ
+        ///
+        /// ブリッジはこれを書き込まず、アバターにFaceEmoが載っているかの判定にだけ使う。
+        /// FaceEmoが維持を明示している名前なので、判定の目印として最も変わりにくい。
+        /// </summary>
         public const string ForceBypassEnable = "CN_FORCE_BYPASS_ENABLE";
 
         /// <summary>

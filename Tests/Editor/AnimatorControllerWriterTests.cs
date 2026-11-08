@@ -28,11 +28,9 @@ namespace FEJsTBridge.Tests
             BypassTrigger trigger = BypassTrigger.FacialExpressionsDisabled,
             bool enableTrackingReapply = true,
             float reapplyDelaySeconds = 0.2f,
-            ControlMethod controlMethod = ControlMethod.Bypass,
             int faceEmoteIndex = 0)
         {
-            return new BridgeSettings(
-                controlMethod, trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
+            return new BridgeSettings(trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
         }
 
         [TearDown]
@@ -53,7 +51,7 @@ namespace FEJsTBridge.Tests
 
             Assert.That(controller.layers.Select(layer => layer.name), Is.EqualTo(new[]
             {
-                BridgePlanBuilder.BypassLayerName,
+                BridgePlanBuilder.ExpressionControlLayerName,
                 BridgePlanBuilder.TrackingReapplyLayerName,
             }));
 
@@ -74,7 +72,9 @@ namespace FEJsTBridge.Tests
                     (BridgeParameterNames.LipTrackingActive, AnimatorControllerParameterType.Float),
                     (BridgeParameterNames.EyeTrackingActive, AnimatorControllerParameterType.Float),
                     (BridgeParameterNames.VisemesEnable, AnimatorControllerParameterType.Bool),
-                    (BridgeParameterNames.ForceBypassEnable, AnimatorControllerParameterType.Bool),
+                    (BridgeParameterNames.EmoteLockEnable, AnimatorControllerParameterType.Bool),
+                    (BridgeParameterNames.ForceBlinkDisable, AnimatorControllerParameterType.Bool),
+                    (BridgeParameterNames.Emote, AnimatorControllerParameterType.Int),
                 }));
         }
 
@@ -100,40 +100,9 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void Write_WritesDriver_ForBypassStates()
-        {
-            var controller = Write(Settings());
-            var bypassLayer = controller.layers[0].stateMachine;
-
-            AssertBypassDriver(FindState(bypassLayer, BridgePlanBuilder.IdleStateName), 0f);
-            AssertBypassDriver(FindState(bypassLayer, BridgePlanBuilder.BypassStateName), 1f);
-        }
-
-        private static void AssertBypassDriver(AnimatorState state, float expectedValue)
-        {
-            var driver = state.behaviours.OfType<VRCAvatarParameterDriver>().Single();
-
-            Assert.That(driver.localOnly, Is.False);
-            Assert.That(driver.parameters.Count, Is.EqualTo(1));
-            Assert.That(driver.parameters[0].type, Is.EqualTo(VRC_AvatarParameterDriver.ChangeType.Set));
-            Assert.That(driver.parameters[0].name, Is.EqualTo(BridgeParameterNames.ForceBypassEnable));
-            Assert.That(driver.parameters[0].value, Is.EqualTo(expectedValue));
-        }
-
-        [Test]
-        public void Write_DeclaresEmoteAsInt_ForExpressionControl()
-        {
-            var controller = Write(Settings(controlMethod: ControlMethod.ExpressionControl));
-
-            var parameter = controller.parameters.Single(p => p.name == BridgeParameterNames.Emote);
-
-            Assert.That(parameter.type, Is.EqualTo(AnimatorControllerParameterType.Int));
-        }
-
-        [Test]
         public void Write_WritesLocalOnlyDriver_ForExpressionControlStates()
         {
-            var controller = Write(Settings(controlMethod: ControlMethod.ExpressionControl));
+            var controller = Write(Settings());
             var layer = controller.layers[0].stateMachine;
 
             var engaged = FindState(layer, BridgePlanBuilder.EngagedStateName)
@@ -228,12 +197,12 @@ namespace FEJsTBridge.Tests
         public void Write_CopiesTransitionConditions_FromPlan()
         {
             var controller = Write(Settings());
-            var bypassLayer = controller.layers[0].stateMachine;
+            var expressionControlLayer = controller.layers[0].stateMachine;
 
-            var transition = FindState(bypassLayer, BridgePlanBuilder.IdleStateName).transitions
-                .Single(t => t.destinationState.name == BridgePlanBuilder.BypassStateName);
+            var transition = FindState(expressionControlLayer, BridgePlanBuilder.IdleStateName).transitions
+                .Single(t => t.destinationState.name == BridgePlanBuilder.EngagedStateName);
 
-            Assert.That(transition.destinationState.name, Is.EqualTo(BridgePlanBuilder.BypassStateName));
+            Assert.That(transition.destinationState.name, Is.EqualTo(BridgePlanBuilder.EngagedStateName));
             Assert.That(transition.hasExitTime, Is.False);
             Assert.That(transition.duration, Is.EqualTo(0f));
             Assert.That(transition.conditions.Length, Is.EqualTo(1));

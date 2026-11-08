@@ -39,7 +39,7 @@ namespace FEJsTBridge.Domain
 
     internal enum FxLayerVerdict
     {
-        /// <summary>バイパス中に競合する。除去の候補</summary>
+        /// <summary>FaceEmoかフェイストラッキングと競合する。除去の候補</summary>
         Candidate,
 
         /// <summary>競合しない</summary>
@@ -118,7 +118,7 @@ namespace FEJsTBridge.Domain
     }
 
     /// <summary>
-    /// バイパス中に競合するレイヤーを判定する
+    /// FaceEmoやフェイストラッキングと競合するレイヤーを判定する
     ///
     /// 名前ではなく、レイヤーが実際に何を書くかで判定する。
     /// 服のトグルのようにブレンドシェイプを使うだけのレイヤーを、
@@ -127,7 +127,7 @@ namespace FEJsTBridge.Domain
     /// 名前で候補から外すこともしない。
     /// 解析するのは素体のFXであり、Merge Animatorでマージされるレイヤーはそこに現れない。
     /// FaceEmoと同じ名前のレイヤーが素体のFXにあるなら、素体の配布物に焼き込まれたものである。
-    /// 焼き込まれたFaceEmoはバイパス用のパラメータを持たず、ブリッジでは止められない。
+    /// 焼き込まれたFaceEmoは制御用のパラメータを持たず、ブリッジでは表情を固定できない。
     /// 表情のブレンドシェイプを書くのなら、他のレイヤーと同じく除去の候補に挙げる。
     /// </summary>
     internal static class FxLayerConflictAnalyzer

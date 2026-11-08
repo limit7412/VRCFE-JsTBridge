@@ -10,14 +10,12 @@ namespace FEJsTBridge.Domain
     internal readonly struct BridgeSettings
     {
         public BridgeSettings(
-            ControlMethod controlMethod,
             BypassTrigger bypassTrigger,
             bool enableTrackingReapply,
             float reapplyDelaySeconds,
             int faceEmoteIndex,
             IReadOnlyList<ExtraParameterTarget> extraParameters = null)
         {
-            ControlMethod = controlMethod;
             BypassTrigger = bypassTrigger;
             EnableTrackingReapply = enableTrackingReapply;
 
@@ -33,15 +31,13 @@ namespace FEJsTBridge.Domain
             ExtraParameters = extraParameters ?? new ExtraParameterTarget[0];
         }
 
-        public ControlMethod ControlMethod { get; }
-
         public BypassTrigger BypassTrigger { get; }
 
         public bool EnableTrackingReapply { get; }
 
         public float ReapplyDelaySeconds { get; }
 
-        /// <summary>表情制御方式で切り替え先にする表情番号</summary>
+        /// <summary>フェイストラッキング中に切り替え先にする表情番号</summary>
         public int FaceEmoteIndex { get; }
 
         /// <summary>
@@ -53,7 +49,6 @@ namespace FEJsTBridge.Domain
         public BridgeSettings WithExtraParameters(IReadOnlyList<ExtraParameterTarget> extraParameters)
         {
             return new BridgeSettings(
-                ControlMethod,
                 BypassTrigger,
                 EnableTrackingReapply,
                 ReapplyDelaySeconds,
@@ -61,13 +56,9 @@ namespace FEJsTBridge.Domain
                 extraParameters);
         }
 
-        /// <summary>
-        /// 追加したてのコンポーネントと同じ設定
-        /// 制御方式はフィールドの初期化子ではなくResetで入るため、ここにも同じ値を書く
-        /// </summary>
+        /// <summary>追加したてのコンポーネントと同じ設定</summary>
         public static BridgeSettings Default =>
             new BridgeSettings(
-                ControlMethod.ExpressionControl,
                 BypassTrigger.FacialExpressionsDisabled,
                 true,
                 FEJsTBridgeComponent.DefaultReapplyDelaySeconds,
@@ -81,7 +72,6 @@ namespace FEJsTBridge.Domain
             }
 
             return new BridgeSettings(
-                component.controlMethod,
                 component.bypassTrigger,
                 component.enableTrackingReapply,
                 component.reapplyDelaySeconds,
