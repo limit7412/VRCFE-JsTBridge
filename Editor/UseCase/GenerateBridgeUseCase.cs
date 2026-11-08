@@ -105,18 +105,11 @@ namespace FEJsTBridge.UseCase
 
                 ReportEnvironment(AvatarEnvironmentScanner.Scan(avatarRoot));
 
-                var settings = BridgeSettings.FromComponent(primary);
-                var faceEmo = FaceEmoParameterNames.Raw;
+                // FaceEmoの制御パラメータは設定次第で名前が変わるため、アバターから解決する
+                var faceEmo = FaceEmoParameterResolver.Resolve(avatarRoot);
+                ReportExpressionControlPrerequisites(avatarRoot, faceEmo);
 
-                // FaceEmoの制御パラメータは設定次第で名前が変わる。
-                // 名前を必要とするのは表情制御方式だけなので、解決もそのときだけ行う
-                if (settings.ControlMethod == ControlMethod.ExpressionControl)
-                {
-                    faceEmo = FaceEmoParameterResolver.Resolve(avatarRoot);
-                    ReportExpressionControlPrerequisites(avatarRoot, faceEmo);
-                }
-
-                settings = settings.WithExtraParameters(
+                var settings = BridgeSettings.FromComponent(primary).WithExtraParameters(
                     ResolveExtraParameters(context, primary.extraParameters));
 
                 var plan = BridgePlanBuilder.Build(settings, faceEmo);
@@ -188,7 +181,7 @@ namespace FEJsTBridge.UseCase
         /// <summary>
         /// 指定されたFXレイヤーを取り除く
         ///
-        /// FaceEmoが書き込みを止めている間だけ表に出てくる素体の表情レイヤーが対象になる。
+        /// フェイストラッキングと競合する素体のレイヤーが対象になる。
         /// 取り除く相手はビルド中のFXであり、素体のアセットには触れない。
         /// </summary>
         private static void RemoveConflictingFxLayers(BuildContext context, IReadOnlyList<string> requestedNames)
@@ -274,7 +267,7 @@ namespace FEJsTBridge.UseCase
         }
 
         /// <summary>
-        /// 表情制御方式の前提が揃っているかを調べて報告する
+        /// 表情制御の前提が揃っているかを調べて報告する
         ///
         /// 揃っていなくても生成は続行する。
         /// パラメータ名の解決はプレフィックスを使っていないアバターなら失敗しても実害がなく、

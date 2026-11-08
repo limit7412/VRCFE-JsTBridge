@@ -29,7 +29,7 @@ msgid "warning.face_emo_not_found"
 msgstr "FaceEmo was not found"
 
 msgid "warning.face_emo_not_found:description"
-msgstr "There is nothing to bypass, so the generated bridge does nothing."
+msgstr "There is no expression to lock, so the generated bridge does nothing."
 
 msgid "warning.face_emo_not_found:hint"
 msgstr "Add the FaceEmo output to this avatar to make the bridge work. Ignore this warning if you plan to add it later."
@@ -41,13 +41,13 @@ msgid "warning.face_emo_parameters_unresolved:description"
 msgstr "FaceEmo's MA Parameters was not found, so the bridge was generated with the names as they are before renaming."
 
 msgid "warning.face_emo_parameters_unresolved:hint"
-msgstr "If FaceEmo is configured to prefix its parameters, the expression control method does nothing. Add FaceEmo's generated prefab to this avatar and build again."
+msgstr "If FaceEmo is configured to prefix its parameters, the bridge cannot lock the expression. Add FaceEmo's generated prefab to this avatar and build again."
 
 msgid "warning.shared_blend_shapes"
 msgstr "FaceEmo and face tracking write the same blend shapes"
 
 msgid "warning.shared_blend_shapes:description"
-msgstr "{0} blend shapes overlap ({1} and so on). With the expression control method FaceEmo keeps writing, so its default face cancels out the tracked values."
+msgstr "{0} blend shapes overlap ({1} and so on). FaceEmo keeps writing while face tracking is active, so its default face cancels out the tracked values."
 
 msgid "warning.shared_blend_shapes:hint"
 msgstr "Register the blend shapes used by face tracking in FaceEmo's Excluded Blend Shapes."
@@ -66,28 +66,7 @@ msgid "guard.dialog.duplicate_removed"
 msgstr "An avatar can only have one Kx VRC FE-JsT Bridge, so the duplicate component was removed."
 
 # Inspector
-msgid "prop.control_method"
-msgstr "Control Method"
-
-msgid "prop.control_method.tooltip"
-msgstr "Chooses how FaceEmo is kept from writing while face tracking is active."
-
-msgid "prop.control_method.bypass"
-msgstr "Bypass (legacy)"
-
-msgid "prop.control_method.bypass.tooltip"
-msgstr "Stops FaceEmo entirely through its bypass parameter. This is the method that predates expression control."
-
-msgid "prop.control_method.expression_control"
-msgstr "Expression control"
-
-msgid "prop.control_method.expression_control.tooltip"
-msgstr "Keeps FaceEmo running, and locks the expression, stops blinking, and switches to the chosen emote."
-
-msgid "inspector.control_method.bypass"
-msgstr "The method that predates expression control, kept for backward compatibility.\nFaceEmo stops writing, so the avatar's own expression layers surface again. Use FX Layers To Remove below to handle them."
-
-msgid "inspector.control_method.expression_control"
+msgid "inspector.expression_control"
 msgstr "FaceEmo keeps writing, so the avatar's own expression layers stay covered as usual and the menu can still switch expressions while tracking.\nFaceEmo's default face writes the same blend shapes as face tracking, so register the tracking blend shapes in FaceEmo's Excluded Blend Shapes first."
 
 msgid "prop.face_emote_index"
@@ -103,7 +82,7 @@ msgid "prop.bypass_trigger"
 msgstr "Trigger"
 
 msgid "prop.bypass_trigger.tooltip"
-msgstr "Chooses which tracking state stops FaceEmo."
+msgstr "Chooses which tracking state locks FaceEmo's expression."
 
 msgid "prop.bypass_trigger.facial_expressions_disabled"
 msgstr "Eye or lip tracking is active"
@@ -115,7 +94,7 @@ msgid "prop.bypass_trigger.lip_tracking_only"
 msgstr "Only lip tracking is active (experimental)"
 
 msgid "prop.bypass_trigger.lip_tracking_only.tooltip"
-msgstr "Follows LipTrackingActive. FaceEmo keeps running while only eye tracking is active."
+msgstr "Follows LipTrackingActive. The expression is not locked while only eye tracking is active."
 
 msgid "inspector.bypass_trigger.lip_tracking_only"
 msgstr "This setting is experimental. With eye tracking only, FaceEmo's blink and default face still conflict with the eye blend shapes."
@@ -143,7 +122,7 @@ msgid "prop.remove_fx_layers.tooltip"
 msgstr "Names of the FX layers removed at build time. The avatar's own assets are not modified."
 
 msgid "inspector.remove_fx_layers"
-msgstr "With the bypass method FaceEmo stops writing, and the avatar's own expression layers surface again.\nList those layers here (gesture expressions, blink, Tracking Control switching, and so on) and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
+msgstr "Use this when the avatar's own FX has layers that conflict with face tracking, such as ones that switch Tracking Control.\nList those layers here and they are removed from FX at build time.\nOpen the built FX in the Animator window to find the layer names."
 
 msgid "warning.fx_not_found"
 msgstr "The FX controller was not found"
@@ -211,7 +190,7 @@ msgid "inspector.inspect.empty_reference"
 msgstr "FaceEmo or Jerry's Templates was found, but none of its clips write blend shapes. There is nothing to compare against, so blend shapes were not used for judging. Check that the expression clips are set up."
 
 msgid "inspector.inspect.write_defaults"
-msgstr "Layers outside this list have states with Write Defaults on. Such states also reset blend shapes their clips do not write, so a layer missing from this list can still break expressions during bypass."
+msgstr "Layers outside this list have states with Write Defaults on. Such states also reset blend shapes their clips do not write, so a layer missing from this list can still break expressions."
 
 msgid "inspector.inspect.no_face_emo"
 msgstr "FaceEmo was not found. Its blend shapes are missing from the comparison, so layers that only conflict with FaceEmo are shown as having no conflict."

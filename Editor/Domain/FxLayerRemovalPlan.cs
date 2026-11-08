@@ -6,9 +6,9 @@ namespace FEJsTBridge.Domain
     /// <summary>
     /// FXから取り除くレイヤーの選定結果
     ///
-    /// FaceEmoをバイパスすると、FaceEmoが書き込みを止めた分だけ、前にいる素体の表情レイヤーが
-    /// 表に出てくる。バイパス中だけの問題に見えるが、素体のレイヤーはFaceEmo使用中は常に
-    /// 上書きされていて意味を持たないため、ビルド時にまとめて取り除く。
+    /// 素体の表情レイヤーはFaceEmo使用中は常に上書きされていて意味を持たない。
+    /// 一方でTracking Controlを切り替えるレイヤーは、再適用レイヤーと競合する。
+    /// こうしたレイヤーを、素体のアセットに触れずにビルド時に取り除く。
     /// </summary>
     internal sealed class FxLayerRemovalPlan
     {

@@ -15,11 +15,9 @@ namespace FEJsTBridge.Tests
             BypassTrigger trigger = BypassTrigger.FacialExpressionsDisabled,
             bool enableTrackingReapply = true,
             float reapplyDelaySeconds = 0.2f,
-            ControlMethod controlMethod = ControlMethod.Bypass,
             int faceEmoteIndex = 0)
         {
-            return new BridgeSettings(
-                controlMethod, trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
+            return new BridgeSettings(trigger, enableTrackingReapply, reapplyDelaySeconds, faceEmoteIndex);
         }
 
         [Test]
@@ -29,18 +27,18 @@ namespace FEJsTBridge.Tests
 
             Assert.That(plan.Layers.Select(layer => layer.Name), Is.EqualTo(new[]
             {
-                BridgePlanBuilder.BypassLayerName,
+                BridgePlanBuilder.ExpressionControlLayerName,
                 BridgePlanBuilder.TrackingReapplyLayerName,
             }));
         }
 
         [Test]
-        public void Build_GeneratesBypassLayerOnly_WhenReapplyDisabled()
+        public void Build_GeneratesExpressionControlLayerOnly_WhenReapplyDisabled()
         {
             var plan = BridgePlanBuilder.Build(Settings(enableTrackingReapply: false));
 
             Assert.That(plan.Layers.Select(layer => layer.Name),
-                Is.EqualTo(new[] { BridgePlanBuilder.BypassLayerName }));
+                Is.EqualTo(new[] { BridgePlanBuilder.ExpressionControlLayerName }));
         }
 
         [Test]
@@ -56,8 +54,15 @@ namespace FEJsTBridge.Tests
                     (BridgeParameterNames.LipTrackingActive, BridgeParameterType.Float),
                     (BridgeParameterNames.EyeTrackingActive, BridgeParameterType.Float),
                     (BridgeParameterNames.VisemesEnable, BridgeParameterType.Bool),
-                    (BridgeParameterNames.ForceBypassEnable, BridgeParameterType.Bool),
+                    (BridgeParameterNames.EmoteLockEnable, BridgeParameterType.Bool),
+                    (BridgeParameterNames.ForceBlinkDisable, BridgeParameterType.Bool),
+                    (BridgeParameterNames.Emote, BridgeParameterType.Int),
                 }));
+
+            // FaceEmoのバイパス用パラメータは検出に使うだけで、書き込まない
+            Assert.That(
+                plan.Parameters.Select(parameter => parameter.Name),
+                Has.No.Member(BridgeParameterNames.ForceBypassEnable));
         }
 
         [Test]
@@ -72,22 +77,9 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void Build_GeneratesExpressionControlLayer_WhenMethodIsExpressionControl()
+        public void Build_DeclaresResolvedFaceEmoParameters()
         {
-            var plan = BridgePlanBuilder.Build(Settings(controlMethod: ControlMethod.ExpressionControl));
-
-            Assert.That(plan.Layers.Select(layer => layer.Name), Is.EqualTo(new[]
-            {
-                BridgePlanBuilder.ExpressionControlLayerName,
-                BridgePlanBuilder.TrackingReapplyLayerName,
-            }));
-        }
-
-        [Test]
-        public void Build_DeclaresResolvedFaceEmoParameters_WhenMethodIsExpressionControl()
-        {
-            var plan = BridgePlanBuilder.Build(
-                Settings(controlMethod: ControlMethod.ExpressionControl), ResolvedNames);
+            var plan = BridgePlanBuilder.Build(Settings(), ResolvedNames);
 
             Assert.That(
                 plan.Parameters.Select(parameter => (parameter.Name, parameter.Type)),
@@ -101,17 +93,12 @@ namespace FEJsTBridge.Tests
                     ("FaceEmo_BLINK", BridgeParameterType.Bool),
                     ("FaceEmo_EMOTE", BridgeParameterType.Int),
                 }));
-
-            // 出力先は方式ごとに違う。使わないパラメータは宣言しない
-            Assert.That(
-                plan.Parameters.Select(parameter => parameter.Name),
-                Has.No.Member(BridgeParameterNames.ForceBypassEnable));
         }
 
         [Test]
         public void Build_UsesRawFaceEmoNames_WhenNamesAreNotResolved()
         {
-            var plan = BridgePlanBuilder.Build(Settings(controlMethod: ControlMethod.ExpressionControl));
+            var plan = BridgePlanBuilder.Build(Settings());
 
             Assert.That(plan.Parameters.Select(parameter => parameter.Name), Is.SupersetOf(new[]
             {
@@ -162,7 +149,7 @@ namespace FEJsTBridge.Tests
         [Test]
         public void ExpressionControlLayer_SwitchesByTrigger()
         {
-            var settings = Settings(controlMethod: ControlMethod.ExpressionControl);
+            var settings = Settings();
             var layer = BridgePlanBuilder.Build(settings, ResolvedNames)
                 .FindLayer(BridgePlanBuilder.ExpressionControlLayerName);
 
@@ -205,38 +192,12 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void BypassLayer_DrivesForceBypassEnable_WithZeroAndOne()
+        public void ExpressionControlLayer_UsesBoolComparison_InFacialExpressionsDisabledMode()
         {
-            var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
+            var layer = ExpressionControlLayer();
 
-            var idle = layer.FindState(BridgePlanBuilder.IdleStateName);
-            var bypass = layer.FindState(BridgePlanBuilder.BypassStateName);
-
-            Assert.That(layer.DefaultStateName, Is.EqualTo(BridgePlanBuilder.IdleStateName));
-            AssertBypassDriver(idle, 0f);
-            AssertBypassDriver(bypass, 1f);
-        }
-
-        private static void AssertBypassDriver(BridgeStatePlan state, float expectedValue)
-        {
-            Assert.That(state.Driver, Is.Not.Null, $"{state.Name}にDriverがない");
-
-            // 同期済みの入力から導出するため、リモートでもDriverを走らせる必要がある
-            Assert.That(state.Driver.LocalOnly, Is.False);
-            Assert.That(state.Driver.Entries.Count, Is.EqualTo(1));
-            Assert.That(state.Driver.Entries[0].Parameter, Is.EqualTo(BridgeParameterNames.ForceBypassEnable));
-            Assert.That(state.Driver.Entries[0].Value, Is.EqualTo(expectedValue));
-        }
-
-        [Test]
-        public void BypassLayer_UsesBoolComparison_InFacialExpressionsDisabledMode()
-        {
-            var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
-
-            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName)
-                .Single(t => t.To == BridgePlanBuilder.BypassStateName);
-            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName)
-                .Single(t => t.To == BridgePlanBuilder.IdleStateName);
+            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName).Single();
+            var off = layer.TransitionsFrom(BridgePlanBuilder.EngagedStateName).Single();
 
             AssertCondition(on.Conditions.Single(),
                 BridgeParameterNames.FacialExpressionsDisabled, BridgeConditionMode.If, 0f);
@@ -247,64 +208,18 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void BypassLayer_UsesThresholdComparison_InLipTrackingOnlyMode()
+        public void ExpressionControlLayer_UsesThresholdComparison_InLipTrackingOnlyMode()
         {
             var layer = BridgePlanBuilder.Build(Settings(BypassTrigger.LipTrackingOnly))
-                .FindLayer(BridgePlanBuilder.BypassLayerName);
+                .FindLayer(BridgePlanBuilder.ExpressionControlLayerName);
 
-            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName)
-                .Single(t => t.To == BridgePlanBuilder.BypassStateName);
-            var off = layer.TransitionsFrom(BridgePlanBuilder.BypassStateName)
-                .Single(t => t.To == BridgePlanBuilder.IdleStateName);
+            var on = layer.TransitionsFrom(BridgePlanBuilder.IdleStateName).Single();
+            var off = layer.TransitionsFrom(BridgePlanBuilder.EngagedStateName).Single();
 
             AssertCondition(on.Conditions.Single(),
                 BridgeParameterNames.LipTrackingActive, BridgeConditionMode.Greater, 0.5f);
             AssertCondition(off.Conditions.Single(),
                 BridgeParameterNames.LipTrackingActive, BridgeConditionMode.Less, 0.5f);
-        }
-
-        [TestCase(BridgePlanBuilder.IdleStateName)]
-        [TestCase(BridgePlanBuilder.BypassStateName)]
-        public void BypassLayer_States_ExitToRedrive_ToRefireDriver(string stateName)
-        {
-            var layer = BridgePlanBuilder.Build(Settings()).FindLayer(BridgePlanBuilder.BypassLayerName);
-
-            var transitions = layer.TransitionsFrom(stateName);
-
-            Assert.That(transitions.Count, Is.EqualTo(2));
-
-            var loop = transitions.Single(t => t.To == BridgePlanBuilder.RedriveStateName);
-            Assert.That(loop.HasExitTime, Is.True);
-            Assert.That(loop.ExitTime, Is.EqualTo(1.0f));
-            Assert.That(loop.Conditions, Is.Empty);
-
-            // トリガーの切替が優先されるよう、ループは記載順の最後に置く
-            Assert.That(transitions[transitions.Count - 1], Is.SameAs(loop));
-        }
-
-        [Test]
-        public void RedriveState_ReturnsImmediately_ToStateMatchingTrigger()
-        {
-            var settings = Settings();
-            var layer = BridgePlanBuilder.Build(settings).FindLayer(BridgePlanBuilder.BypassLayerName);
-
-            Assert.That(layer.States.Count, Is.EqualTo(3));
-            Assert.That(layer.FindState(BridgePlanBuilder.RedriveStateName).Driver, Is.Null);
-
-            var transitions = layer.TransitionsFrom(BridgePlanBuilder.RedriveStateName);
-            Assert.That(transitions.Count, Is.EqualTo(2));
-
-            var toBypass = transitions.Single(t => t.To == BridgePlanBuilder.BypassStateName);
-            var expectedOn = BridgePlanBuilder.TriggerOn(settings);
-            Assert.That(toBypass.HasExitTime, Is.False);
-            AssertCondition(
-                toBypass.Conditions.Single(), expectedOn.Parameter, expectedOn.Mode, expectedOn.Threshold);
-
-            var toIdle = transitions.Single(t => t.To == BridgePlanBuilder.IdleStateName);
-            var expectedOff = BridgePlanBuilder.TriggerOff(settings);
-            Assert.That(toIdle.HasExitTime, Is.False);
-            AssertCondition(
-                toIdle.Conditions.Single(), expectedOff.Parameter, expectedOff.Mode, expectedOff.Threshold);
         }
 
         [Test]
@@ -451,7 +366,7 @@ namespace FEJsTBridge.Tests
 
             Assert.That(plan.Layers.Select(layer => layer.Name), Is.EqualTo(new[]
             {
-                BridgePlanBuilder.BypassLayerName,
+                BridgePlanBuilder.ExpressionControlLayerName,
                 BridgePlanBuilder.TrackingReapplyLayerName,
                 BridgePlanBuilder.ExtraParametersLayerName,
             }));
@@ -743,7 +658,7 @@ namespace FEJsTBridge.Tests
         {
             return BridgePlanBuilder
                 .Build(
-                    Settings(controlMethod: ControlMethod.ExpressionControl, faceEmoteIndex: faceEmoteIndex),
+                    Settings(faceEmoteIndex: faceEmoteIndex),
                     ResolvedNames)
                 .FindLayer(BridgePlanBuilder.ExpressionControlLayerName);
         }

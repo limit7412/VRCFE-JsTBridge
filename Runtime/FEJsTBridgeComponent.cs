@@ -8,7 +8,7 @@ namespace FEJsTBridge
 {
     /// <summary>
     /// FaceEmoとJerry's Templates (MA版) を橋渡しするコンポーネント
-    /// フェイストラッキング有効中はFaceEmoの書き込みを止め、無効化したら元の動作へ戻す
+    /// フェイストラッキング有効中はFaceEmoの表情を固定してまばたきを止め、無効化したら元の動作へ戻す
     ///
     /// 保持するのは設定値だけで、実際の生成はNDMFのGenerating Phaseで行う。
     /// コンポーネント自体はビルド中に取り除かれる。
@@ -23,24 +23,21 @@ namespace FEJsTBridge
     {
         // インスペクタ表示用の文言はEditorアセンブリ側でローカライズされる
         // （以下の属性はカスタムエディタが無効な場合のフォールバック表示）
-        [Tooltip("How to keep FaceEmo from writing while face tracking is active. ExpressionControl: keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote. Bypass: stop FaceEmo entirely, kept for backward compatibility")]
-        public ControlMethod controlMethod = ControlMethod.Bypass;
-
-        [Tooltip("Emote number to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes. Used only by ExpressionControl")]
+        [Tooltip("Emote number to switch to while face tracking is active. It is the same number the FaceEmo expression select menu writes")]
         [Min(0)]
         public int faceEmoteIndex = DefaultFaceEmoteIndex;
 
-        [Tooltip("Condition that triggers the bypass. FacialExpressionsDisabled: fires when either eye or lip tracking is active. LipTrackingOnly: fires only while lip tracking is active (experimental)")]
+        [Tooltip("Condition that activates the bridge. FacialExpressionsDisabled: fires when either eye or lip tracking is active. LipTrackingOnly: fires only while lip tracking is active (experimental)")]
         public BypassTrigger bypassTrigger = BypassTrigger.FacialExpressionsDisabled;
 
-        [Tooltip("Generate the layer that re-applies Tracking Control after the bypass takes effect. Turn it off only to work around trouble")]
+        [Tooltip("Generate the layer that re-applies Tracking Control after FaceEmo applies its own. Turn it off only to work around trouble")]
         public bool enableTrackingReapply = true;
 
-        [Tooltip("Seconds to wait for the bypass to take effect before re-applying Tracking Control")]
+        [Tooltip("Seconds to wait for FaceEmo to apply its Tracking Control before re-applying it")]
         [Range(MinReapplyDelaySeconds, MaxReapplyDelaySeconds)]
         public float reapplyDelaySeconds = DefaultReapplyDelaySeconds;
 
-        [Tooltip("Names of FX layers to remove at build time. Use it for the avatar's own expression layers, which surface again while FaceEmo is bypassed. The avatar's own assets are not modified")]
+        [Tooltip("Names of FX layers to remove at build time. Use it for the avatar's own layers that conflict with face tracking. The avatar's own assets are not modified")]
         public List<string> removeFxLayers = new List<string>();
 
         [Tooltip("Parameters to set while face tracking is active, such as toggles made with MA Menu Item. Each entry is written when the trigger turns on, and written back when it turns off")]
@@ -75,53 +72,13 @@ namespace FEJsTBridge
             EditorOnValidateHook?.Invoke(this);
 #endif
         }
-
-        /// <summary>
-        /// 追加したてのコンポーネントへ既定の制御方式を入れる
-        /// </summary>
-        /// <remarks>
-        /// フィールドの初期化子に書かないのは、制御方式を持たない版で保存したアバターにまで
-        /// 既定が渡ってしまうためである。Unityはシリアライズデータに無いフィールドを
-        /// 初期化子の値のまま残すので、初期化子を表情制御にすると、更新しただけで
-        /// バイパスで組んであったアバターの方式が変わる。
-        /// 追加のときだけ呼ばれるResetで入れれば、古い保存データはバイパスのまま残る。
-        /// </remarks>
-        private void Reset()
-        {
-#if UNITY_EDITOR
-            controlMethod = ControlMethod.ExpressionControl;
-#endif
-        }
     }
 
     /// <summary>
-    /// FaceEmoの書き込みを止める方式
+    /// ブリッジの発動条件
     ///
-    /// 宣言順はシリアライズされた値の意味そのものなので入れ替えない。
-    /// 入れ替えると、追加済みのコンポーネントが別の方式で動くようになる。
-    /// </summary>
-    public enum ControlMethod
-    {
-        /// <summary>
-        /// FaceEmoの外部連携用パラメータでバイパスさせ、FaceEmoごと止める
-        ///
-        /// 接点が1本で済み、FaceEmo側の設定にも依存しないが、
-        /// FaceEmoが書き込みを止めた分だけ素体の表情レイヤーが表に出る。
-        /// 表情制御方式より前からある方式であり、下位互換のために残している。
-        /// </summary>
-        [Tooltip("Stop FaceEmo entirely through its bypass parameter. Kept for backward compatibility")]
-        Bypass,
-
-        /// <summary>
-        /// FaceEmoを動かしたまま、表情ロックとまばたき停止、表情の切り替えで無害な状態へ寄せる
-        /// 素体の表情レイヤーは押さえ込まれたままになり、トラッキング中もメニューから表情を選べる
-        /// </summary>
-        [Tooltip("Keep FaceEmo running, and lock the expression, stop blinking, and switch to the chosen emote")]
-        ExpressionControl
-    }
-
-    /// <summary>
-    /// バイパスの発動条件
+    /// 型名とフィールド名はFaceEmoをバイパスさせていた頃の名残である。
+    /// フィールド名は保存済みの設定を読む鍵であり、型名もそれに揃えて残している。
     /// </summary>
     public enum BypassTrigger
     {
@@ -133,7 +90,7 @@ namespace FEJsTBridge
 
         /// <summary>
         /// LipTrackingActiveに従う（口が有効なときだけ発動）
-        /// 目だけのトラッキングではFaceEmoを止めないが、目系シェイプの競合は残る（実験的）
+        /// 目だけのトラッキングでは表情を固定しないが、目系シェイプの競合は残る（実験的）
         /// </summary>
         [Tooltip("Follow LipTrackingActive (fires only while lip tracking is active). Experimental")]
         LipTrackingOnly

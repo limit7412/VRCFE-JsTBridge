@@ -39,14 +39,16 @@ namespace FEJsTBridge.Tests
         }
 
         [Test]
-        public void CreateObject_UsesResetDefaults()
+        public void CreateObject_UsesDefaults()
         {
             var parent = new GameObject("Avatar");
             _created.Add(parent);
 
             var component = CreateBridgeMenu.CreateObject(parent).GetComponent<FEJsTBridgeComponent>();
 
-            Assert.That(component.controlMethod, Is.EqualTo(ControlMethod.ExpressionControl));
+            Assert.That(component.faceEmoteIndex, Is.EqualTo(FEJsTBridgeComponent.DefaultFaceEmoteIndex));
+            Assert.That(component.bypassTrigger, Is.EqualTo(BypassTrigger.FacialExpressionsDisabled));
+            Assert.That(component.enableTrackingReapply, Is.True);
         }
 
         [Test]

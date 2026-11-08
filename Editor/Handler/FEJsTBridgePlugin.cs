@@ -21,7 +21,7 @@ namespace FEJsTBridge.Handler
             // マージ後のFXでパラメータ名が一致すればよい
             InPhase(BuildPhase.Generating)
                 .BeforePlugin("nadena.dev.modular-avatar")
-                .Run("Generate FaceEmo bypass bridge", GenerateBridgeUseCase.ExecuteForBuild);
+                .Run("Generate FaceEmo expression control bridge", GenerateBridgeUseCase.ExecuteForBuild);
         }
     }
 }
